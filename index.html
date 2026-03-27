@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>D&D Encounter Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <button id="back-btn" class="icon-btn hidden" aria-label="Back">
+                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            <h1 id="page-title">Encounters</h1>
+            <button id="menu-btn" class="icon-btn" aria-label="Menu">
+                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <!-- Encounter List View -->
+            <section id="encounter-list-view" class="view active">
+                <div id="encounter-list" class="list"></div>
+                <button id="new-encounter-btn" class="fab" aria-label="New Encounter">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
+            </section>
+
+            <!-- Encounter Edit View -->
+            <section id="encounter-edit-view" class="view">
+                <form id="encounter-form" class="form">
+                    <div class="form-group">
+                        <label for="encounter-title">Title</label>
+                        <input type="text" id="encounter-title" placeholder="Encounter name..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="encounter-description">Description</label>
+                        <textarea id="encounter-description" placeholder="Optional description..." rows="3"></textarea>
+                    </div>
+
+                    <!-- PCs Section -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Player Characters</h3>
+                            <button type="button" id="add-pc-btn" class="btn btn-small">+ Add PC</button>
+                        </div>
+                        <div id="pc-list" class="item-list"></div>
+                    </div>
+
+                    <!-- Monsters Section -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Monsters</h3>
+                            <button type="button" id="add-monster-btn" class="btn btn-small">+ Add Monster</button>
+                        </div>
+                        <div id="monster-list" class="item-list"></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Encounter</button>
+                        <button type="button" id="delete-encounter-btn" class="btn btn-danger hidden">Delete</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Monster Search Modal -->
+            <div id="monster-search-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Search Monsters</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="search-box">
+                            <input type="text" id="monster-search-input" placeholder="Search by name...">
+                            <select id="monster-source-filter">
+                                <option value="">Core Books</option>
+                                <option value="ALL">All Sources</option>
+                                <option value="MM">Monster Manual (2014)</option>
+                                <option value="XMM">Monster Manual (2024)</option>
+                                <option value="MPMM">Mordenkainen Presents</option>
+                                <option value="VGM">Volo's Guide</option>
+                                <option value="MTF">Mordenkainen's Tome</option>
+                                <option value="FTD">Fizban's Treasury</option>
+                                <option value="BGG">Bigby's Giants</option>
+                                <option value="BGDIA">Baldur's Gate: DiA</option>
+                                <option value="CoS">Curse of Strahd</option>
+                                <option value="DMG">Dungeon Master's Guide</option>
+                                <option value="GoS">Ghosts of Saltmarsh</option>
+                                <option value="IDRotF">Icewind Dale</option>
+                                <option value="OotA">Out of the Abyss</option>
+                                <option value="PotA">Princes of the Apocalypse</option>
+                                <option value="SKT">Storm King's Thunder</option>
+                                <option value="ToA">Tomb of Annihilation</option>
+                                <option value="VRGR">Van Richten's Guide</option>
+                                <option value="WBtW">Wild Beyond the Witchlight</option>
+                                <option value="WDMM">Waterdeep: Dungeon of the Mad Mage</option>
+                            </select>
+                        </div>
+                        <div id="monster-search-results" class="search-results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Encounter Run View -->
+            <section id="encounter-run-view" class="view">
+                <div id="initiative-setup" class="initiative-panel">
+                    <h2>Set Initiative</h2>
+                    <div class="initiative-actions">
+                        <button id="add-combat-monster-btn" class="btn btn-small">+ Add Monster</button>
+                        <button id="add-combat-pc-btn" class="btn btn-small">+ Add PC</button>
+                    </div>
+                    <div id="initiative-list" class="initiative-list"></div>
+                    <button id="start-combat-btn" class="btn btn-primary btn-large">Start Combat</button>
+                </div>
+
+                <div id="combat-tracker" class="combat-panel hidden">
+                    <div class="combat-header">
+                        <div class="round-info">
+                            <span>Round <span id="round-number">1</span></span>
+                        </div>
+                        <div class="combat-header-actions">
+                            <button id="add-combat-monster-btn-2" class="btn btn-small">+ Monster</button>
+                        </div>
+                    </div>
+                    <div id="turn-order" class="turn-order"></div>
+                    <div class="combat-actions">
+                        <button id="prev-turn-btn" class="btn">Previous</button>
+                        <button id="next-turn-btn" class="btn btn-primary">Next Turn</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monster Stat Block Modal -->
+            <div id="stat-block-modal" class="modal">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h2 id="stat-block-name">Monster Name</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="stat-block-content" class="stat-block"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HP Adjustment Modal -->
+            <div id="hp-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2 id="hp-modal-title">Adjust HP</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Instance selector for grouped monsters -->
+                        <div id="hp-instance-selector" class="instance-selector hidden"></div>
+                        <div class="hp-display">
+                            <span id="current-hp">0</span> / <span id="max-hp">0</span>
+                        </div>
+                        <div class="hp-controls">
+                            <button type="button" class="hp-btn damage" data-amount="-10">-10</button>
+                            <button type="button" class="hp-btn damage" data-amount="-5">-5</button>
+                            <button type="button" class="hp-btn damage" data-amount="-1">-1</button>
+                            <button type="button" class="hp-btn heal" data-amount="1">+1</button>
+                            <button type="button" class="hp-btn heal" data-amount="5">+5</button>
+                            <button type="button" class="hp-btn heal" data-amount="10">+10</button>
+                        </div>
+                        <div class="hp-custom">
+                            <input type="number" id="hp-custom-amount" placeholder="Custom amount">
+                            <button type="button" id="hp-damage-btn" class="btn btn-danger">Damage</button>
+                            <button type="button" id="hp-heal-btn" class="btn btn-success">Heal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combat Monster Search Modal -->
+            <div id="combat-monster-search-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Add Monster to Combat</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="search-box">
+                            <input type="text" id="combat-monster-search-input" placeholder="Search by name...">
+                            <select id="combat-monster-source-filter">
+                                <option value="">Core Books</option>
+                                <option value="ALL">All Sources</option>
+                                <option value="MM">Monster Manual (2014)</option>
+                                <option value="XMM">Monster Manual (2024)</option>
+                                <option value="MPMM">Mordenkainen Presents</option>
+                            </select>
+                        </div>
+                        <div class="quantity-selector">
+                            <label>Quantity:</label>
+                            <button type="button" class="qty-btn" id="qty-decrease">-</button>
+                            <span id="monster-quantity">1</span>
+                            <button type="button" class="qty-btn" id="qty-increase">+</button>
+                        </div>
+                        <div id="combat-monster-search-results" class="search-results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add PC to Combat Modal -->
+            <div id="combat-pc-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Add PC to Combat</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="combat-pc-name">Character Name</label>
+                            <input type="text" id="combat-pc-name" placeholder="Enter name...">
+                        </div>
+                        <div class="form-group">
+                            <label for="combat-pc-initiative">Initiative</label>
+                            <input type="number" id="combat-pc-initiative" placeholder="0">
+                        </div>
+                        <button type="button" id="add-combat-pc-confirm" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Add PC</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context Menu -->
+            <div id="context-menu" class="context-menu hidden">
+                <button class="context-item" data-action="edit">Edit</button>
+                <button class="context-item" data-action="copy">Duplicate</button>
+                <button class="context-item" data-action="run">Run Encounter</button>
+                <button class="context-item danger" data-action="delete">Delete</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
