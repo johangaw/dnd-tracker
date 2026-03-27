@@ -245,6 +245,7 @@ const State = {
     selectedMonsterIndex: null,
     selectedInstanceIndex: 0,
     monsterQuantity: 1,
+    hpDelta: 0,
     
     setView(view) {
         this.currentView = view;
@@ -402,319 +403,39 @@ const UI = {
         });
     },
 
-    // Render monster list in edit form
+    // Render Monster list in edit form
     renderMonsterList() {
         const container = document.getElementById('monster-list');
         const monsters = State.editingEncounter.monsters || [];
 
         container.innerHTML = monsters.map((monster, index) => `
             <div class="item-row" data-index="${index}">
-                <div class="item-info">
-                    <div class="item-name">${this.escapeHtml(monster.name)}</div>
-                    <div class="item-meta">CR ${MonsterAPI.formatCR(monster.cr)} | HP ${monster.hp} | ${monster.source}</div>
+                <div class="monster-info">
+                    <div class="monster-name">${this.escapeHtml(monster.name)}</div>
+                    <div class="monster-meta">CR ${MonsterAPI.formatCR(monster.cr)} | HP ${monster.hp} | ${monster.source}</div>
                 </div>
+                <button type="button" class="btn btn-small stats-btn" data-name="${this.escapeHtml(monster.name)}" data-source="${monster.source}">Stats</button>
                 <button type="button" class="remove-btn" data-index="${index}">
                     <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                 </button>
             </div>
         `).join('');
 
+        // Stats buttons
+        container.querySelectorAll('.stats-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const name = btn.dataset.name;
+                const source = btn.dataset.source;
+                await this.showStatBlockByNameSource(name, source);
+            });
+        });
+
+        // Remove buttons
         container.querySelectorAll('.remove-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const index = parseInt(btn.dataset.index);
                 State.editingEncounter.monsters.splice(index, 1);
                 this.renderMonsterList();
-            });
-        });
-    },
-
-    // Monster search modal
-    async showMonsterSearch() {
-        const modal = document.getElementById('monster-search-modal');
-        const input = document.getElementById('monster-search-input');
-        const results = document.getElementById('monster-search-results');
-        
-        modal.classList.add('active');
-        input.value = '';
-        results.innerHTML = '<div class="search-empty">Type to search for monsters...</div>';
-        input.focus();
-    },
-
-    async searchMonsters(query, source) {
-        const results = document.getElementById('monster-search-results');
-        
-        if (query.length < 2) {
-            results.innerHTML = '<div class="search-empty">Type at least 2 characters...</div>';
-            return;
-        }
-
-        results.innerHTML = '<div class="search-loading">Searching...</div>';
-
-        try {
-            const monsters = await MonsterAPI.searchMonsters(query, source);
-            
-            if (monsters.length === 0) {
-                results.innerHTML = '<div class="search-empty">No monsters found</div>';
-                return;
-            }
-
-            results.innerHTML = monsters.map(m => `
-                <div class="search-result-item" data-name="${this.escapeHtml(m.name)}" data-source="${m.source}">
-                    <div>
-                        <div class="monster-name">${this.escapeHtml(m.name)}</div>
-                        <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | ${m.source}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            results.querySelectorAll('.search-result-item').forEach(item => {
-                item.addEventListener('click', async () => {
-                    const name = item.dataset.name;
-                    const source = item.dataset.source;
-                    await this.addMonsterToEncounter(name, source);
-                });
-            });
-        } catch (error) {
-            results.innerHTML = '<div class="search-empty">Error searching monsters</div>';
-        }
-    },
-
-    async addMonsterToEncounter(name, source) {
-        const monster = await MonsterAPI.getMonster(name, source);
-        if (!monster) return;
-
-        State.editingEncounter.monsters.push({
-            name: monster.name,
-            source: monster.source,
-            cr: monster.cr,
-            hp: MonsterAPI.getHP(monster),
-            ac: MonsterAPI.getAC(monster),
-            initMod: MonsterAPI.getInitiativeMod(monster)
-        });
-
-        this.renderMonsterList();
-        this.closeModals();
-    },
-
-    // Initialize run mode
-    initRunMode(encounter) {
-        State.currentEncounter = JSON.parse(JSON.stringify(encounter));
-        State.combatState = {
-            round: 1,
-            currentTurn: 0,
-            combatants: [],
-            started: false
-        };
-
-        // Create combatants array
-        const combatants = [];
-        
-        // Add PCs
-        (encounter.pcs || []).forEach((pc, i) => {
-            combatants.push({
-                id: `pc-${Date.now()}-${i}`,
-                name: pc.name,
-                type: 'pc',
-                initiative: 0
-            });
-        });
-
-        // Add monsters - group same monsters together with multiple instances
-        const monsterGroups = {};
-        (encounter.monsters || []).forEach((monster) => {
-            const key = `${monster.name}|${monster.source}`;
-            if (!monsterGroups[key]) {
-                monsterGroups[key] = {
-                    name: monster.name,
-                    source: monster.source,
-                    cr: monster.cr,
-                    ac: monster.ac,
-                    baseHp: monster.hp,
-                    initMod: monster.initMod ?? monster.dexMod ?? 0,
-                    instances: []
-                };
-            }
-            monsterGroups[key].instances.push({
-                hp: monster.hp,
-                maxHp: monster.hp
-            });
-        });
-
-        // Convert groups to combatants
-        Object.values(monsterGroups).forEach((group, i) => {
-            combatants.push({
-                id: `monster-${Date.now()}-${i}`,
-                name: group.name,
-                source: group.source,
-                type: 'monster',
-                initiative: 0,
-                cr: group.cr,
-                ac: group.ac,
-                baseHp: group.baseHp,
-                initMod: group.initMod,
-                instances: group.instances
-            });
-        });
-
-        State.combatState.combatants = combatants;
-
-        // Show initiative setup
-        document.getElementById('initiative-setup').classList.remove('hidden');
-        document.getElementById('combat-tracker').classList.add('hidden');
-        
-        this.renderInitiativeList();
-        State.setView('encounter-run');
-    },
-
-    // Add monster to combat (runtime only)
-    async addMonsterToCombat(name, source, quantity = 1) {
-        const monster = await MonsterAPI.getMonster(name, source);
-        if (!monster) return;
-
-        const hp = MonsterAPI.getHP(monster);
-        const ac = MonsterAPI.getAC(monster);
-        const initMod = MonsterAPI.getInitiativeMod(monster);
-
-        // Check if this monster type already exists in combat
-        const existingIndex = State.combatState.combatants.findIndex(
-            c => c.type === 'monster' && c.name === name && c.source === source
-        );
-
-        if (existingIndex >= 0) {
-            // Add instances to existing group
-            for (let i = 0; i < quantity; i++) {
-                State.combatState.combatants[existingIndex].instances.push({
-                    hp: hp,
-                    maxHp: hp
-                });
-            }
-        } else {
-            // Create new combatant group
-            const instances = [];
-            for (let i = 0; i < quantity; i++) {
-                instances.push({ hp: hp, maxHp: hp });
-            }
-
-            const newCombatant = {
-                id: `monster-${Date.now()}`,
-                name: name,
-                source: source,
-                type: 'monster',
-                initiative: 0,
-                cr: monster.cr,
-                ac: ac,
-                baseHp: hp,
-                initMod: initMod,
-                instances: instances
-            };
-
-            State.combatState.combatants.push(newCombatant);
-        }
-
-        // Re-render appropriate view
-        if (State.combatState.started) {
-            this.renderTurnOrder();
-        } else {
-            this.renderInitiativeList();
-        }
-
-        this.closeModals();
-    },
-
-    // Add PC to combat (runtime only)
-    addPCToCombat(name, initiative = 0) {
-        const newPC = {
-            id: `pc-${Date.now()}`,
-            name: name,
-            type: 'pc',
-            initiative: initiative
-        };
-
-        State.combatState.combatants.push(newPC);
-
-        // Re-sort if combat has started
-        if (State.combatState.started) {
-            State.combatState.combatants.sort((a, b) => b.initiative - a.initiative);
-            this.renderTurnOrder();
-        } else {
-            this.renderInitiativeList();
-        }
-
-        this.closeModals();
-    },
-
-    // Remove combatant from combat
-    removeCombatant(index) {
-        const combatant = State.combatState.combatants[index];
-        if (!combatant) return;
-
-        const name = combatant.name;
-        if (!confirm(`Remove ${name} from combat?`)) return;
-
-        // Adjust current turn if needed
-        if (State.combatState.started) {
-            if (index < State.combatState.currentTurn) {
-                State.combatState.currentTurn--;
-            } else if (index === State.combatState.currentTurn) {
-                // If removing current combatant, stay at same index (next combatant slides up)
-                if (State.combatState.currentTurn >= State.combatState.combatants.length - 1) {
-                    State.combatState.currentTurn = 0;
-                    State.combatState.round++;
-                }
-            }
-        }
-
-        State.combatState.combatants.splice(index, 1);
-
-        if (State.combatState.started) {
-            this.renderTurnOrder();
-        } else {
-            this.renderInitiativeList();
-        }
-    },
-
-    renderInitiativeList() {
-        const container = document.getElementById('initiative-list');
-        const combatants = State.combatState.combatants;
-
-        container.innerHTML = `
-            <button class="btn roll-all-btn" id="roll-all-init">Roll All Monster Initiative</button>
-            ${combatants.map((c, i) => {
-                const instanceCount = c.type === 'monster' ? c.instances.length : 0;
-                const countLabel = instanceCount > 1 ? ` (x${instanceCount})` : '';
-                return `
-                <div class="initiative-item ${c.type}" data-index="${i}">
-                    <input type="number" class="init-input" value="${c.initiative}" data-index="${i}" placeholder="0">
-                    <div style="flex:1">
-                        <div class="init-name">${this.escapeHtml(c.name)}${countLabel}</div>
-                        ${c.type === 'monster' ? `<div class="init-meta">CR ${MonsterAPI.formatCR(c.cr)} | HP ${c.baseHp}</div>` : ''}
-                    </div>
-                    <button class="remove-combat-btn" data-index="${i}" title="Remove">
-                        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                    </button>
-                </div>
-            `}).join('')}
-        `;
-
-        // Roll all button
-        document.getElementById('roll-all-init').addEventListener('click', () => {
-            this.rollAllMonsterInitiative();
-        });
-
-        // Initiative inputs
-        container.querySelectorAll('.init-input').forEach(input => {
-            input.addEventListener('change', () => {
-                const index = parseInt(input.dataset.index);
-                State.combatState.combatants[index].initiative = parseInt(input.value) || 0;
-            });
-        });
-
-        // Remove buttons
-        container.querySelectorAll('.remove-combat-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const index = parseInt(btn.dataset.index);
-                this.removeCombatant(index);
             });
         });
     },
@@ -757,7 +478,7 @@ const UI = {
             if (c.type === 'pc') {
                 return `
                     <div class="turn-item ${c.type} ${isActive ? 'active' : ''}" data-index="${i}">
-                        <div class="turn-init">${c.initiative}</div>
+                        <div class="turn-init clickable" data-index="${i}" title="Click to edit">${c.initiative}</div>
                         <div class="turn-info">
                             <div class="turn-name">${this.escapeHtml(c.name)}</div>
                         </div>
@@ -786,7 +507,7 @@ const UI = {
 
             return `
                 <div class="turn-item ${c.type} ${isActive ? 'active' : ''} ${allDead ? 'dead' : ''}" data-index="${i}">
-                    <div class="turn-init">${c.initiative}</div>
+                    <div class="turn-init clickable" data-index="${i}" title="Click to edit">${c.initiative}</div>
                     <div class="turn-info">
                         <div class="turn-name">${this.escapeHtml(c.name)}${c.instances.length > 1 ? ` (x${c.instances.length})` : ''}</div>
                         <div class="monster-instances">${instanceTags}</div>
@@ -853,15 +574,46 @@ const UI = {
         this.renderTurnOrder();
     },
 
+    // Initiative Modal
+    showInitiativeModal(combatantIndex) {
+        State.selectedMonsterIndex = combatantIndex;
+        const combatant = State.combatState.combatants[combatantIndex];
+        
+        document.getElementById('initiative-modal-title').textContent = `${combatant.name} Initiative`;
+        document.getElementById('initiative-input').value = combatant.initiative;
+        document.getElementById('initiative-modal').classList.add('active');
+        document.getElementById('initiative-input').focus();
+        document.getElementById('initiative-input').select();
+    },
+
+    saveInitiative() {
+        if (State.selectedMonsterIndex === null) return;
+        
+        const newInit = parseInt(document.getElementById('initiative-input').value) || 0;
+        State.combatState.combatants[State.selectedMonsterIndex].initiative = newInit;
+        
+        // Re-sort combatants by initiative
+        const currentCombatant = State.combatState.combatants[State.combatState.currentTurn];
+        State.combatState.combatants.sort((a, b) => b.initiative - a.initiative);
+        
+        // Update current turn to follow the same combatant
+        State.combatState.currentTurn = State.combatState.combatants.indexOf(currentCombatant);
+        
+        this.closeModals();
+        this.renderTurnOrder();
+    },
+
     // HP Modal
     showHPModal(combatantIndex) {
         State.selectedMonsterIndex = combatantIndex;
+        State.hpDelta = 0;
         const combatant = State.combatState.combatants[combatantIndex];
         
         const modal = document.getElementById('hp-modal');
         const instanceSelector = document.getElementById('hp-instance-selector');
         
         document.getElementById('hp-modal-title').textContent = `${combatant.name} HP`;
+        document.getElementById('hp-custom-amount').value = '';
         
         // Show instance selector if multiple instances
         if (combatant.instances.length > 1) {
@@ -875,6 +627,7 @@ const UI = {
         
         const instance = combatant.instances[State.selectedInstanceIndex];
         this.updateHPDisplay(instance.hp, instance.maxHp);
+        this.updateHPDeltaDisplay();
         
         modal.classList.add('active');
     },
@@ -895,9 +648,11 @@ const UI = {
         container.querySelectorAll('.instance-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 State.selectedInstanceIndex = parseInt(btn.dataset.instance);
+                State.hpDelta = 0;
                 const combatant = State.combatState.combatants[State.selectedMonsterIndex];
                 const instance = combatant.instances[State.selectedInstanceIndex];
                 this.updateHPDisplay(instance.hp, instance.maxHp);
+                this.updateHPDeltaDisplay();
                 this.renderInstanceSelector(combatant);
             });
         });
@@ -914,6 +669,63 @@ const UI = {
         else if (percent <= 0.5) display.classList.add('low');
     },
 
+    updateHPDeltaDisplay() {
+        const deltaDisplay = document.getElementById('hp-delta-display');
+        const deltaValue = document.getElementById('hp-delta-value');
+        const previewValue = document.getElementById('hp-preview-value');
+        
+        if (State.hpDelta === 0) {
+            deltaDisplay.classList.add('hidden');
+            return;
+        }
+        
+        deltaDisplay.classList.remove('hidden');
+        
+        // Show delta with sign
+        const sign = State.hpDelta > 0 ? '+' : '';
+        deltaValue.textContent = `${sign}${State.hpDelta}`;
+        deltaValue.classList.remove('damage', 'heal');
+        deltaValue.classList.add(State.hpDelta < 0 ? 'damage' : 'heal');
+        
+        // Calculate and show preview
+        const combatant = State.combatState.combatants[State.selectedMonsterIndex];
+        const instance = combatant.instances[State.selectedInstanceIndex];
+        const newHp = Math.max(0, Math.min(instance.maxHp, instance.hp + State.hpDelta));
+        previewValue.textContent = newHp;
+        previewValue.classList.toggle('dead', newHp <= 0);
+    },
+
+    addToHPDelta(amount) {
+        State.hpDelta += amount;
+        this.updateHPDeltaDisplay();
+    },
+
+    resetHPDelta() {
+        State.hpDelta = 0;
+        this.updateHPDeltaDisplay();
+        document.getElementById('hp-custom-amount').value = '';
+    },
+
+    applyHPDelta() {
+        if (State.selectedMonsterIndex === null || State.hpDelta === 0) return;
+        
+        const combatant = State.combatState.combatants[State.selectedMonsterIndex];
+        const instance = combatant.instances[State.selectedInstanceIndex];
+        instance.hp = Math.max(0, Math.min(instance.maxHp, instance.hp + State.hpDelta));
+        
+        this.updateHPDisplay(instance.hp, instance.maxHp);
+        State.hpDelta = 0;
+        this.updateHPDeltaDisplay();
+        
+        // Update instance selector if visible
+        if (combatant.instances.length > 1) {
+            this.renderInstanceSelector(combatant);
+        }
+        
+        this.renderTurnOrder();
+    },
+
+    // Legacy function kept for compatibility
     adjustHP(amount) {
         if (State.selectedMonsterIndex === null) return;
         
@@ -930,11 +742,17 @@ const UI = {
         
         this.renderTurnOrder();
     },
+        this.renderTurnOrder();
+    },
 
     // Stat Block
     async showStatBlock(combatantIndex) {
         const combatant = State.combatState.combatants[combatantIndex];
-        const monster = await MonsterAPI.getMonster(combatant.name, combatant.source);
+        await this.showStatBlockByNameSource(combatant.name, combatant.source);
+    },
+
+    async showStatBlockByNameSource(name, source) {
+        const monster = await MonsterAPI.getMonster(name, source);
         
         if (!monster) {
             alert('Could not load monster stats');
@@ -1139,6 +957,68 @@ const UI = {
         return str.charAt(0).toUpperCase() + str.slice(1);
     },
 
+    // Show monster search modal
+    showMonsterSearch() {
+        document.getElementById('monster-search-input').value = '';
+        document.getElementById('monster-search-results').innerHTML = 
+            '<div class="search-empty">Type to search for monsters...</div>';
+        document.getElementById('monster-search-modal').classList.add('active');
+        document.getElementById('monster-search-input').focus();
+    },
+
+    // Search monsters (for encounter editing)
+    async searchMonsters(query, source) {
+        const results = document.getElementById('monster-search-results');
+        
+        if (query.length < 2) {
+            results.innerHTML = '<div class="search-empty">Type at least 2 characters...</div>';
+            return;
+        }
+
+        results.innerHTML = '<div class="search-loading">Searching...</div>';
+
+        try {
+            const monsters = await MonsterAPI.searchMonsters(query, source);
+            
+            if (monsters.length === 0) {
+                results.innerHTML = '<div class="search-empty">No monsters found</div>';
+                return;
+            }
+
+            results.innerHTML = monsters.map(m => `
+                <div class="search-result-item" data-name="${this.escapeHtml(m.name)}" data-source="${m.source}">
+                    <div class="search-result-info">
+                        <div class="monster-name">${this.escapeHtml(m.name)}</div>
+                        <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${MonsterAPI.getHP(m)} | ${m.source}</div>
+                    </div>
+                    <button class="btn btn-small view-stats-btn" data-name="${this.escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
+                </div>
+            `).join('');
+
+            // Add click handler for adding monster
+            results.querySelectorAll('.search-result-info').forEach(item => {
+                item.addEventListener('click', async () => {
+                    const parent = item.closest('.search-result-item');
+                    const name = parent.dataset.name;
+                    const source = parent.dataset.source;
+                    await this.addMonsterToEncounter(name, source);
+                });
+            });
+
+            // Add click handler for viewing stats
+            results.querySelectorAll('.view-stats-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const name = btn.dataset.name;
+                    const source = btn.dataset.source;
+                    await this.showStatBlockByNameSource(name, source);
+                });
+            });
+        } catch (error) {
+            results.innerHTML = '<div class="search-empty">Error searching monsters</div>';
+        }
+    },
+
     // Close all modals
     closeModals() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
@@ -1335,24 +1215,48 @@ function initEventHandlers() {
         UI.prevTurn();
     });
 
-    // HP adjustment buttons
-    document.querySelectorAll('.hp-controls .hp-btn').forEach(btn => {
+    // HP adjustment buttons (add to delta, don't apply immediately)
+    document.querySelectorAll('.hp-controls .hp-adj-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const amount = parseInt(btn.dataset.amount);
-            UI.adjustHP(amount);
+            UI.addToHPDelta(amount);
         });
     });
 
     document.getElementById('hp-damage-btn').addEventListener('click', () => {
         const amount = parseInt(document.getElementById('hp-custom-amount').value) || 0;
-        UI.adjustHP(-amount);
-        document.getElementById('hp-custom-amount').value = '';
+        if (amount > 0) {
+            UI.addToHPDelta(-amount);
+            document.getElementById('hp-custom-amount').value = '';
+        }
     });
 
     document.getElementById('hp-heal-btn').addEventListener('click', () => {
         const amount = parseInt(document.getElementById('hp-custom-amount').value) || 0;
-        UI.adjustHP(amount);
-        document.getElementById('hp-custom-amount').value = '';
+        if (amount > 0) {
+            UI.addToHPDelta(amount);
+            document.getElementById('hp-custom-amount').value = '';
+        }
+    });
+
+    document.getElementById('hp-reset-btn').addEventListener('click', () => {
+        UI.resetHPDelta();
+    });
+
+    document.getElementById('hp-apply-btn').addEventListener('click', () => {
+        UI.applyHPDelta();
+    });
+
+    // Save initiative button
+    document.getElementById('save-initiative-btn').addEventListener('click', () => {
+        UI.saveInitiative();
+    });
+
+    // Allow Enter key in initiative input
+    document.getElementById('initiative-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            UI.saveInitiative();
+        }
     });
 
     // Close modals
@@ -1412,18 +1316,31 @@ async function searchCombatMonsters(query, source) {
 
         results.innerHTML = monsters.map(m => `
             <div class="search-result-item" data-name="${UI.escapeHtml(m.name)}" data-source="${m.source}">
-                <div>
+                <div class="search-result-info">
                     <div class="monster-name">${UI.escapeHtml(m.name)}</div>
                     <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${MonsterAPI.getHP(m)} | ${m.source}</div>
                 </div>
+                <button class="btn btn-small view-stats-btn" data-name="${UI.escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
             </div>
         `).join('');
 
-        results.querySelectorAll('.search-result-item').forEach(item => {
+        // Add click handler for adding monster
+        results.querySelectorAll('.search-result-info').forEach(item => {
             item.addEventListener('click', async () => {
-                const name = item.dataset.name;
-                const source = item.dataset.source;
+                const parent = item.closest('.search-result-item');
+                const name = parent.dataset.name;
+                const source = parent.dataset.source;
                 await UI.addMonsterToCombat(name, source, State.monsterQuantity);
+            });
+        });
+
+        // Add click handler for viewing stats
+        results.querySelectorAll('.view-stats-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const name = btn.dataset.name;
+                const source = btn.dataset.source;
+                await UI.showStatBlockByNameSource(name, source);
             });
         });
     } catch (error) {

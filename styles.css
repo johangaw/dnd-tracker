@@ -281,11 +281,17 @@ html, body {
     cursor: pointer;
 }
 
-.item-row .item-name {
+.item-row .monster-info {
+    flex: 1;
+}
+
+.item-row .item-name,
+.item-row .monster-name {
     font-weight: 500;
 }
 
-.item-row .item-meta {
+.item-row .item-meta,
+.item-row .monster-meta {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
@@ -478,10 +484,16 @@ html, body {
     border-radius: var(--radius);
     cursor: pointer;
     transition: background var(--transition);
+    gap: 8px;
 }
 
 .search-result-item:hover, .search-result-item:active {
     background: var(--bg-tertiary);
+}
+
+.search-result-item .search-result-info {
+    flex: 1;
+    cursor: pointer;
 }
 
 .search-result-item .monster-name {
@@ -491,6 +503,10 @@ html, body {
 .search-result-item .monster-meta {
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+.search-result-item .view-stats-btn {
+    flex-shrink: 0;
 }
 
 .search-loading,
@@ -636,6 +652,17 @@ html, body {
     font-size: 0.9rem;
 }
 
+.turn-item .turn-init.clickable {
+    cursor: pointer;
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.turn-item .turn-init.clickable:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
 .turn-item .turn-info {
     flex: 1;
 }
@@ -694,7 +721,7 @@ html, body {
     text-align: center;
     font-size: 2.5rem;
     font-weight: 700;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     padding: 16px;
     background: var(--bg-card);
     border-radius: var(--radius);
@@ -712,6 +739,48 @@ html, body {
     color: var(--danger);
 }
 
+.hp-delta {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.hp-delta.hidden {
+    display: none;
+}
+
+.hp-delta #hp-delta-value {
+    min-width: 60px;
+}
+
+.hp-delta #hp-delta-value.damage {
+    color: var(--danger);
+}
+
+.hp-delta #hp-delta-value.heal {
+    color: var(--success);
+}
+
+.hp-delta #hp-preview {
+    color: var(--text-muted);
+}
+
+.hp-delta #hp-preview-value {
+    color: var(--text-primary);
+}
+
+.hp-delta #hp-preview-value.dead {
+    color: var(--danger);
+}
+
 .hp-controls {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -719,7 +788,7 @@ html, body {
     margin-bottom: 16px;
 }
 
-.hp-btn {
+.hp-adj-btn {
     padding: 14px 8px;
     border-radius: var(--radius);
     font-size: 1rem;
@@ -729,16 +798,16 @@ html, body {
     transition: transform var(--transition);
 }
 
-.hp-btn:active {
+.hp-adj-btn:active {
     transform: scale(0.95);
 }
 
-.hp-btn.damage {
+.hp-adj-btn.damage {
     background: var(--danger);
     color: white;
 }
 
-.hp-btn.heal {
+.hp-adj-btn.heal {
     background: var(--success);
     color: white;
 }
@@ -746,6 +815,17 @@ html, body {
 .hp-custom {
     display: flex;
     gap: 8px;
+    margin-bottom: 12px;
+}
+
+.hp-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.hp-actions #hp-apply-btn {
+    flex: 1;
 }
 
 .hp-custom input {

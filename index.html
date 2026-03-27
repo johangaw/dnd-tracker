@@ -164,18 +164,26 @@
                         <div class="hp-display">
                             <span id="current-hp">0</span> / <span id="max-hp">0</span>
                         </div>
+                        <div id="hp-delta-display" class="hp-delta hidden">
+                            <span id="hp-delta-value">0</span>
+                            <span id="hp-preview">= <span id="hp-preview-value">0</span></span>
+                        </div>
                         <div class="hp-controls">
-                            <button type="button" class="hp-btn damage" data-amount="-10">-10</button>
-                            <button type="button" class="hp-btn damage" data-amount="-5">-5</button>
-                            <button type="button" class="hp-btn damage" data-amount="-1">-1</button>
-                            <button type="button" class="hp-btn heal" data-amount="1">+1</button>
-                            <button type="button" class="hp-btn heal" data-amount="5">+5</button>
-                            <button type="button" class="hp-btn heal" data-amount="10">+10</button>
+                            <button type="button" class="hp-adj-btn damage" data-amount="-10">-10</button>
+                            <button type="button" class="hp-adj-btn damage" data-amount="-5">-5</button>
+                            <button type="button" class="hp-adj-btn damage" data-amount="-1">-1</button>
+                            <button type="button" class="hp-adj-btn heal" data-amount="1">+1</button>
+                            <button type="button" class="hp-adj-btn heal" data-amount="5">+5</button>
+                            <button type="button" class="hp-adj-btn heal" data-amount="10">+10</button>
                         </div>
                         <div class="hp-custom">
                             <input type="number" id="hp-custom-amount" placeholder="Custom amount">
-                            <button type="button" id="hp-damage-btn" class="btn btn-danger">Damage</button>
-                            <button type="button" id="hp-heal-btn" class="btn btn-success">Heal</button>
+                            <button type="button" id="hp-damage-btn" class="btn btn-small btn-danger">-</button>
+                            <button type="button" id="hp-heal-btn" class="btn btn-small btn-success">+</button>
+                        </div>
+                        <div class="hp-actions">
+                            <button type="button" id="hp-reset-btn" class="btn btn-small">Reset</button>
+                            <button type="button" id="hp-apply-btn" class="btn btn-primary">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -227,6 +235,23 @@
                             <input type="number" id="combat-pc-initiative" placeholder="0">
                         </div>
                         <button type="button" id="add-combat-pc-confirm" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Add PC</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initiative Edit Modal -->
+            <div id="initiative-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2 id="initiative-modal-title">Edit Initiative</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="initiative-input">Initiative</label>
+                            <input type="number" id="initiative-input" placeholder="0">
+                        </div>
+                        <button type="button" id="save-initiative-btn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Save</button>
                     </div>
                 </div>
             </div>
