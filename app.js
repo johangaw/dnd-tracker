@@ -455,7 +455,8 @@ const UI = {
             source: monster.source,
             cr: monster.cr,
             hp: MonsterAPI.getHP(monster),
-            ac: MonsterAPI.getAC(monster)
+            ac: MonsterAPI.getAC(monster),
+            dexMod: MonsterAPI.getAbilityMod(monster.dex)
         });
 
         this.renderMonsterList();
@@ -496,6 +497,7 @@ const UI = {
                     cr: monster.cr,
                     ac: monster.ac,
                     baseHp: monster.hp,
+                    dexMod: monster.dexMod || 0,
                     instances: []
                 };
             }
@@ -516,6 +518,7 @@ const UI = {
                 cr: group.cr,
                 ac: group.ac,
                 baseHp: group.baseHp,
+                dexMod: group.dexMod,
                 instances: group.instances
             });
         });
@@ -537,6 +540,7 @@ const UI = {
 
         const hp = MonsterAPI.getHP(monster);
         const ac = MonsterAPI.getAC(monster);
+        const dexMod = MonsterAPI.getAbilityMod(monster.dex);
 
         // Check if this monster type already exists in combat
         const existingIndex = State.combatState.combatants.findIndex(
@@ -567,6 +571,7 @@ const UI = {
                 cr: monster.cr,
                 ac: ac,
                 baseHp: hp,
+                dexMod: dexMod,
                 instances: instances
             };
 
@@ -684,9 +689,10 @@ const UI = {
     rollAllMonsterInitiative() {
         State.combatState.combatants.forEach((c, i) => {
             if (c.type === 'monster') {
-                // Roll d20 + dex modifier (estimate based on CR if not available)
+                // Roll d20 + dex modifier
                 const roll = Math.floor(Math.random() * 20) + 1;
-                c.initiative = roll;
+                const dexMod = c.dexMod || 0;
+                c.initiative = roll + dexMod;
                 
                 const input = document.querySelector(`.init-input[data-index="${i}"]`);
                 if (input) input.value = c.initiative;
