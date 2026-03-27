@@ -742,8 +742,6 @@ const UI = {
         
         this.renderTurnOrder();
     },
-        this.renderTurnOrder();
-    },
 
     // Stat Block
     async showStatBlock(combatantIndex) {
