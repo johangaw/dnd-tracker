@@ -196,6 +196,39 @@ const MonsterAPI = {
         return Math.floor((score - 10) / 2);
     },
 
+    // Get proficiency bonus based on CR
+    getProficiencyBonus(cr) {
+        if (!cr) return 2;
+        // CR can be a string like "1/4", "1/2", "1", "22", or an object like {cr: "22"}
+        let crValue = cr;
+        if (typeof cr === 'object') {
+            crValue = cr.cr || cr;
+        }
+        if (typeof crValue === 'string') {
+            if (crValue === '1/8' || crValue === '1/4' || crValue === '1/2' || crValue === '0') {
+                crValue = 0;
+            } else {
+                crValue = parseFloat(crValue);
+            }
+        }
+        // Proficiency bonus: +2 for CR 0-4, +3 for CR 5-8, +4 for CR 9-12, etc.
+        return Math.max(2, Math.floor((crValue - 1) / 4) + 2);
+    },
+
+    // Get initiative modifier (DEX mod + proficiency bonus * initiative.proficiency)
+    getInitiativeMod(monster) {
+        const dexMod = this.getAbilityMod(monster.dex);
+        
+        // Check if monster has initiative proficiency multiplier (2024 rules)
+        if (monster.initiative && monster.initiative.proficiency) {
+            const profBonus = this.getProficiencyBonus(monster.cr);
+            const profMultiplier = monster.initiative.proficiency;
+            return dexMod + (profBonus * profMultiplier);
+        }
+        
+        return dexMod;
+    },
+
     formatMod(mod) {
         return mod >= 0 ? `+${mod}` : `${mod}`;
     }
@@ -456,7 +489,7 @@ const UI = {
             cr: monster.cr,
             hp: MonsterAPI.getHP(monster),
             ac: MonsterAPI.getAC(monster),
-            dexMod: MonsterAPI.getAbilityMod(monster.dex)
+            initMod: MonsterAPI.getInitiativeMod(monster)
         });
 
         this.renderMonsterList();
@@ -497,7 +530,7 @@ const UI = {
                     cr: monster.cr,
                     ac: monster.ac,
                     baseHp: monster.hp,
-                    dexMod: monster.dexMod || 0,
+                    initMod: monster.initMod ?? monster.dexMod ?? 0,
                     instances: []
                 };
             }
@@ -518,7 +551,7 @@ const UI = {
                 cr: group.cr,
                 ac: group.ac,
                 baseHp: group.baseHp,
-                dexMod: group.dexMod,
+                initMod: group.initMod,
                 instances: group.instances
             });
         });
@@ -540,7 +573,7 @@ const UI = {
 
         const hp = MonsterAPI.getHP(monster);
         const ac = MonsterAPI.getAC(monster);
-        const dexMod = MonsterAPI.getAbilityMod(monster.dex);
+        const initMod = MonsterAPI.getInitiativeMod(monster);
 
         // Check if this monster type already exists in combat
         const existingIndex = State.combatState.combatants.findIndex(
@@ -571,7 +604,7 @@ const UI = {
                 cr: monster.cr,
                 ac: ac,
                 baseHp: hp,
-                dexMod: dexMod,
+                initMod: initMod,
                 instances: instances
             };
 
@@ -689,10 +722,10 @@ const UI = {
     rollAllMonsterInitiative() {
         State.combatState.combatants.forEach((c, i) => {
             if (c.type === 'monster') {
-                // Roll d20 + dex modifier
+                // Roll d20 + initiative modifier (DEX mod + proficiency if applicable)
                 const roll = Math.floor(Math.random() * 20) + 1;
-                const dexMod = c.dexMod || 0;
-                c.initiative = roll + dexMod;
+                const initMod = c.initMod ?? c.dexMod ?? 0;
+                c.initiative = roll + initMod;
                 
                 const input = document.querySelector(`.init-input[data-index="${i}"]`);
                 if (input) input.value = c.initiative;
