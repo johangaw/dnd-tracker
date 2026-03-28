@@ -739,45 +739,58 @@ html, body {
     color: var(--danger);
 }
 
-.hp-delta {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius);
+/* HP Input Row with preview */
+.hp-input-row {
     display: flex;
-    justify-content: center;
     align-items: center;
     gap: 12px;
+    margin-bottom: 16px;
 }
 
-.hp-delta.hidden {
-    display: none;
+.hp-input-row #hp-custom-amount {
+    flex: 1;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    transition: border-color var(--transition), color var(--transition);
 }
 
-.hp-delta #hp-delta-value {
-    min-width: 60px;
+.hp-input-row #hp-custom-amount:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
-.hp-delta #hp-delta-value.damage {
+.hp-input-row #hp-custom-amount.damage {
+    border-color: var(--danger);
     color: var(--danger);
 }
 
-.hp-delta #hp-delta-value.heal {
+.hp-input-row #hp-custom-amount.heal {
+    border-color: var(--success);
     color: var(--success);
 }
 
-.hp-delta #hp-preview {
+.hp-input-row .hp-preview {
+    font-size: 1.2rem;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
-.hp-delta #hp-preview-value {
+.hp-input-row .hp-preview.hidden {
+    display: none;
+}
+
+.hp-input-row .hp-preview #hp-preview-value {
     color: var(--text-primary);
+    font-weight: 600;
 }
 
-.hp-delta #hp-preview-value.dead {
+.hp-input-row .hp-preview #hp-preview-value.dead {
     color: var(--danger);
 }
 
@@ -812,12 +825,6 @@ html, body {
     color: white;
 }
 
-.hp-custom {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
 .hp-actions {
     display: flex;
     gap: 8px;
@@ -826,22 +833,6 @@ html, body {
 
 .hp-actions #hp-apply-btn {
     flex: 1;
-}
-
-.hp-custom input {
-    flex: 1;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 12px;
-    font-size: 1rem;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-.hp-custom input:focus {
-    outline: none;
-    border-color: var(--accent);
 }
 
 /* Stat Block */
@@ -934,6 +925,65 @@ html, body {
 .stat-block .action-name {
     font-weight: 700;
     font-style: italic;
+}
+
+/* DM Notes in stat block */
+.stat-block .dm-notes-title {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.stat-block .dm-notes {
+    background: rgba(233, 69, 96, 0.1);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    font-style: italic;
+}
+
+/* Notes button in monster list */
+.notes-btn {
+    padding: 6px 8px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.notes-btn:hover {
+    opacity: 1;
+}
+
+.notes-btn.has-notes {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* DM Notes modal textarea */
+#dm-notes-input {
+    width: 100%;
+    min-height: 150px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+#dm-notes-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#dm-notes-input::placeholder {
+    color: var(--text-muted);
 }
 
 /* Context Menu */
