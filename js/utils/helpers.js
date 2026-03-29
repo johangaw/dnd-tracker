@@ -79,7 +79,7 @@ export function formatEntries(entries) {
                 .replace(/{@creature ([^}]+)}/g, '$1')
                 .replace(/{@spell ([^}]+)}/g, '$1')
                 .replace(/{@item ([^}]+)}/g, '$1')
-                .replace(/{@recharge( \d)?(\|[^}]*)?}/g, (_, n) => n ? `(Recharge ${n.trim()}-6)` : '(Recharge)')
+                .replace(/{@recharge( \d)?(\|[^}]*)?}/g, (_, n) => n ? `(Recharge ${n.trim()}-6)` : '(Recharge 6)')
                 .replace(/{@h}/g, 'Hit: ')
                 .replace(/{@[^}]+}/g, '');
         }
