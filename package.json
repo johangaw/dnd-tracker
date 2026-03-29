@@ -1,0 +1,16 @@
+{
+  "name": "dnd-tracker",
+  "version": "1.0.0",
+  "description": "D&D Encounter Tracker - A web app for managing D&D 5e combat encounters",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "happy-dom": "^15.11.7",
+    "vitest": "^2.1.8"
+  }
+}

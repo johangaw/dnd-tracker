@@ -9,8 +9,13 @@ import * as EncounterList from './components/encounterList/index.js';
 import * as EncounterEdit from './components/encounterEdit/index.js';
 import * as CombatTracker from './components/combatTracker/index.js';
 
+// Track initialization to prevent duplicate event handlers
+let initialized = false;
+
 // Initialize Event Handlers
 function initEventHandlers() {
+    if (initialized) return;
+    initialized = true;
     // Back button
     document.getElementById('back-btn').addEventListener('click', () => {
         const state = getState();
@@ -332,4 +337,9 @@ function checkForImport() {
         
         document.getElementById('import-modal').classList.add('active');
     }
+}
+
+// Reset initialization state (for testing)
+export function resetForTests() {
+    initialized = false;
 }
