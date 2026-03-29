@@ -1,0 +1,63 @@
+/* Encounter List Component Styles */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.encounter-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.encounter-card:active {
+    transform: scale(0.98);
+}
+
+.encounter-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.encounter-card p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.encounter-card .meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.encounter-card .meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin-bottom: 8px;
+}

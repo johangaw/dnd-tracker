@@ -1,0 +1,426 @@
+/* Combat Tracker Component Styles */
+
+/* Initiative Panel */
+.initiative-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.initiative-panel h2 {
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+.initiative-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.initiative-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.initiative-item.pc {
+    border-left: 3px solid var(--success);
+}
+
+.initiative-item.monster {
+    border-left: 3px solid var(--danger);
+}
+
+.initiative-item .init-input {
+    width: 60px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 8px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.initiative-item .init-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.initiative-item .init-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.initiative-item .init-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.roll-all-btn {
+    margin-bottom: 8px;
+}
+
+/* Initiative Actions */
+.initiative-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    justify-content: center;
+}
+
+/* Combat Panel */
+.combat-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.round-info {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+}
+
+.round-info span {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* Combat Header */
+.combat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.combat-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.turn-order {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.turn-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition);
+}
+
+.turn-item.active {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.3);
+}
+
+.turn-item.dead {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.turn-item.pc {
+    border-left: 3px solid var(--success);
+}
+
+.turn-item.monster {
+    border-left: 3px solid var(--danger);
+}
+
+.turn-item .turn-init {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.turn-item .turn-init.clickable {
+    cursor: pointer;
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.turn-item .turn-init.clickable:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.turn-item .turn-info {
+    flex: 1;
+}
+
+.turn-item .turn-name {
+    font-weight: 500;
+}
+
+.turn-item .turn-hp {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.turn-item .turn-hp.low {
+    color: var(--warning);
+}
+
+.turn-item .turn-hp.critical {
+    color: var(--danger);
+}
+
+.turn-item .turn-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.turn-item .hp-btn,
+.turn-item .stats-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.turn-item .hp-btn:hover,
+.turn-item .stats-btn:hover {
+    background: var(--bg-tertiary);
+}
+
+.combat-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.combat-actions .btn {
+    flex: 1;
+}
+
+/* Instance Selector for grouped monsters */
+.instance-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    justify-content: center;
+}
+
+.instance-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition);
+    min-width: 60px;
+    text-align: center;
+}
+
+.instance-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.instance-btn.dead {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.instance-btn .instance-hp {
+    font-size: 0.75rem;
+    display: block;
+    color: var(--text-muted);
+}
+
+.instance-btn.active .instance-hp {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Monster group in turn order */
+.turn-item .monster-instances {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.instance-tag {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.instance-tag.dead {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.instance-tag.low {
+    color: var(--warning);
+}
+
+.instance-tag.critical {
+    color: var(--danger);
+}
+
+/* Remove button in combat */
+.remove-combat-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity var(--transition);
+}
+
+.remove-combat-btn:hover {
+    opacity: 1;
+}
+
+/* HP Modal */
+.hp-display {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding: 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+}
+
+.hp-display #current-hp {
+    color: var(--success);
+}
+
+.hp-display.low #current-hp {
+    color: var(--warning);
+}
+
+.hp-display.critical #current-hp {
+    color: var(--danger);
+}
+
+/* HP Input Row with preview */
+.hp-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.hp-input-row #hp-custom-amount {
+    flex: 1;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.hp-input-row #hp-custom-amount:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.hp-input-row #hp-custom-amount.damage {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.hp-input-row #hp-custom-amount.heal {
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.hp-input-row .hp-preview {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.hp-input-row .hp-preview.hidden {
+    display: none;
+}
+
+.hp-input-row .hp-preview #hp-preview-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.hp-input-row .hp-preview #hp-preview-value.dead {
+    color: var(--danger);
+}
+
+.hp-controls {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.hp-adj-btn {
+    padding: 14px 8px;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: transform var(--transition);
+}
+
+.hp-adj-btn:active {
+    transform: scale(0.95);
+}
+
+.hp-adj-btn.damage {
+    background: var(--danger);
+    color: white;
+}
+
+.hp-adj-btn.heal {
+    background: var(--success);
+    color: white;
+}
+
+.hp-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.hp-actions #hp-apply-btn {
+    flex: 1;
+}

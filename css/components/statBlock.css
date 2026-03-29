@@ -1,0 +1,151 @@
+/* Stat Block Component Styles */
+
+.stat-block {
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    background: #fdf1dc;
+    color: #1a1a1a;
+    padding: 16px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.stat-block .monster-header {
+    border-bottom: 2px solid #922610;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.stat-block .monster-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #922610;
+    margin-bottom: 4px;
+}
+
+.stat-block .monster-type {
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.stat-block .divider {
+    height: 2px;
+    background: linear-gradient(to right, #922610, transparent);
+    margin: 8px 0;
+}
+
+.stat-block .stat-row {
+    margin: 4px 0;
+}
+
+.stat-block .stat-label {
+    font-weight: 700;
+    color: #922610;
+}
+
+.stat-block .abilities {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    text-align: center;
+    margin: 12px 0;
+    padding: 8px;
+    background: rgba(146, 38, 16, 0.1);
+    border-radius: 4px;
+}
+
+.stat-block .ability {
+    font-size: 0.8rem;
+}
+
+.stat-block .ability-name {
+    font-weight: 700;
+    color: #922610;
+}
+
+.stat-block .ability-score {
+    font-weight: 600;
+}
+
+.stat-block .ability-mod {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.stat-block .section-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #922610;
+    margin: 12px 0 6px;
+    border-bottom: 1px solid #922610;
+}
+
+.stat-block .trait,
+.stat-block .action {
+    margin: 8px 0;
+}
+
+.stat-block .trait-name,
+.stat-block .action-name {
+    font-weight: 700;
+    font-style: italic;
+}
+
+/* DM Notes in stat block */
+.stat-block .dm-notes-title {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.stat-block .dm-notes {
+    background: rgba(233, 69, 96, 0.1);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    font-style: italic;
+}
+
+/* Notes button in monster list */
+.notes-btn {
+    padding: 6px 8px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.notes-btn:hover {
+    opacity: 1;
+}
+
+.notes-btn.has-notes {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* DM Notes modal textarea */
+#dm-notes-input {
+    width: 100%;
+    min-height: 150px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+#dm-notes-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#dm-notes-input::placeholder {
+    color: var(--text-muted);
+}

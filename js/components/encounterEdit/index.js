@@ -1,0 +1,237 @@
+// Encounter Edit Component
+
+import * as Storage from '../../services/storage.js';
+import * as MonsterAPI from '../../services/monsterApi.js';
+import { getState, setView, setEditingEncounter, setEditingMonsterIndex } from '../../services/state.js';
+import { escapeHtml, closeModals } from '../../utils/helpers.js';
+import { showStatBlockByNameSource } from '../modals/statBlock.js';
+
+// Initialize edit form
+export function init(encounter = null) {
+    const state = getState();
+    
+    const editingEncounter = encounter || {
+        id: Date.now().toString(),
+        title: '',
+        description: '',
+        pcs: [],
+        monsters: []
+    };
+    
+    setEditingEncounter(editingEncounter);
+
+    document.getElementById('encounter-title').value = editingEncounter.title;
+    document.getElementById('encounter-description').value = editingEncounter.description || '';
+    
+    const deleteBtn = document.getElementById('delete-encounter-btn');
+    if (encounter) {
+        deleteBtn.classList.remove('hidden');
+    } else {
+        deleteBtn.classList.add('hidden');
+    }
+
+    renderPCList();
+    renderMonsterList();
+    setView('encounter-edit');
+}
+
+// Render PC list in edit form
+export function renderPCList() {
+    const state = getState();
+    const container = document.getElementById('pc-list');
+    const pcs = state.editingEncounter.pcs || [];
+
+    container.innerHTML = pcs.map((pc, index) => `
+        <div class="item-row" data-index="${index}">
+            <input type="text" value="${escapeHtml(pc.name)}" placeholder="Character name..." class="pc-name-input">
+            <button type="button" class="remove-btn" data-index="${index}">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+    `).join('');
+
+    // Add event listeners
+    container.querySelectorAll('.pc-name-input').forEach((input, index) => {
+        input.addEventListener('change', () => {
+            state.editingEncounter.pcs[index].name = input.value;
+        });
+    });
+
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            state.editingEncounter.pcs.splice(index, 1);
+            renderPCList();
+        });
+    });
+}
+
+// Render Monster list in edit form
+export function renderMonsterList() {
+    const state = getState();
+    const container = document.getElementById('monster-list');
+    const monsters = state.editingEncounter.monsters || [];
+
+    container.innerHTML = monsters.map((monster, index) => `
+        <div class="item-row" data-index="${index}">
+            <div class="monster-info">
+                <div class="monster-name">${escapeHtml(monster.name)}</div>
+                <div class="monster-meta">CR ${MonsterAPI.formatCR(monster.cr)} | HP ${monster.hp} | ${monster.source}</div>
+            </div>
+            <button type="button" class="btn btn-small notes-btn ${monster.comment ? 'has-notes' : ''}" data-index="${index}" title="DM Notes">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/></svg>
+            </button>
+            <button type="button" class="btn btn-small stats-btn" data-name="${escapeHtml(monster.name)}" data-source="${monster.source}" data-index="${index}">Stats</button>
+            <button type="button" class="remove-btn" data-index="${index}">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+    `).join('');
+
+    // Notes buttons
+    container.querySelectorAll('.notes-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            showDMNotesModal(index);
+        });
+    });
+
+    // Stats buttons - pass comment to stat block
+    container.querySelectorAll('.stats-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const name = btn.dataset.name;
+            const source = btn.dataset.source;
+            const index = parseInt(btn.dataset.index);
+            const comment = state.editingEncounter.monsters[index]?.comment || '';
+            await showStatBlockByNameSource(name, source, comment);
+        });
+    });
+
+    // Remove buttons
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            state.editingEncounter.monsters.splice(index, 1);
+            renderMonsterList();
+        });
+    });
+}
+
+// Show DM Notes modal for a monster
+export function showDMNotesModal(monsterIndex) {
+    const state = getState();
+    setEditingMonsterIndex(monsterIndex);
+    const monster = state.editingEncounter.monsters[monsterIndex];
+    
+    document.getElementById('dm-notes-modal-title').textContent = `Notes: ${monster.name}`;
+    document.getElementById('dm-notes-input').value = monster.comment || '';
+    document.getElementById('dm-notes-modal').classList.add('active');
+    document.getElementById('dm-notes-input').focus();
+}
+
+// Save DM Notes from modal
+export function saveDMNotes() {
+    const state = getState();
+    const notes = document.getElementById('dm-notes-input').value;
+    state.editingEncounter.monsters[state.editingMonsterIndex].comment = notes;
+    closeModals();
+    renderMonsterList();
+}
+
+// Add monster to encounter (for encounter editing)
+export async function addMonsterToEncounter(name, source) {
+    const state = getState();
+    const monster = await MonsterAPI.getMonster(name, source);
+    if (!monster) {
+        alert('Could not load monster data');
+        return;
+    }
+
+    if (!state.editingEncounter.monsters) {
+        state.editingEncounter.monsters = [];
+    }
+
+    state.editingEncounter.monsters.push({
+        name: monster.name,
+        source: monster.source,
+        cr: monster.cr,
+        hp: MonsterAPI.getHP(monster),
+        comment: '' // DM notes for this monster instance
+    });
+
+    renderMonsterList();
+    closeModals();
+}
+
+// Search monsters (for encounter editing)
+export async function searchMonsters(query, source) {
+    const results = document.getElementById('monster-search-results');
+    
+    if (query.length < 2) {
+        results.innerHTML = '<div class="search-empty">Type at least 2 characters...</div>';
+        return;
+    }
+
+    results.innerHTML = '<div class="search-loading">Searching...</div>';
+
+    try {
+        const monsters = await MonsterAPI.searchMonsters(query, source);
+        
+        if (monsters.length === 0) {
+            results.innerHTML = '<div class="search-empty">No monsters found</div>';
+            return;
+        }
+
+        results.innerHTML = monsters.map(m => `
+            <div class="search-result-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}">
+                <div class="search-result-info">
+                    <div class="monster-name">${escapeHtml(m.name)}</div>
+                    <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${MonsterAPI.getHP(m)} | ${m.source}</div>
+                </div>
+                <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
+            </div>
+        `).join('');
+
+        // Add click handler for adding monster
+        results.querySelectorAll('.search-result-info').forEach(item => {
+            item.addEventListener('click', async () => {
+                const parent = item.closest('.search-result-item');
+                const name = parent.dataset.name;
+                const source = parent.dataset.source;
+                await addMonsterToEncounter(name, source);
+            });
+        });
+
+        // Add click handler for viewing stats
+        results.querySelectorAll('.view-stats-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const name = btn.dataset.name;
+                const source = btn.dataset.source;
+                await showStatBlockByNameSource(name, source);
+            });
+        });
+    } catch (error) {
+        results.innerHTML = '<div class="search-empty">Error searching monsters</div>';
+    }
+}
+
+// Show monster search modal
+export function showMonsterSearch() {
+    document.getElementById('monster-search-input').value = '';
+    document.getElementById('monster-search-results').innerHTML = 
+        '<div class="search-empty">Type to search for monsters...</div>';
+    document.getElementById('monster-search-modal').classList.add('active');
+    document.getElementById('monster-search-input').focus();
+}
+
+export default {
+    init,
+    renderPCList,
+    renderMonsterList,
+    showDMNotesModal,
+    saveDMNotes,
+    addMonsterToEncounter,
+    searchMonsters,
+    showMonsterSearch
+};
