@@ -15,13 +15,15 @@ export function init(encounter = null) {
         title: '',
         description: '',
         pcs: [],
-        monsters: []
+        monsters: [],
+        autoAddMonsters: false
     };
     
     setEditingEncounter(editingEncounter);
 
     document.getElementById('encounter-title').value = editingEncounter.title;
     document.getElementById('encounter-description').value = editingEncounter.description || '';
+    document.getElementById('auto-add-monsters').checked = editingEncounter.autoAddMonsters || false;
     
     const deleteBtn = document.getElementById('delete-encounter-btn');
     if (encounter) {

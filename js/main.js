@@ -72,6 +72,7 @@ function initEventHandlers() {
         
         state.editingEncounter.title = document.getElementById('encounter-title').value;
         state.editingEncounter.description = document.getElementById('encounter-description').value;
+        state.editingEncounter.autoAddMonsters = document.getElementById('auto-add-monsters').checked;
         
         // Filter out empty PCs
         state.editingEncounter.pcs = state.editingEncounter.pcs.filter(pc => pc.name.trim());
@@ -140,6 +141,11 @@ function initEventHandlers() {
 
     // Add encounter monster button (quick add from encounter definition)
     document.getElementById('add-encounter-monster-btn').addEventListener('click', () => {
+        CombatTracker.showEncounterMonstersModal();
+    });
+
+    // Add encounter monster button in setup phase
+    document.getElementById('add-encounter-monster-setup-btn').addEventListener('click', () => {
         CombatTracker.showEncounterMonstersModal();
     });
 

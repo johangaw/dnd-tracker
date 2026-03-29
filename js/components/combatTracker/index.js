@@ -29,50 +29,53 @@ export function init(encounter) {
         });
     });
 
-    // Add monsters - group same monsters together with multiple instances
-    const monsterGroups = {};
-    (encounter.monsters || []).forEach((monster) => {
-        const key = `${monster.name}|${monster.source}`;
-        if (!monsterGroups[key]) {
-            monsterGroups[key] = {
-                name: monster.name,
-                source: monster.source,
-                cr: monster.cr,
-                ac: monster.ac,
-                baseHp: monster.hp,
-                initMod: monster.initMod ?? monster.dexMod ?? 0,
-                comment: monster.comment || '',
-                instances: []
-            };
-        } else if (monster.comment && !monsterGroups[key].comment) {
-            // If this instance has a comment and the group doesn't, use it
-            monsterGroups[key].comment = monster.comment;
-        } else if (monster.comment && monsterGroups[key].comment && monster.comment !== monsterGroups[key].comment) {
-            // Combine different comments
-            monsterGroups[key].comment += '\n---\n' + monster.comment;
-        }
-        monsterGroups[key].instances.push({
-            hp: monster.hp,
-            maxHp: monster.hp
+    // Only add monsters if autoAddMonsters is enabled
+    if (encounter.autoAddMonsters) {
+        // Add monsters - group same monsters together with multiple instances
+        const monsterGroups = {};
+        (encounter.monsters || []).forEach((monster) => {
+            const key = `${monster.name}|${monster.source}`;
+            if (!monsterGroups[key]) {
+                monsterGroups[key] = {
+                    name: monster.name,
+                    source: monster.source,
+                    cr: monster.cr,
+                    ac: monster.ac,
+                    baseHp: monster.hp,
+                    initMod: monster.initMod ?? monster.dexMod ?? 0,
+                    comment: monster.comment || '',
+                    instances: []
+                };
+            } else if (monster.comment && !monsterGroups[key].comment) {
+                // If this instance has a comment and the group doesn't, use it
+                monsterGroups[key].comment = monster.comment;
+            } else if (monster.comment && monsterGroups[key].comment && monster.comment !== monsterGroups[key].comment) {
+                // Combine different comments
+                monsterGroups[key].comment += '\n---\n' + monster.comment;
+            }
+            monsterGroups[key].instances.push({
+                hp: monster.hp,
+                maxHp: monster.hp
+            });
         });
-    });
 
-    // Convert groups to combatants
-    Object.values(monsterGroups).forEach((group, i) => {
-        combatants.push({
-            id: `monster-${Date.now()}-${i}`,
-            name: group.name,
-            source: group.source,
-            type: 'monster',
-            initiative: 0,
-            cr: group.cr,
-            ac: group.ac,
-            baseHp: group.baseHp,
-            initMod: group.initMod,
-            comment: group.comment,
-            instances: group.instances
+        // Convert groups to combatants
+        Object.values(monsterGroups).forEach((group, i) => {
+            combatants.push({
+                id: `monster-${Date.now()}-${i}`,
+                name: group.name,
+                source: group.source,
+                type: 'monster',
+                initiative: 0,
+                cr: group.cr,
+                ac: group.ac,
+                baseHp: group.baseHp,
+                initMod: group.initMod,
+                comment: group.comment,
+                instances: group.instances
+            });
         });
-    });
+    }
 
     combatState.combatants = combatants;
     setCombatState(combatState);
