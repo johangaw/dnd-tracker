@@ -362,6 +362,39 @@
     margin-bottom: 12px;
 }
 
+/* In-combat count badge */
+.in-combat-count {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.in-combat-count.has-count {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+/* Flash animation when monster is added */
+.encounter-monster-item.added-flash {
+    animation: addedFlash 0.3s ease;
+}
+
+@keyframes addedFlash {
+    0% { background: var(--bg-card); }
+    50% { background: var(--success); }
+    100% { background: var(--bg-card); }
+}
+
 /* Context Menu */
 .context-menu {
     position: fixed;

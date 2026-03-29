@@ -86,7 +86,7 @@ export function init(encounter) {
 }
 
 // Add monster to combat (runtime only)
-export async function addMonsterToCombat(name, source, quantity = 1) {
+export async function addMonsterToCombat(name, source, quantity = 1, keepModalOpen = false) {
     const state = getState();
     const monster = await MonsterAPI.getMonster(name, source);
     if (!monster) return;
@@ -138,7 +138,9 @@ export async function addMonsterToCombat(name, source, quantity = 1) {
         renderInitiativeList();
     }
 
-    closeModals();
+    if (!keepModalOpen) {
+        closeModals();
+    }
 }
 
 // Add PC to combat (runtime only)
@@ -669,15 +671,28 @@ export function showEncounterMonstersModal() {
         }
     });
     
-    container.innerHTML = Object.values(uniqueMonsters).map(m => `
+    // Get current counts in combat
+    const combatCounts = {};
+    state.combatState.combatants.forEach(c => {
+        if (c.type === 'monster') {
+            const key = `${c.name}|${c.source}`;
+            combatCounts[key] = c.instances?.length || 1;
+        }
+    });
+    
+    container.innerHTML = Object.values(uniqueMonsters).map(m => {
+        const key = `${m.name}|${m.source}`;
+        const inCombat = combatCounts[key] || 0;
+        return `
         <div class="search-result-item encounter-monster-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}">
             <div class="search-result-info">
                 <div class="monster-name">${escapeHtml(m.name)}</div>
                 <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${m.hp} | ${m.source}</div>
             </div>
+            <span class="in-combat-count ${inCombat > 0 ? 'has-count' : ''}" data-name="${escapeHtml(m.name)}" data-source="${m.source}">${inCombat > 0 ? inCombat : ''}</span>
             <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
         </div>
-    `).join('');
+    `}).join('');
     
     // Add click handlers for adding monster
     container.querySelectorAll('.encounter-monster-item .search-result-info').forEach(item => {
@@ -685,9 +700,23 @@ export function showEncounterMonstersModal() {
             const parent = item.closest('.encounter-monster-item');
             const name = parent.dataset.name;
             const source = parent.dataset.source;
-            await addMonsterToCombat(name, source, 1);
-            // Re-render to show updated state but keep modal open
-            showEncounterMonstersModal();
+            
+            // Add visual feedback
+            parent.classList.add('added-flash');
+            
+            await addMonsterToCombat(name, source, 1, true);
+            
+            // Update the count badge
+            const combatant = state.combatState.combatants.find(c => c.type === 'monster' && c.name === name && c.source === source);
+            const newCount = combatant?.instances?.length || 0;
+            const countBadge = parent.querySelector('.in-combat-count');
+            if (countBadge) {
+                countBadge.textContent = newCount;
+                countBadge.classList.add('has-count');
+            }
+            
+            // Remove flash class after animation
+            setTimeout(() => parent.classList.remove('added-flash'), 300);
         });
     });
     
