@@ -644,6 +644,66 @@ export function showCombatMonsterSearch() {
     document.getElementById('combat-monster-search-input').focus();
 }
 
+// Show encounter monsters modal for quick adding
+export function showEncounterMonstersModal() {
+    const state = getState();
+    const container = document.getElementById('encounter-monsters-list');
+    
+    // Get unique monsters from the encounter
+    const encounterMonsters = state.currentEncounter?.monsters || [];
+    
+    if (encounterMonsters.length === 0) {
+        container.innerHTML = '<div class="search-empty">No monsters in this encounter</div>';
+        document.getElementById('encounter-monsters-modal').classList.add('active');
+        return;
+    }
+    
+    // Group monsters by name/source to show unique types
+    const uniqueMonsters = {};
+    encounterMonsters.forEach(m => {
+        const key = `${m.name}|${m.source}`;
+        if (!uniqueMonsters[key]) {
+            uniqueMonsters[key] = { ...m, count: 1 };
+        } else {
+            uniqueMonsters[key].count++;
+        }
+    });
+    
+    container.innerHTML = Object.values(uniqueMonsters).map(m => `
+        <div class="search-result-item encounter-monster-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}">
+            <div class="search-result-info">
+                <div class="monster-name">${escapeHtml(m.name)}</div>
+                <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${m.hp} | ${m.source}</div>
+            </div>
+            <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
+        </div>
+    `).join('');
+    
+    // Add click handlers for adding monster
+    container.querySelectorAll('.encounter-monster-item .search-result-info').forEach(item => {
+        item.addEventListener('click', async () => {
+            const parent = item.closest('.encounter-monster-item');
+            const name = parent.dataset.name;
+            const source = parent.dataset.source;
+            await addMonsterToCombat(name, source, 1);
+            // Re-render to show updated state but keep modal open
+            showEncounterMonstersModal();
+        });
+    });
+    
+    // Add click handlers for viewing stats
+    container.querySelectorAll('.view-stats-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const name = btn.dataset.name;
+            const source = btn.dataset.source;
+            await showStatBlockByNameSource(name, source);
+        });
+    });
+    
+    document.getElementById('encounter-monsters-modal').classList.add('active');
+}
+
 export default {
     init,
     addMonsterToCombat,
@@ -667,5 +727,6 @@ export default {
     adjustHP,
     showStatBlock,
     searchCombatMonsters,
-    showCombatMonsterSearch
+    showCombatMonsterSearch,
+    showEncounterMonstersModal
 };

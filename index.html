@@ -127,7 +127,8 @@
                             <span>Round <span id="round-number">1</span></span>
                         </div>
                         <div class="combat-header-actions">
-                            <button id="add-combat-monster-btn-2" class="btn btn-small">+ Monster</button>
+                            <button id="add-encounter-monster-btn" class="btn btn-small btn-primary">+ Encounter</button>
+                            <button id="add-combat-monster-btn-2" class="btn btn-small">+ Search</button>
                         </div>
                     </div>
                     <div id="turn-order" class="turn-order"></div>
@@ -180,6 +181,20 @@
                             <button type="button" id="hp-reset-btn" class="btn btn-small">Reset</button>
                             <button type="button" id="hp-apply-btn" class="btn btn-primary">Apply</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Encounter Monsters Quick Add Modal -->
+            <div id="encounter-monsters-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Add from Encounter</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-hint">Tap a monster to add one instance to combat</p>
+                        <div id="encounter-monsters-list" class="search-results"></div>
                     </div>
                 </div>
             </div>

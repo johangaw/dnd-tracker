@@ -138,6 +138,11 @@ function initEventHandlers() {
         CombatTracker.showCombatMonsterSearch();
     });
 
+    // Add encounter monster button (quick add from encounter definition)
+    document.getElementById('add-encounter-monster-btn').addEventListener('click', () => {
+        CombatTracker.showEncounterMonstersModal();
+    });
+
     // Add PC to combat button
     document.getElementById('add-combat-pc-btn').addEventListener('click', () => {
         document.getElementById('combat-pc-name').value = '';
