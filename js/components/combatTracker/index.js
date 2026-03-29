@@ -355,6 +355,15 @@ export function renderTurnOrder() {
             removeCombatant(index);
         });
     });
+
+    // Initiative click to edit
+    container.querySelectorAll('.turn-init.clickable').forEach(init => {
+        init.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(init.dataset.index);
+            showInitiativeModal(index);
+        });
+    });
 }
 
 export function nextTurn() {
