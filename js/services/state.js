@@ -9,7 +9,8 @@ const state = {
     selectedInstanceIndex: 0,
     monsterQuantity: 1,
     hpDelta: 0,
-    editingMonsterIndex: null
+    editingMonsterIndex: null,
+    importingEncounter: null
 };
 
 export function getState() {
@@ -69,6 +70,10 @@ export function setEditingMonsterIndex(index) {
     state.editingMonsterIndex = index;
 }
 
+export function setImportingEncounter(encounter) {
+    state.importingEncounter = encounter;
+}
+
 // Default export for backward compatibility
 export default {
     getState,
@@ -79,5 +84,6 @@ export default {
     setSelectedMonsterIndex,
     setSelectedInstanceIndex,
     setMonsterQuantity,
-    setEditingMonsterIndex
+    setEditingMonsterIndex,
+    setImportingEncounter
 };

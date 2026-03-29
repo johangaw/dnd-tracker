@@ -298,8 +298,26 @@
             <div id="context-menu" class="context-menu hidden">
                 <button class="context-item" data-action="edit">Edit</button>
                 <button class="context-item" data-action="copy">Duplicate</button>
+                <button class="context-item" data-action="share">Share Link</button>
                 <button class="context-item" data-action="run">Run Encounter</button>
                 <button class="context-item danger" data-action="delete">Delete</button>
+            </div>
+
+            <!-- Import Encounter Modal -->
+            <div id="import-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Import Encounter</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="import-encounter-info"></p>
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button type="button" id="import-cancel-btn" class="btn">Cancel</button>
+                            <button type="button" id="import-confirm-btn" class="btn btn-primary">Import</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

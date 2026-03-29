@@ -43,6 +43,70 @@ export function cacheMonster(key, monster) {
     localStorage.setItem(MONSTER_CACHE_KEY, JSON.stringify(cache));
 }
 
+// Export encounter to shareable URL
+export function exportEncounterToURL(encounter) {
+    // Create a minimal copy without the id (will be regenerated on import)
+    const exportData = {
+        t: encounter.title,
+        d: encounter.description || '',
+        p: (encounter.pcs || []).map(pc => pc.name),
+        m: (encounter.monsters || []).map(m => ({
+            n: m.name,
+            s: m.source,
+            c: m.cr,
+            h: m.hp,
+            cm: m.comment || ''
+        })),
+        a: encounter.autoAddMonsters ? 1 : 0
+    };
+    
+    const json = JSON.stringify(exportData);
+    const encoded = btoa(encodeURIComponent(json));
+    const url = `${window.location.origin}${window.location.pathname}?import=${encoded}`;
+    return url;
+}
+
+// Import encounter from URL parameter
+export function importEncounterFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const importData = params.get('import');
+    
+    if (!importData) return null;
+    
+    try {
+        const json = decodeURIComponent(atob(importData));
+        const data = JSON.parse(json);
+        
+        // Reconstruct the encounter object
+        const encounter = {
+            id: Date.now().toString(),
+            title: data.t || 'Imported Encounter',
+            description: data.d || '',
+            pcs: (data.p || []).map(name => ({ name })),
+            monsters: (data.m || []).map(m => ({
+                name: m.n,
+                source: m.s,
+                cr: m.c,
+                hp: m.h,
+                comment: m.cm || ''
+            })),
+            autoAddMonsters: data.a === 1
+        };
+        
+        return encounter;
+    } catch (e) {
+        console.error('Failed to import encounter from URL:', e);
+        return null;
+    }
+}
+
+// Clear the import parameter from URL without reloading
+export function clearImportParam() {
+    const url = new URL(window.location);
+    url.searchParams.delete('import');
+    window.history.replaceState({}, '', url);
+}
+
 // Default export for backward compatibility
 export default {
     ENCOUNTERS_KEY,
@@ -53,5 +117,8 @@ export default {
     saveEncounter,
     deleteEncounter,
     getMonsterCache,
-    cacheMonster
+    cacheMonster,
+    exportEncounterToURL,
+    importEncounterFromURL,
+    clearImportParam
 };

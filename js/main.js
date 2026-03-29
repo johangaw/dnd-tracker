@@ -2,7 +2,7 @@
 
 import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
-import { getState, setView, setMonsterQuantity } from './services/state.js';
+import { getState, setView, setMonsterQuantity, setImportingEncounter } from './services/state.js';
 import { closeModals, hideContextMenu } from './utils/helpers.js';
 
 import * as EncounterList from './components/encounterList/index.js';
@@ -110,6 +110,15 @@ function initEventHandlers() {
                     copy.title = `${copy.title} (Copy)`;
                     Storage.saveEncounter(copy);
                     EncounterList.render();
+                    break;
+                case 'share':
+                    const url = Storage.exportEncounterToURL(encounter);
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('Share link copied to clipboard!');
+                    }).catch(() => {
+                        // Fallback for older browsers
+                        prompt('Copy this link to share:', url);
+                    });
                     break;
                 case 'run':
                     CombatTracker.init(encounter);
@@ -251,6 +260,23 @@ function initEventHandlers() {
         EncounterEdit.saveDMNotes();
     });
 
+    // Import encounter buttons
+    document.getElementById('import-cancel-btn').addEventListener('click', () => {
+        Storage.clearImportParam();
+        closeModals();
+    });
+
+    document.getElementById('import-confirm-btn').addEventListener('click', () => {
+        const state = getState();
+        if (state.importingEncounter) {
+            Storage.saveEncounter(state.importingEncounter);
+            Storage.clearImportParam();
+            setImportingEncounter(null);
+            closeModals();
+            EncounterList.render();
+        }
+    });
+
     // Close modals
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -283,4 +309,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Preload monster index
     MonsterAPI.loadIndex();
+    
+    // Check for encounter import in URL
+    checkForImport();
 });
+
+// Check for encounter import in URL
+function checkForImport() {
+    const encounter = Storage.importEncounterFromURL();
+    if (encounter) {
+        setImportingEncounter(encounter);
+        
+        // Show import modal with encounter info
+        const pcCount = encounter.pcs?.length || 0;
+        const monsterCount = encounter.monsters?.length || 0;
+        
+        document.getElementById('import-encounter-info').innerHTML = `
+            <strong>${encounter.title}</strong><br>
+            ${encounter.description ? `<em>${encounter.description}</em><br>` : ''}
+            ${pcCount} PC${pcCount !== 1 ? 's' : ''}, ${monsterCount} monster${monsterCount !== 1 ? 's' : ''}
+        `;
+        
+        document.getElementById('import-modal').classList.add('active');
+    }
+}
