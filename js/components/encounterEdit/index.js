@@ -105,7 +105,20 @@ export function renderMonsterList() {
             const name = btn.dataset.name;
             const source = btn.dataset.source;
             const index = parseInt(btn.dataset.index);
-            const comment = state.editingEncounter.monsters[index]?.comment || '';
+            const monster = state.editingEncounter.monsters[index];
+            const comment = monster?.comment || '';
+            
+            // Check if it's a custom monster
+            if (monster?.customMonsterId || source === 'Custom') {
+                const customMonster = monster?.customMonsterId 
+                    ? CustomMonsters.getCustomMonster(monster.customMonsterId)
+                    : CustomMonsters.searchCustomMonsters(name).find(m => m.name === name);
+                if (customMonster) {
+                    showStatBlock(customMonster, comment);
+                    return;
+                }
+            }
+            
             await showStatBlockByNameSource(name, source, comment);
         });
     });
