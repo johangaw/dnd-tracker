@@ -95,18 +95,18 @@ export function renderStatBlock(monster, comment = '') {
     }
 
     // Damage immunities/resistances/vulnerabilities
-    if (monster.immune) {
+    if (monster.immune && monster.immune.length > 0) {
         html += `<div class="stat-row"><span class="stat-label">Damage Immunities</span> ${formatDamageTypes(monster.immune)}</div>`;
     }
-    if (monster.resist) {
+    if (monster.resist && monster.resist.length > 0) {
         html += `<div class="stat-row"><span class="stat-label">Damage Resistances</span> ${formatDamageTypes(monster.resist)}</div>`;
     }
-    if (monster.vulnerable) {
+    if (monster.vulnerable && monster.vulnerable.length > 0) {
         html += `<div class="stat-row"><span class="stat-label">Damage Vulnerabilities</span> ${formatDamageTypes(monster.vulnerable)}</div>`;
     }
 
     // Condition immunities
-    if (monster.conditionImmune) {
+    if (monster.conditionImmune && monster.conditionImmune.length > 0) {
         html += `<div class="stat-row"><span class="stat-label">Condition Immunities</span> ${monster.conditionImmune.join(', ')}</div>`;
     }
 
