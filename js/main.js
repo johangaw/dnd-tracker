@@ -45,9 +45,51 @@ function initEventHandlers() {
         }
     });
 
-    // New encounter button
+    // New encounter button - show choice modal
     document.getElementById('new-encounter-btn').addEventListener('click', () => {
+        document.getElementById('add-encounter-choice-modal').classList.add('active');
+    });
+
+    // Encounter choice modal - Create New
+    document.getElementById('encounter-choice-create-new').addEventListener('click', () => {
+        closeModals();
         EncounterEdit.init();
+    });
+
+    // Encounter choice modal - Import JSON
+    document.getElementById('encounter-choice-import-json').addEventListener('click', () => {
+        closeModals();
+        document.getElementById('import-encounter-json-input').value = '';
+        document.getElementById('import-encounter-json-error').classList.add('hidden');
+        document.getElementById('import-encounter-json-modal').classList.add('active');
+    });
+
+    // Import Encounter JSON Modal - Cancel
+    document.getElementById('import-encounter-json-cancel-btn').addEventListener('click', () => {
+        closeModals();
+    });
+
+    // Import Encounter JSON Modal - Confirm
+    document.getElementById('import-encounter-json-confirm-btn').addEventListener('click', () => {
+        const jsonInput = document.getElementById('import-encounter-json-input').value.trim();
+        const errorEl = document.getElementById('import-encounter-json-error');
+        
+        if (!jsonInput) {
+            errorEl.textContent = 'Please enter JSON data';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            const encounter = Storage.importEncounterFromJSON(jsonInput);
+            Storage.saveEncounter(encounter);
+            closeModals();
+            EncounterList.render();
+            showToast(`Imported "${encounter.title}"`);
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.classList.remove('hidden');
+        }
     });
 
     // Add PC button
@@ -130,6 +172,14 @@ function initEventHandlers() {
                     copy.title = `${copy.title} (Copy)`;
                     Storage.saveEncounter(copy);
                     EncounterList.render();
+                    break;
+                case 'copy-json':
+                    const jsonStr = Storage.exportEncounterToJSON(encounter);
+                    navigator.clipboard.writeText(jsonStr).then(() => {
+                        showToast('Encounter JSON copied to clipboard!');
+                    }).catch(() => {
+                        prompt('Copy this JSON:', jsonStr);
+                    });
                     break;
                 case 'share':
                     const url = Storage.exportEncounterToURL(encounter);

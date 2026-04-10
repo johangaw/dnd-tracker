@@ -603,6 +603,7 @@ describe('Custom Monsters', () => {
 
         it('adds custom monster to encounter', async () => {
             await click('#new-encounter-btn')
+            await click('#encounter-choice-create-new')
             await type('#encounter-title', 'Test Encounter')
             
             await click('#add-monster-btn')

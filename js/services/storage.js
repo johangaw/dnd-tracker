@@ -107,6 +107,53 @@ export function clearImportParam() {
     window.history.replaceState({}, '', url);
 }
 
+// Export encounter to JSON string (for copy/paste sharing)
+export function exportEncounterToJSON(encounter) {
+    const exportData = {
+        title: encounter.title,
+        description: encounter.description || '',
+        pcs: encounter.pcs || [],
+        monsters: encounter.monsters || [],
+        autoAddMonsters: encounter.autoAddMonsters || false
+    };
+    return JSON.stringify(exportData, null, 2);
+}
+
+// Import encounter from JSON string
+export function importEncounterFromJSON(jsonString) {
+    try {
+        const data = JSON.parse(jsonString);
+        
+        // Validate required fields
+        if (!data.title) {
+            throw new Error('Encounter must have a title');
+        }
+        
+        // Create a valid encounter object with defaults for missing fields
+        const encounter = {
+            id: Date.now().toString(),
+            title: data.title,
+            description: data.description || '',
+            pcs: (data.pcs || []).map(pc => ({
+                name: pc.name || pc
+            })),
+            monsters: (data.monsters || []).map(m => ({
+                name: m.name || m.n,
+                source: m.source || m.s || 'Unknown',
+                cr: m.cr || m.c || '0',
+                hp: m.hp || m.h || 0,
+                comment: m.comment || m.cm || ''
+            })),
+            autoAddMonsters: data.autoAddMonsters || false
+        };
+        
+        return encounter;
+    } catch (e) {
+        console.error('Failed to import encounter from JSON:', e);
+        throw new Error(`Invalid JSON: ${e.message}`);
+    }
+}
+
 // Default export for backward compatibility
 export default {
     ENCOUNTERS_KEY,
@@ -120,5 +167,7 @@ export default {
     cacheMonster,
     exportEncounterToURL,
     importEncounterFromURL,
-    clearImportParam
+    clearImportParam,
+    exportEncounterToJSON,
+    importEncounterFromJSON
 };

@@ -541,6 +541,7 @@
             <div id="context-menu" class="context-menu hidden">
                 <button class="context-item" data-action="edit">Edit</button>
                 <button class="context-item" data-action="copy">Duplicate</button>
+                <button class="context-item" data-action="copy-json">Copy JSON</button>
                 <button class="context-item" data-action="share">Share Link</button>
                 <button class="context-item" data-action="run">Run Encounter</button>
                 <button class="context-item danger" data-action="delete">Delete</button>
@@ -643,6 +644,49 @@
             <!-- App Menu (Navigation Dropdown) -->
             <div id="app-menu" class="app-menu hidden">
                 <button class="app-menu-item" id="menu-custom-monsters">Custom Monsters</button>
+            </div>
+
+            <!-- Add Encounter Choice Modal -->
+            <div id="add-encounter-choice-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Add Encounter</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="choice-buttons">
+                            <button type="button" id="encounter-choice-create-new" class="btn btn-large">
+                                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                                Create New
+                            </button>
+                            <button type="button" id="encounter-choice-import-json" class="btn btn-large">
+                                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                                Import JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Encounter JSON Modal -->
+            <div id="import-encounter-json-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Import Encounter from JSON</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-hint">Paste encounter JSON data</p>
+                        <div class="form-group">
+                            <textarea id="import-encounter-json-input" rows="10" placeholder='{"title": "My Encounter", "pcs": [{"name": "Fighter"}], "monsters": [{"name": "Goblin", "source": "MM"}], ...}'></textarea>
+                        </div>
+                        <p id="import-encounter-json-error" class="error-text hidden"></p>
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button type="button" id="import-encounter-json-cancel-btn" class="btn">Cancel</button>
+                            <button type="button" id="import-encounter-json-confirm-btn" class="btn btn-primary">Import</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Add Monster Choice Modal -->

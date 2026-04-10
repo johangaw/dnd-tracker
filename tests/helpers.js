@@ -224,6 +224,9 @@ export async function createEncounterViaUI({ title, description = '', pcs = [], 
   // Click new encounter button
   await click('#new-encounter-btn')
   
+  // Click "Create New" in the choice modal
+  await click('#encounter-choice-create-new')
+  
   // Fill in title
   await type('#encounter-title', title)
   
