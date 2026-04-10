@@ -53,7 +53,16 @@ export function render() {
 // Show context menu
 export function showContextMenu(e, encounterId) {
     e.preventDefault();
+    e.stopPropagation();
+    
     const menu = document.getElementById('context-menu');
+    
+    // If clicking on the same encounter while menu is open, just close it
+    if (!menu.classList.contains('hidden') && menu.dataset.encounterId === encounterId) {
+        hideContextMenu();
+        return;
+    }
+    
     menu.classList.remove('hidden');
     menu.dataset.encounterId = encounterId;
 
@@ -64,7 +73,7 @@ export function showContextMenu(e, encounterId) {
     menu.style.left = `${Math.min(x, window.innerWidth - 180)}px`;
     menu.style.top = `${Math.min(y, window.innerHeight - 200)}px`;
 
-    // Close on click outside
+    // Close on click outside - use setTimeout to avoid the current click triggering it
     setTimeout(() => {
         document.addEventListener('click', hideContextMenu, { once: true });
     }, 0);

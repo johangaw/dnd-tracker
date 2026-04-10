@@ -72,7 +72,16 @@ function formatSize(size) {
 // Show context menu for monster
 export function showContextMenu(e, monsterId) {
     e.preventDefault();
+    e.stopPropagation();
+    
     const menu = document.getElementById('monster-context-menu');
+    
+    // If clicking on the same monster while menu is open, just close it
+    if (!menu.classList.contains('hidden') && menu.dataset.monsterId === monsterId) {
+        hideContextMenu();
+        return;
+    }
+    
     menu.classList.remove('hidden');
     menu.dataset.monsterId = monsterId;
 
@@ -83,7 +92,7 @@ export function showContextMenu(e, monsterId) {
     menu.style.left = `${Math.min(x, window.innerWidth - 180)}px`;
     menu.style.top = `${Math.min(y, window.innerHeight - 250)}px`;
 
-    // Close on click outside
+    // Close on click outside - use setTimeout to avoid the current click triggering it
     setTimeout(() => {
         document.addEventListener('click', hideContextMenu, { once: true });
     }, 0);
