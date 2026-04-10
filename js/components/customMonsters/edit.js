@@ -3,7 +3,8 @@
 import * as CustomMonsters from '../../services/customMonsters.js';
 import { getState, setView } from '../../services/state.js';
 import { escapeHtml } from '../../utils/helpers.js';
-import { getHP, getAC } from '../../services/monsterApi.js';
+import { getHP, getAC, getProficiencyBonus } from '../../services/monsterApi.js';
+import { showStatBlock } from '../modals/statBlock.js';
 import CustomMonsterList from './list.js';
 
 // Initialize the edit form with a monster (or empty for new)
@@ -41,6 +42,9 @@ export function renderForm() {
     document.getElementById('monster-type').value = monster.type || 'humanoid';
     document.getElementById('monster-cr').value = formatCRForSelect(monster.cr);
     document.getElementById('monster-alignment').value = formatAlignmentForSelect(monster.alignment);
+    
+    // Update proficiency bonus display
+    updateProficiencyBonus(monster.cr);
     
     // Combat stats
     document.getElementById('monster-ac').value = getAC(monster);
@@ -243,19 +247,12 @@ function removeAction(index) {
     }
 }
 
-// Collect form data and save monster
-export function saveMonster() {
+// Collect form data into monster object
+function collectFormData() {
     const state = getState();
     const monster = state.editingMonster;
     
-    // Collect form data
     monster.name = document.getElementById('monster-name').value.trim();
-    
-    if (!monster.name) {
-        alert('Monster name is required');
-        return;
-    }
-    
     monster.size = [document.getElementById('monster-size').value];
     monster.type = document.getElementById('monster-type').value;
     monster.cr = document.getElementById('monster-cr').value;
@@ -280,6 +277,30 @@ export function saveMonster() {
     monster.source = 'Custom';
     monster.isCustom = true;
     
+    return monster;
+}
+
+// Preview monster stat block
+export function previewMonster() {
+    const monster = collectFormData();
+    
+    if (!monster.name) {
+        alert('Monster name is required for preview');
+        return;
+    }
+    
+    showStatBlock(monster);
+}
+
+// Collect form data and save monster
+export function saveMonster() {
+    const monster = collectFormData();
+    
+    if (!monster.name) {
+        alert('Monster name is required');
+        return;
+    }
+    
     // Save to storage
     CustomMonsters.saveCustomMonster(monster);
     
@@ -302,6 +323,21 @@ export function deleteMonster() {
     }
 }
 
+// Update proficiency bonus display based on CR
+export function updateProficiencyBonus(cr) {
+    const profBonus = getProficiencyBonus(cr);
+    const profEl = document.getElementById('monster-prof-bonus');
+    if (profEl) {
+        profEl.textContent = `Prof. +${profBonus}`;
+    }
+}
+
+// Handle CR change to update proficiency bonus
+export function onCRChange() {
+    const cr = document.getElementById('monster-cr').value;
+    updateProficiencyBonus(cr);
+}
+
 export default {
     init,
     initFromBaseline,
@@ -310,6 +346,9 @@ export default {
     renderActions,
     addTrait,
     addAction,
+    previewMonster,
     saveMonster,
-    deleteMonster
+    deleteMonster,
+    updateProficiencyBonus,
+    onCRChange
 };

@@ -121,8 +121,9 @@ export function renderStatBlock(monster, comment = '') {
         html += `<div class="stat-row"><span class="stat-label">Languages</span> ${monster.languages.join(', ') || '—'}</div>`;
     }
 
-    // CR
-    html += `<div class="stat-row"><span class="stat-label">Challenge</span> ${MonsterAPI.formatCR(monster.cr)}</div>`;
+    // CR and Proficiency Bonus
+    const profBonus = MonsterAPI.getProficiencyBonus(monster.cr);
+    html += `<div class="stat-row"><span class="stat-label">Challenge</span> ${MonsterAPI.formatCR(monster.cr)} <span class="prof-bonus">(Prof. +${profBonus})</span></div>`;
     html += `<div class="divider"></div>`;
 
     // Traits

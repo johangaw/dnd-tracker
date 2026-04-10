@@ -210,3 +210,21 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* Proficiency bonus display */
+.prof-bonus-display {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Stat block proficiency bonus */
+.prof-bonus {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}

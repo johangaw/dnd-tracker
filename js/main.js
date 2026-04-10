@@ -336,6 +336,11 @@ function initEventHandlers() {
         CustomMonsterEdit.saveMonster();
     });
 
+    // Preview monster button
+    document.getElementById('preview-monster-btn').addEventListener('click', () => {
+        CustomMonsterEdit.previewMonster();
+    });
+
     // Delete monster button
     document.getElementById('delete-monster-btn').addEventListener('click', () => {
         CustomMonsterEdit.deleteMonster();
@@ -349,6 +354,11 @@ function initEventHandlers() {
     // Add action button
     document.getElementById('add-action-btn').addEventListener('click', () => {
         CustomMonsterEdit.addAction();
+    });
+
+    // CR change - update proficiency bonus
+    document.getElementById('monster-cr').addEventListener('change', () => {
+        CustomMonsterEdit.onCRChange();
     });
 
     // Custom monster context menu actions
