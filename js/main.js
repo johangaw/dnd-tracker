@@ -16,6 +16,7 @@ import * as EncounterEdit from './components/encounterEdit/index.js';
 import * as CombatTracker from './components/combatTracker/index.js';
 import * as CustomMonsterList from './components/customMonsters/list.js';
 import * as CustomMonsterEdit from './components/customMonsters/edit.js';
+import { showStatBlock } from './components/modals/statBlock.js';
 
 // Track initialization to prevent duplicate event handlers
 let initialized = false;
@@ -410,6 +411,9 @@ function initEventHandlers() {
             }
 
             switch (action) {
+                case 'view-stats':
+                    showStatBlock(monster);
+                    break;
                 case 'edit':
                     CustomMonsterEdit.init(monster);
                     break;
