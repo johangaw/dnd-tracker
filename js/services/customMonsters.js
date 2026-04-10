@@ -87,7 +87,12 @@ export function createFromBaseline(baseMonster) {
 // Import monster from JSON string
 export function importMonsterFromJSON(jsonString) {
     try {
-        const data = JSON.parse(jsonString);
+        let data = JSON.parse(jsonString);
+        
+        // Handle 5e.tools format with monster array wrapper
+        if (data.monster && Array.isArray(data.monster) && data.monster.length > 0) {
+            data = data.monster[0];
+        }
         
         // Validate required fields
         if (!data.name) {
@@ -112,10 +117,14 @@ export function importMonsterFromJSON(jsonString) {
             wis: data.wis || 10,
             cha: data.cha || 10,
             cr: data.cr || '1',
+            passive: data.passive,
             trait: data.trait || [],
             action: data.action || [],
+            bonus: data.bonus || [],
             reaction: data.reaction || [],
             legendary: data.legendary || [],
+            legendaryActions: data.legendaryActions,
+            legendaryActionsLair: data.legendaryActionsLair,
             skill: data.skill || {},
             save: data.save || {},
             immune: data.immune || [],
