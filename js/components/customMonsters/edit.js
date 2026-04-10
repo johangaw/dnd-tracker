@@ -68,6 +68,7 @@ export function renderForm() {
     document.getElementById('monster-vulnerabilities').value = formatDamageList(monster.vulnerable);
     document.getElementById('monster-condition-immunities').value = (monster.conditionImmune || []).join(', ');
     document.getElementById('monster-senses').value = (monster.senses || []).join(', ');
+    document.getElementById('monster-passive').value = monster.passive || 10;
     document.getElementById('monster-languages').value = (monster.languages || []).join(', ');
     
     // Traits and actions
@@ -739,6 +740,7 @@ function collectFormData() {
     monster.vulnerable = parseCommaList(document.getElementById('monster-vulnerabilities').value);
     monster.conditionImmune = parseCommaList(document.getElementById('monster-condition-immunities').value);
     monster.senses = parseCommaList(document.getElementById('monster-senses').value);
+    monster.passive = parseInt(document.getElementById('monster-passive').value) || 10;
     monster.languages = parseCommaList(document.getElementById('monster-languages').value);
     
     // Clean up empty arrays/objects
