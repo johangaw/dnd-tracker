@@ -4,7 +4,7 @@ import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
 import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster } from './services/state.js';
-import { closeModals, hideContextMenu } from './utils/helpers.js';
+import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
 
 // Hide app menu
 function hideAppMenu() {
@@ -133,7 +133,7 @@ function initEventHandlers() {
                 case 'share':
                     const url = Storage.exportEncounterToURL(encounter);
                     navigator.clipboard.writeText(url).then(() => {
-                        alert('Share link copied to clipboard!');
+                        showToast('Share link copied to clipboard!');
                     }).catch(() => {
                         // Fallback for older browsers
                         prompt('Copy this link to share:', url);
@@ -385,10 +385,21 @@ function initEventHandlers() {
                     CustomMonsters.saveCustomMonster(copy);
                     CustomMonsterList.render();
                     break;
+                case 'copy-json':
+                    const jsonExport = { ...monster };
+                    delete jsonExport.id;
+                    delete jsonExport.isCustom;
+                    const jsonStr = JSON.stringify(jsonExport, null, 2);
+                    navigator.clipboard.writeText(jsonStr).then(() => {
+                        showToast('Monster JSON copied to clipboard!');
+                    }).catch(() => {
+                        prompt('Copy this JSON:', jsonStr);
+                    });
+                    break;
                 case 'share':
                     const url = CustomMonsters.exportMonsterToURL(monster);
                     navigator.clipboard.writeText(url).then(() => {
-                        alert('Share link copied to clipboard!');
+                        showToast('Share link copied to clipboard!');
                     }).catch(() => {
                         prompt('Copy this link to share:', url);
                     });
