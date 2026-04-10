@@ -18,6 +18,20 @@ export async function showStatBlockByNameSource(name, source, comment = '') {
     modal.classList.add('active');
 }
 
+// Show stat block for a monster object directly (used for custom monsters)
+export function showStatBlock(monster, comment = '') {
+    if (!monster) {
+        alert('Could not load monster stats');
+        return;
+    }
+
+    const modal = document.getElementById('stat-block-modal');
+    document.getElementById('stat-block-name').textContent = monster.name;
+    document.getElementById('stat-block-content').innerHTML = renderStatBlock(monster, comment);
+    
+    modal.classList.add('active');
+}
+
 export function renderStatBlock(monster, comment = '') {
     const size = formatSize(monster.size);
     const type = formatType(monster.type);
@@ -146,5 +160,6 @@ export function renderStatBlock(monster, comment = '') {
 
 export default {
     showStatBlockByNameSource,
+    showStatBlock,
     renderStatBlock
 };

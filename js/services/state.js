@@ -10,7 +10,9 @@ const state = {
     monsterQuantity: 1,
     hpDelta: 0,
     editingMonsterIndex: null,
-    importingEncounter: null
+    importingEncounter: null,
+    editingMonster: null,
+    importingMonster: null
 };
 
 export function getState() {
@@ -38,6 +40,14 @@ export function setView(view) {
         case 'encounter-run':
             backBtn.classList.remove('hidden');
             title.textContent = state.currentEncounter?.title || 'Combat';
+            break;
+        case 'custom-monsters':
+            backBtn.classList.remove('hidden');
+            title.textContent = 'Custom Monsters';
+            break;
+        case 'custom-monster-edit':
+            backBtn.classList.remove('hidden');
+            title.textContent = state.editingMonster?.id ? 'Edit Monster' : 'New Monster';
             break;
     }
 }
@@ -74,6 +84,14 @@ export function setImportingEncounter(encounter) {
     state.importingEncounter = encounter;
 }
 
+export function setEditingMonster(monster) {
+    state.editingMonster = monster;
+}
+
+export function setImportingMonster(monster) {
+    state.importingMonster = monster;
+}
+
 // Default export for backward compatibility
 export default {
     getState,
@@ -85,5 +103,7 @@ export default {
     setSelectedInstanceIndex,
     setMonsterQuantity,
     setEditingMonsterIndex,
-    setImportingEncounter
+    setImportingEncounter,
+    setEditingMonster,
+    setImportingMonster
 };

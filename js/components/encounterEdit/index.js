@@ -2,9 +2,10 @@
 
 import * as Storage from '../../services/storage.js';
 import * as MonsterAPI from '../../services/monsterApi.js';
+import * as CustomMonsters from '../../services/customMonsters.js';
 import { getState, setView, setEditingEncounter, setEditingMonsterIndex } from '../../services/state.js';
 import { escapeHtml, closeModals } from '../../utils/helpers.js';
-import { showStatBlockByNameSource } from '../modals/statBlock.js';
+import { showStatBlockByNameSource, showStatBlock } from '../modals/statBlock.js';
 
 // Initialize edit form
 export function init(encounter = null) {
@@ -141,9 +142,19 @@ export function saveDMNotes() {
 }
 
 // Add monster to encounter (for encounter editing)
-export async function addMonsterToEncounter(name, source) {
+export async function addMonsterToEncounter(name, source, customMonsterId = null) {
     const state = getState();
-    const monster = await MonsterAPI.getMonster(name, source);
+    let monster;
+    
+    // Check if it's a custom monster
+    if (customMonsterId || source === 'Custom') {
+        monster = customMonsterId 
+            ? CustomMonsters.getCustomMonster(customMonsterId)
+            : CustomMonsters.searchCustomMonsters(name).find(m => m.name === name);
+    } else {
+        monster = await MonsterAPI.getMonster(name, source);
+    }
+    
     if (!monster) {
         alert('Could not load monster data');
         return;
@@ -155,9 +166,10 @@ export async function addMonsterToEncounter(name, source) {
 
     state.editingEncounter.monsters.push({
         name: monster.name,
-        source: monster.source,
+        source: monster.source || 'Custom',
         cr: monster.cr,
         hp: MonsterAPI.getHP(monster),
+        customMonsterId: monster.isCustom ? monster.id : undefined, // Track custom monster ID
         comment: '' // DM notes for this monster instance
     });
 
@@ -177,22 +189,36 @@ export async function searchMonsters(query, source) {
     results.innerHTML = '<div class="search-loading">Searching...</div>';
 
     try {
-        const monsters = await MonsterAPI.searchMonsters(query, source);
+        // Search custom monsters first (if not filtering by specific source or showing Custom)
+        const customMonsters = (!source || source === 'Custom') 
+            ? CustomMonsters.searchCustomMonsters(query) 
+            : [];
+        
+        // Search API monsters (if not filtering to Custom only)
+        const apiMonsters = source === 'Custom' 
+            ? [] 
+            : await MonsterAPI.searchMonsters(query, source);
+        
+        // Combine results, custom monsters first
+        const monsters = [...customMonsters, ...apiMonsters];
         
         if (monsters.length === 0) {
             results.innerHTML = '<div class="search-empty">No monsters found</div>';
             return;
         }
 
-        results.innerHTML = monsters.map(m => `
-            <div class="search-result-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}">
+        results.innerHTML = monsters.map(m => {
+            const isCustom = m.isCustom || m.source === 'Custom';
+            return `
+            <div class="search-result-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}" data-id="${m.id || ''}">
                 <div class="search-result-info">
                     <div class="monster-name">${escapeHtml(m.name)}</div>
-                    <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${MonsterAPI.getHP(m)} | ${m.source}</div>
+                    <div class="monster-meta">CR ${MonsterAPI.formatCR(m.cr)} | HP ${MonsterAPI.getHP(m)} | ${isCustom ? 'Custom' : m.source}</div>
                 </div>
-                <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
+                <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}" data-id="${m.id || ''}">Stats</button>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Add click handler for adding monster
         results.querySelectorAll('.search-result-info').forEach(item => {
@@ -200,7 +226,8 @@ export async function searchMonsters(query, source) {
                 const parent = item.closest('.search-result-item');
                 const name = parent.dataset.name;
                 const source = parent.dataset.source;
-                await addMonsterToEncounter(name, source);
+                const id = parent.dataset.id;
+                await addMonsterToEncounter(name, source, id || null);
             });
         });
 
@@ -210,7 +237,17 @@ export async function searchMonsters(query, source) {
                 e.stopPropagation();
                 const name = btn.dataset.name;
                 const source = btn.dataset.source;
-                await showStatBlockByNameSource(name, source);
+                const id = btn.dataset.id;
+                
+                if (id && source === 'Custom') {
+                    // Show custom monster stat block
+                    const monster = CustomMonsters.getCustomMonster(id);
+                    if (monster) {
+                        showStatBlock(monster);
+                    }
+                } else {
+                    await showStatBlockByNameSource(name, source);
+                }
             });
         });
     } catch (error) {
