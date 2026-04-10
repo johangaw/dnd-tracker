@@ -60,6 +60,16 @@ export function renderForm() {
     document.getElementById('monster-wis').value = monster.wis || 10;
     document.getElementById('monster-cha').value = monster.cha || 10;
     
+    // Defenses & Senses
+    document.getElementById('monster-saves').value = formatSaves(monster.save);
+    document.getElementById('monster-skills').value = formatSkills(monster.skill);
+    document.getElementById('monster-resistances').value = formatDamageList(monster.resist);
+    document.getElementById('monster-immunities').value = formatDamageList(monster.immune);
+    document.getElementById('monster-vulnerabilities').value = formatDamageList(monster.vulnerable);
+    document.getElementById('monster-condition-immunities').value = (monster.conditionImmune || []).join(', ');
+    document.getElementById('monster-senses').value = (monster.senses || []).join(', ');
+    document.getElementById('monster-languages').value = (monster.languages || []).join(', ');
+    
     // Traits and actions
     renderTraits();
     renderActions();
@@ -103,6 +113,66 @@ function formatAlignmentForSelect(alignment) {
         return alignment[0] || 'N';
     }
     return alignment;
+}
+
+// Format saving throws for display (e.g., {str: "+5", dex: "+3"} -> "Str +5, Dex +3")
+function formatSaves(save) {
+    if (!save || typeof save !== 'object') return '';
+    return Object.entries(save)
+        .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${v}`)
+        .join(', ');
+}
+
+// Parse saving throws from input (e.g., "Str +5, Dex +3" -> {str: "+5", dex: "+3"})
+function parseSaves(text) {
+    if (!text.trim()) return undefined;
+    const result = {};
+    const parts = text.split(',').map(p => p.trim()).filter(p => p);
+    parts.forEach(part => {
+        const match = part.match(/^(str|dex|con|int|wis|cha)\s*([+-]?\d+)/i);
+        if (match) {
+            const ability = match[1].toLowerCase();
+            const bonus = match[2].startsWith('+') || match[2].startsWith('-') ? match[2] : `+${match[2]}`;
+            result[ability] = bonus;
+        }
+    });
+    return Object.keys(result).length > 0 ? result : undefined;
+}
+
+// Format skills for display (e.g., {perception: "+5"} -> "Perception +5")
+function formatSkills(skill) {
+    if (!skill || typeof skill !== 'object') return '';
+    return Object.entries(skill)
+        .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${v}`)
+        .join(', ');
+}
+
+// Parse skills from input (e.g., "Perception +5, Stealth +7" -> {perception: "+5", stealth: "+7"})
+function parseSkills(text) {
+    if (!text.trim()) return undefined;
+    const result = {};
+    const parts = text.split(',').map(p => p.trim()).filter(p => p);
+    parts.forEach(part => {
+        const match = part.match(/^(\w+)\s*([+-]?\d+)/i);
+        if (match) {
+            const skill = match[1].toLowerCase();
+            const bonus = match[2].startsWith('+') || match[2].startsWith('-') ? match[2] : `+${match[2]}`;
+            result[skill] = bonus;
+        }
+    });
+    return Object.keys(result).length > 0 ? result : undefined;
+}
+
+// Format damage types list for display
+function formatDamageList(list) {
+    if (!list || !Array.isArray(list) || list.length === 0) return '';
+    return list.join(', ');
+}
+
+// Parse comma-separated list into array
+function parseCommaList(text) {
+    if (!text.trim()) return [];
+    return text.split(',').map(p => p.trim()).filter(p => p);
 }
 
 // Render traits list
@@ -660,6 +730,24 @@ function collectFormData() {
     monster.int = parseInt(document.getElementById('monster-int').value) || 10;
     monster.wis = parseInt(document.getElementById('monster-wis').value) || 10;
     monster.cha = parseInt(document.getElementById('monster-cha').value) || 10;
+    
+    // Defenses & Senses
+    monster.save = parseSaves(document.getElementById('monster-saves').value);
+    monster.skill = parseSkills(document.getElementById('monster-skills').value);
+    monster.resist = parseCommaList(document.getElementById('monster-resistances').value);
+    monster.immune = parseCommaList(document.getElementById('monster-immunities').value);
+    monster.vulnerable = parseCommaList(document.getElementById('monster-vulnerabilities').value);
+    monster.conditionImmune = parseCommaList(document.getElementById('monster-condition-immunities').value);
+    monster.senses = parseCommaList(document.getElementById('monster-senses').value);
+    monster.languages = parseCommaList(document.getElementById('monster-languages').value);
+    
+    // Clean up empty arrays/objects
+    if (!monster.resist || monster.resist.length === 0) delete monster.resist;
+    if (!monster.immune || monster.immune.length === 0) delete monster.immune;
+    if (!monster.vulnerable || monster.vulnerable.length === 0) delete monster.vulnerable;
+    if (!monster.conditionImmune || monster.conditionImmune.length === 0) delete monster.conditionImmune;
+    if (!monster.senses || monster.senses.length === 0) delete monster.senses;
+    if (!monster.languages || monster.languages.length === 0) delete monster.languages;
     
     // Legendary actions config
     const legendaryCount = parseInt(document.getElementById('legendary-actions-count').value) || 3;
