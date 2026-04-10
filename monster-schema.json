@@ -4,306 +4,737 @@
   "title": "D&D 5e Monster",
   "description": "Schema for importing custom monsters (5e.tools compatible format)",
   "type": "object",
-  "required": ["name"],
   "properties": {
     "name": {
-      "type": "string",
-      "description": "Monster name",
-      "minLength": 1
+      "type": "string"
     },
     "source": {
-      "type": "string",
-      "description": "Source book abbreviation (e.g., MM, PHB, Custom)",
-      "default": "Custom"
+      "type": "string"
+    },
+    "page": {
+      "type": "number"
+    },
+    "referenceSources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "size": {
       "type": "array",
-      "description": "Size category",
       "items": {
-        "type": "string",
-        "enum": ["T", "S", "M", "L", "H", "G"]
-      },
-      "default": ["M"]
+        "type": "string"
+      }
     },
-    "type": {
-      "oneOf": [
-        { "type": "string" },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "type": "string" },
-            "tags": { "type": "array", "items": { "type": "string" } }
-          }
-        }
-      ],
-      "description": "Creature type (e.g., humanoid, beast, dragon)"
-    },
+    "type": {},
     "alignment": {
       "type": "array",
-      "description": "Alignment abbreviations",
       "items": {
-        "type": "string",
-        "enum": ["L", "N", "C", "G", "E", "U", "A"]
-      },
-      "default": ["N"]
+        "type": "string"
+      }
     },
     "ac": {
       "type": "array",
-      "description": "Armor class entries",
       "items": {
-        "oneOf": [
-          { "type": "integer" },
-          {
-            "type": "object",
-            "properties": {
-              "ac": { "type": "integer", "description": "AC value" },
-              "from": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "Sources of AC (e.g., natural armor, shield)"
-              },
-              "condition": { "type": "string" }
-            },
-            "required": ["ac"]
-          }
-        ]
-      },
-      "default": [{ "ac": 10 }]
+        "type": "number"
+      }
     },
     "hp": {
       "type": "object",
-      "description": "Hit points",
       "properties": {
-        "average": { "type": "integer", "description": "Average HP" },
-        "formula": { "type": "string", "description": "HP dice formula (e.g., 2d8+2)" }
+        "average": {
+          "type": "number"
+        },
+        "formula": {
+          "type": "string"
+        }
       },
-      "required": ["average"]
+      "required": ["average", "formula"]
     },
     "speed": {
       "type": "object",
-      "description": "Movement speeds in feet",
       "properties": {
-        "walk": { "type": "integer" },
-        "fly": { "type": "integer" },
-        "swim": { "type": "integer" },
-        "climb": { "type": "integer" },
-        "burrow": { "type": "integer" },
-        "hover": { "type": "boolean" }
+        "walk": {},
+        "fly": {},
+        "swim": {
+          "type": "number"
+        },
+        "climb": {},
+        "burrow": {
+          "type": "number"
+        },
+        "canHover": {
+          "type": "boolean"
+        },
+        "choose": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "amount": {
+              "type": "number"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "required": ["from", "amount", "note"]
+        },
+        "alternate": {
+          "type": "object",
+          "properties": {
+            "walk": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "number"
+                  },
+                  "condition": {
+                    "type": "string"
+                  }
+                },
+                "required": ["number", "condition"]
+              }
+            }
+          },
+          "required": ["walk"]
+        }
       },
-      "default": { "walk": 30 }
+      "required": ["walk", "fly", "climb"]
     },
-    "str": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
-    "dex": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
-    "con": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
-    "int": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
-    "wis": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
-    "cha": { "type": "integer", "minimum": 1, "maximum": 30, "default": 10 },
+    "str": {
+      "type": "number"
+    },
+    "dex": {
+      "type": "number"
+    },
+    "con": {
+      "type": "number"
+    },
+    "int": {
+      "type": "number"
+    },
+    "wis": {
+      "type": "number"
+    },
+    "cha": {
+      "type": "number"
+    },
     "save": {
       "type": "object",
-      "description": "Saving throw bonuses",
       "properties": {
-        "str": { "type": "string" },
-        "dex": { "type": "string" },
-        "con": { "type": "string" },
-        "int": { "type": "string" },
-        "wis": { "type": "string" },
-        "cha": { "type": "string" }
-      }
+        "wis": {
+          "type": "string"
+        },
+        "dex": {
+          "type": "string"
+        },
+        "int": {
+          "type": "string"
+        },
+        "cha": {
+          "type": "string"
+        },
+        "str": {
+          "type": "string"
+        },
+        "con": {
+          "type": "string"
+        }
+      },
+      "required": []
     },
     "skill": {
       "type": "object",
-      "description": "Skill bonuses (e.g., { \"perception\": \"+5\" })",
-      "additionalProperties": { "type": "string" }
-    },
-    "immune": {
-      "type": "array",
-      "description": "Damage immunities",
-      "items": {
-        "oneOf": [
-          { "type": "string" },
-          {
-            "type": "object",
-            "properties": {
-              "immune": { "type": "array", "items": { "type": "string" } },
-              "note": { "type": "string" },
-              "cond": { "type": "boolean" }
-            }
-          }
-        ]
-      }
-    },
-    "resist": {
-      "type": "array",
-      "description": "Damage resistances",
-      "items": {
-        "oneOf": [
-          { "type": "string" },
-          {
-            "type": "object",
-            "properties": {
-              "resist": { "type": "array", "items": { "type": "string" } },
-              "note": { "type": "string" },
-              "cond": { "type": "boolean" }
-            }
-          }
-        ]
-      }
-    },
-    "vulnerable": {
-      "type": "array",
-      "description": "Damage vulnerabilities",
-      "items": { "type": "string" }
-    },
-    "conditionImmune": {
-      "type": "array",
-      "description": "Condition immunities",
-      "items": { "type": "string" }
-    },
-    "senses": {
-      "type": "array",
-      "description": "Special senses (e.g., darkvision 60 ft.)",
-      "items": { "type": "string" }
+      "properties": {
+        "stealth": {
+          "type": "string"
+        },
+        "deception": {
+          "type": "string"
+        },
+        "perception": {
+          "type": "string"
+        },
+        "history": {
+          "type": "string"
+        },
+        "insight": {
+          "type": "string"
+        },
+        "persuasion": {
+          "type": "string"
+        },
+        "acrobatics": {
+          "type": "string"
+        },
+        "athletics": {
+          "type": "string"
+        },
+        "arcana": {
+          "type": "string"
+        },
+        "survival": {
+          "type": "string"
+        },
+        "investigation": {
+          "type": "string"
+        },
+        "sleight of hand": {
+          "type": "string"
+        },
+        "religion": {
+          "type": "string"
+        },
+        "nature": {
+          "type": "string"
+        },
+        "performance": {
+          "type": "string"
+        },
+        "medicine": {
+          "type": "string"
+        }
+      },
+      "required": []
     },
     "passive": {
-      "type": "integer",
-      "description": "Passive Perception score"
+      "type": "number"
     },
     "languages": {
       "type": "array",
-      "description": "Languages known",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-    "cr": {
-      "oneOf": [
-        { "type": "string", "pattern": "^(0|1/8|1/4|1/2|[1-9]|[12][0-9]|30)$" },
-        {
-          "type": "object",
-          "properties": {
-            "cr": { "type": "string" },
-            "lair": { "type": "string" },
-            "coven": { "type": "string" }
-          }
-        }
-      ],
-      "description": "Challenge rating"
-    },
-    "trait": {
+    "cr": {},
+    "spellcasting": {
       "type": "array",
-      "description": "Special traits/abilities",
       "items": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "description": "Trait name" },
-          "entries": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "headerEntries": {
             "type": "array",
-            "description": "Trait description",
             "items": {
-              "oneOf": [
-                { "type": "string" },
-                { "type": "object" }
-              ]
+              "type": "string"
             }
+          },
+          "will": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "daily": {
+            "type": "object",
+            "properties": {
+              "1": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "2": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "3": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "1e": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "2e": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": []
+          },
+          "ability": {
+            "type": "string"
+          },
+          "displayAs": {
+            "type": "string"
+          },
+          "recharge": {
+            "type": "object",
+            "properties": {
+              "4": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "5": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "6": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": []
+          },
+          "hidden": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "legendary": {
+            "type": "object",
+            "properties": {
+              "1": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["1"]
+          },
+          "restLong": {
+            "type": "object",
+            "properties": {
+              "1": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["1"]
           }
         },
-        "required": ["name", "entries"]
+        "required": ["name", "type", "headerEntries", "ability"]
       }
     },
     "action": {
       "type": "array",
-      "description": "Actions",
       "items": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "description": "Action name" },
+          "name": {
+            "type": "string"
+          },
           "entries": {
             "type": "array",
-            "description": "Action description",
+            "items": {}
+          }
+        },
+        "required": ["name", "entries"]
+      }
+    },
+    "environment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "treasure": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actionTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "languageTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "damageTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "damageTagsSpell": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spellcastingTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "miscTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "savingThrowForcedSpell": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hasToken": {
+      "type": "boolean"
+    },
+    "hasFluff": {
+      "type": "boolean"
+    },
+    "hasFluffImages": {
+      "type": "boolean"
+    },
+    "initiative": {
+      "type": "object",
+      "properties": {
+        "proficiency": {
+          "type": "number"
+        }
+      },
+      "required": ["proficiency"]
+    },
+    "senses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "senseTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditionInflict": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "savingThrowForced": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "srd52": {
+      "type": "boolean"
+    },
+    "basicRules2024": {
+      "type": "boolean"
+    },
+    "trait": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": ["name", "entries"]
+      }
+    },
+    "legendaryActionsLair": {
+      "type": "number"
+    },
+    "legendary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
             "items": {
-              "oneOf": [
-                { "type": "string" },
-                { "type": "object" }
-              ]
+              "type": "string"
             }
           }
         },
         "required": ["name", "entries"]
       }
     },
+    "legendaryGroup": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "source"]
+    },
+    "soundClip": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "path"]
+    },
+    "traitTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "savingThrowForcedLegendary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "immune": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "group": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dragonAge": {
+      "type": "string"
+    },
+    "conditionInflictSpell": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditionImmune": {
+      "type": "array",
+      "items": {}
+    },
+    "resist": {
+      "type": "array",
+      "items": {}
+    },
+    "bonus": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": ["name", "entries"]
+      }
+    },
+    "altArt": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "source"]
+      }
+    },
+    "_versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "_mod": {
+            "type": "object",
+            "properties": {
+              "trait": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string"
+                  },
+                  "replace": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "entries": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": ["name", "entries"]
+                  }
+                },
+                "required": ["mode", "replace", "items"]
+              },
+              "action": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string"
+                  },
+                  "replace": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "entries": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": ["name", "entries"]
+                  }
+                },
+                "required": ["mode", "replace", "items"]
+              }
+            },
+            "required": ["trait", "action"]
+          }
+        },
+        "required": ["name", "source", "_mod"]
+      }
+    },
+    "otherSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "page": {
+            "type": "number"
+          }
+        },
+        "required": ["source", "page"]
+      }
+    },
+    "gear": {
+      "type": "array",
+      "items": {}
+    },
+    "vulnerable": {
+      "type": "array",
+      "items": {}
+    },
+    "familiar": {
+      "type": "boolean"
+    },
     "reaction": {
       "type": "array",
-      "description": "Reactions",
       "items": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "entries": { "type": "array", "items": { "oneOf": [{ "type": "string" }, { "type": "object" }] } }
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         },
         "required": ["name", "entries"]
       }
     },
-    "legendary": {
+    "attachedItems": {
       "type": "array",
-      "description": "Legendary actions",
       "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "entries": { "type": "array", "items": { "oneOf": [{ "type": "string" }, { "type": "object" }] } }
-        },
-        "required": ["name", "entries"]
-      }
-    },
-    "spellcasting": {
-      "type": "array",
-      "description": "Spellcasting abilities",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "headerEntries": { "type": "array", "items": { "type": "string" } },
-          "spells": { "type": "object" },
-          "will": { "type": "array", "items": { "type": "string" } },
-          "daily": { "type": "object" }
-        }
+        "type": "string"
       }
     }
   },
-  "examples": [
-    {
-      "name": "Custom Goblin",
-      "size": ["S"],
-      "type": "humanoid",
-      "alignment": ["N", "E"],
-      "ac": [{ "ac": 15, "from": ["leather armor", "shield"] }],
-      "hp": { "average": 7, "formula": "2d6" },
-      "speed": { "walk": 30 },
-      "str": 8,
-      "dex": 14,
-      "con": 10,
-      "int": 10,
-      "wis": 8,
-      "cha": 8,
-      "skill": { "stealth": "+6" },
-      "senses": ["darkvision 60 ft."],
-      "passive": 9,
-      "languages": ["Common", "Goblin"],
-      "cr": "1/4",
-      "trait": [
-        {
-          "name": "Nimble Escape",
-          "entries": ["The goblin can take the Disengage or Hide action as a bonus action on each of its turns."]
-        }
-      ],
-      "action": [
-        {
-          "name": "Scimitar",
-          "entries": ["Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage."]
-        },
-        {
-          "name": "Shortbow",
-          "entries": ["Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage."]
-        }
-      ]
-    }
+  "required": [
+    "name",
+    "source",
+    "page",
+    "size",
+    "type",
+    "alignment",
+    "ac",
+    "hp",
+    "speed",
+    "str",
+    "dex",
+    "con",
+    "int",
+    "wis",
+    "cha",
+    "passive",
+    "cr",
+    "environment",
+    "hasToken",
+    "hasFluff",
+    "hasFluffImages"
   ]
 }
