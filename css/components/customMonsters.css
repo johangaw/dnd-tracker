@@ -190,7 +190,7 @@
 .app-menu {
     position: fixed;
     top: 56px;
-    right: 8px;
+    right: max(8px, calc(50% - 300px + 8px));
     background: var(--bg-card);
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
