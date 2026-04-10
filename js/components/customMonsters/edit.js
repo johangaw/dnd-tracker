@@ -195,7 +195,11 @@ export function renderTraits() {
                 <input type="text" class="trait-name" value="${escapeHtml(trait.name || '')}" placeholder="Trait name">
                 <textarea class="trait-desc" placeholder="Description">${escapeHtml(formatEntries(trait.entries))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === traits.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -208,6 +212,12 @@ export function renderTraits() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeTrait(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveTraitUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveTraitDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -230,7 +240,11 @@ export function renderActions() {
                 <input type="text" class="action-name" value="${escapeHtml(action.name || '')}" placeholder="Action name">
                 <textarea class="action-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === actions.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -243,6 +257,12 @@ export function renderActions() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeAction(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveActionUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveActionDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -265,7 +285,11 @@ export function renderBonusActions() {
                 <input type="text" class="bonus-name" value="${escapeHtml(action.name || '')}" placeholder="Bonus action name">
                 <textarea class="bonus-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === bonusActions.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -278,6 +302,12 @@ export function renderBonusActions() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeBonusAction(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveBonusActionUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveBonusActionDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -300,7 +330,11 @@ export function renderReactions() {
                 <input type="text" class="reaction-name" value="${escapeHtml(action.name || '')}" placeholder="Reaction name">
                 <textarea class="reaction-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === reactions.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -313,6 +347,12 @@ export function renderReactions() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeReaction(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveReactionUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveReactionDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -336,7 +376,11 @@ export function renderSpellcasting() {
                 <textarea class="spellcasting-header" placeholder="Header (e.g., 'The mage is a 5th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 14, +6 to hit).')">${escapeHtml(formatEntries(sc.headerEntries || []))}</textarea>
                 <textarea class="spellcasting-spells" placeholder="Spells (one per line, format: 'Cantrips: fire bolt, light' or '1st (4 slots): magic missile, shield' or 'At will: detect magic' or '1/day each: fireball, lightning bolt')">${escapeHtml(formatSpellcastingForEdit(sc))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === spellcasting.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -352,6 +396,12 @@ export function renderSpellcasting() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeSpellcasting(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveSpellcastingUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveSpellcastingDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -378,7 +428,11 @@ export function renderLegendaryActions() {
                 <input type="text" class="legendary-name" value="${escapeHtml(action.name || '')}" placeholder="Legendary action name (e.g., 'Attack' or 'Wing Attack (Costs 2 Actions)')">
                 <textarea class="legendary-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
             </div>
-            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" aria-label="Move up" ${index === 0 ? 'disabled' : ''}>&#9650;</button>
+                <button type="button" class="move-down-btn" data-index="${index}" aria-label="Move down" ${index === legendary.length - 1 ? 'disabled' : ''}>&#9660;</button>
+                <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            </div>
         </div>
     `).join('');
     
@@ -391,6 +445,12 @@ export function renderLegendaryActions() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeLegendaryAction(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveLegendaryActionUp(parseInt(btn.dataset.index)));
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => moveLegendaryActionDown(parseInt(btn.dataset.index)));
     });
 }
 
@@ -408,6 +468,20 @@ function formatEntries(entries) {
 function parseEntries(text) {
     if (!text) return [];
     return text.split('\n').filter(line => line.trim());
+}
+
+// Generic move item up in array
+function moveItemUp(array, index) {
+    if (index <= 0 || index >= array.length) return false;
+    [array[index - 1], array[index]] = [array[index], array[index - 1]];
+    return true;
+}
+
+// Generic move item down in array
+function moveItemDown(array, index) {
+    if (index < 0 || index >= array.length - 1) return false;
+    [array[index], array[index + 1]] = [array[index + 1], array[index]];
+    return true;
 }
 
 // Update trait
@@ -479,6 +553,22 @@ function removeTrait(index) {
     }
 }
 
+// Move trait up
+function moveTraitUp(index) {
+    const state = getState();
+    if (state.editingMonster.trait && moveItemUp(state.editingMonster.trait, index)) {
+        renderTraits();
+    }
+}
+
+// Move trait down
+function moveTraitDown(index) {
+    const state = getState();
+    if (state.editingMonster.trait && moveItemDown(state.editingMonster.trait, index)) {
+        renderTraits();
+    }
+}
+
 // Add new action
 export function addAction() {
     const state = getState();
@@ -492,6 +582,22 @@ function removeAction(index) {
     const state = getState();
     if (state.editingMonster.action) {
         state.editingMonster.action.splice(index, 1);
+        renderActions();
+    }
+}
+
+// Move action up
+function moveActionUp(index) {
+    const state = getState();
+    if (state.editingMonster.action && moveItemUp(state.editingMonster.action, index)) {
+        renderActions();
+    }
+}
+
+// Move action down
+function moveActionDown(index) {
+    const state = getState();
+    if (state.editingMonster.action && moveItemDown(state.editingMonster.action, index)) {
         renderActions();
     }
 }
@@ -513,6 +619,22 @@ function removeBonusAction(index) {
     }
 }
 
+// Move bonus action up
+function moveBonusActionUp(index) {
+    const state = getState();
+    if (state.editingMonster.bonus && moveItemUp(state.editingMonster.bonus, index)) {
+        renderBonusActions();
+    }
+}
+
+// Move bonus action down
+function moveBonusActionDown(index) {
+    const state = getState();
+    if (state.editingMonster.bonus && moveItemDown(state.editingMonster.bonus, index)) {
+        renderBonusActions();
+    }
+}
+
 // Add new reaction
 export function addReaction() {
     const state = getState();
@@ -526,6 +648,22 @@ function removeReaction(index) {
     const state = getState();
     if (state.editingMonster.reaction) {
         state.editingMonster.reaction.splice(index, 1);
+        renderReactions();
+    }
+}
+
+// Move reaction up
+function moveReactionUp(index) {
+    const state = getState();
+    if (state.editingMonster.reaction && moveItemUp(state.editingMonster.reaction, index)) {
+        renderReactions();
+    }
+}
+
+// Move reaction down
+function moveReactionDown(index) {
+    const state = getState();
+    if (state.editingMonster.reaction && moveItemDown(state.editingMonster.reaction, index)) {
         renderReactions();
     }
 }
@@ -675,6 +813,22 @@ function removeSpellcasting(index) {
     }
 }
 
+// Move spellcasting up
+function moveSpellcastingUp(index) {
+    const state = getState();
+    if (state.editingMonster.spellcasting && moveItemUp(state.editingMonster.spellcasting, index)) {
+        renderSpellcasting();
+    }
+}
+
+// Move spellcasting down
+function moveSpellcastingDown(index) {
+    const state = getState();
+    if (state.editingMonster.spellcasting && moveItemDown(state.editingMonster.spellcasting, index)) {
+        renderSpellcasting();
+    }
+}
+
 // Update legendary action
 function updateLegendaryAction(index, field, value) {
     const state = getState();
@@ -701,6 +855,22 @@ function removeLegendaryAction(index) {
     const state = getState();
     if (state.editingMonster.legendary) {
         state.editingMonster.legendary.splice(index, 1);
+        renderLegendaryActions();
+    }
+}
+
+// Move legendary action up
+function moveLegendaryActionUp(index) {
+    const state = getState();
+    if (state.editingMonster.legendary && moveItemUp(state.editingMonster.legendary, index)) {
+        renderLegendaryActions();
+    }
+}
+
+// Move legendary action down
+function moveLegendaryActionDown(index) {
+    const state = getState();
+    if (state.editingMonster.legendary && moveItemDown(state.editingMonster.legendary, index)) {
         renderLegendaryActions();
     }
 }
