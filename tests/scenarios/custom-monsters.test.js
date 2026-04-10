@@ -179,6 +179,7 @@ describe('Custom Monsters', () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
             
             expect(document.getElementById('custom-monster-edit-view').classList.contains('active')).toBe(true)
         })
@@ -187,6 +188,7 @@ describe('Custom Monsters', () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
             
             // Fill in the form
             await type('#monster-name', 'Test Dragon')
@@ -215,6 +217,7 @@ describe('Custom Monsters', () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
             
             // Don't fill in name, just try to save
             await submitForm('#custom-monster-form')
@@ -230,6 +233,7 @@ describe('Custom Monsters', () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
             
             await type('#monster-name', 'Trait Monster')
             await click('#add-trait-btn')
@@ -254,6 +258,7 @@ describe('Custom Monsters', () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
             
             await type('#monster-name', 'Action Monster')
             await click('#add-action-btn')
@@ -393,16 +398,16 @@ describe('Custom Monsters', () => {
     })
 
     describe('Import JSON Modal', () => {
-        it('opens import JSON modal from menu', async () => {
-            await click('#menu-btn')
-            await click('#menu-import-json')
+        it('opens import JSON modal from add button', async () => {
+            await click('#new-custom-monster-btn')
+            await click('#choice-import-json')
             
             expect(isVisible('#import-json-modal')).toBe(true)
         })
 
         it('imports monster from valid JSON', async () => {
-            await click('#menu-btn')
-            await click('#menu-import-json')
+            await click('#new-custom-monster-btn')
+            await click('#choice-import-json')
             
             const json = JSON.stringify({
                 name: 'JSON Monster',
@@ -422,8 +427,8 @@ describe('Custom Monsters', () => {
         })
 
         it('shows error for invalid JSON', async () => {
-            await click('#menu-btn')
-            await click('#menu-import-json')
+            await click('#new-custom-monster-btn')
+            await click('#choice-import-json')
             
             await type('#import-json-input', 'not valid json')
             await click('#import-json-confirm-btn')
@@ -436,11 +441,24 @@ describe('Custom Monsters', () => {
         })
 
         it('closes modal on cancel', async () => {
-            await click('#menu-btn')
-            await click('#menu-import-json')
+            await click('#new-custom-monster-btn')
+            await click('#choice-import-json')
             await click('#import-json-cancel-btn')
             
             expect(isVisible('#import-json-modal')).toBe(false)
+        })
+
+        it('shows choice modal when clicking add button', async () => {
+            await click('#new-custom-monster-btn')
+            
+            expect(isVisible('#add-monster-choice-modal')).toBe(true)
+        })
+
+        it('opens create new from choice modal', async () => {
+            await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
+            
+            expect(document.getElementById('custom-monster-edit-view').classList.contains('active')).toBe(true)
         })
     })
 

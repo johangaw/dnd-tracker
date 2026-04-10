@@ -316,18 +316,25 @@ function initEventHandlers() {
         CustomMonsterList.render();
     });
 
-    document.getElementById('menu-import-json')?.addEventListener('click', () => {
-        hideAppMenu();
+    // === Custom Monster Events ===
+    
+    // New custom monster button - show choice modal
+    document.getElementById('new-custom-monster-btn').addEventListener('click', () => {
+        document.getElementById('add-monster-choice-modal').classList.add('active');
+    });
+
+    // Choice modal - Create New
+    document.getElementById('choice-create-new').addEventListener('click', () => {
+        closeModals();
+        CustomMonsterEdit.init();
+    });
+
+    // Choice modal - Import JSON
+    document.getElementById('choice-import-json').addEventListener('click', () => {
+        closeModals();
         document.getElementById('import-json-input').value = '';
         document.getElementById('import-json-error').classList.add('hidden');
         document.getElementById('import-json-modal').classList.add('active');
-    });
-
-    // === Custom Monster Events ===
-    
-    // New custom monster button
-    document.getElementById('new-custom-monster-btn').addEventListener('click', () => {
-        CustomMonsterEdit.init();
     });
 
     // Custom monster form submit
