@@ -371,6 +371,21 @@ function initEventHandlers() {
         CustomMonsterEdit.addAction();
     });
 
+    // Add bonus action button
+    document.getElementById('add-bonus-btn').addEventListener('click', () => {
+        CustomMonsterEdit.addBonusAction();
+    });
+
+    // Add reaction button
+    document.getElementById('add-reaction-btn').addEventListener('click', () => {
+        CustomMonsterEdit.addReaction();
+    });
+
+    // Add spellcasting button
+    document.getElementById('add-spellcasting-btn').addEventListener('click', () => {
+        CustomMonsterEdit.addSpellcasting();
+    });
+
     // CR change - update proficiency bonus
     document.getElementById('monster-cr').addEventListener('change', () => {
         CustomMonsterEdit.onCRChange();

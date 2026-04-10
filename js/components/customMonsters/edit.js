@@ -63,6 +63,9 @@ export function renderForm() {
     // Traits and actions
     renderTraits();
     renderActions();
+    renderBonusActions();
+    renderReactions();
+    renderSpellcasting();
     
     // Show delete button only for existing monsters
     const deleteBtn = document.getElementById('delete-monster-btn');
@@ -171,6 +174,115 @@ export function renderActions() {
     });
 }
 
+// Render bonus actions list
+export function renderBonusActions() {
+    const state = getState();
+    const monster = state.editingMonster;
+    const container = document.getElementById('bonus-list');
+    
+    const bonusActions = monster.bonus || [];
+    
+    if (bonusActions.length === 0) {
+        container.innerHTML = '<p class="empty-hint">No bonus actions added</p>';
+        return;
+    }
+    
+    container.innerHTML = bonusActions.map((action, index) => `
+        <div class="bonus-item item-row" data-index="${index}">
+            <div class="bonus-content">
+                <input type="text" class="bonus-name" value="${escapeHtml(action.name || '')}" placeholder="Bonus action name">
+                <textarea class="bonus-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
+            </div>
+            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+        </div>
+    `).join('');
+    
+    // Add change handlers
+    container.querySelectorAll('.bonus-name').forEach((input, i) => {
+        input.addEventListener('change', () => updateBonusAction(i, 'name', input.value));
+    });
+    container.querySelectorAll('.bonus-desc').forEach((textarea, i) => {
+        textarea.addEventListener('change', () => updateBonusAction(i, 'entries', textarea.value));
+    });
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeBonusAction(parseInt(btn.dataset.index)));
+    });
+}
+
+// Render reactions list
+export function renderReactions() {
+    const state = getState();
+    const monster = state.editingMonster;
+    const container = document.getElementById('reactions-list');
+    
+    const reactions = monster.reaction || [];
+    
+    if (reactions.length === 0) {
+        container.innerHTML = '<p class="empty-hint">No reactions added</p>';
+        return;
+    }
+    
+    container.innerHTML = reactions.map((action, index) => `
+        <div class="reaction-item item-row" data-index="${index}">
+            <div class="reaction-content">
+                <input type="text" class="reaction-name" value="${escapeHtml(action.name || '')}" placeholder="Reaction name">
+                <textarea class="reaction-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
+            </div>
+            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+        </div>
+    `).join('');
+    
+    // Add change handlers
+    container.querySelectorAll('.reaction-name').forEach((input, i) => {
+        input.addEventListener('change', () => updateReaction(i, 'name', input.value));
+    });
+    container.querySelectorAll('.reaction-desc').forEach((textarea, i) => {
+        textarea.addEventListener('change', () => updateReaction(i, 'entries', textarea.value));
+    });
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeReaction(parseInt(btn.dataset.index)));
+    });
+}
+
+// Render spellcasting list
+export function renderSpellcasting() {
+    const state = getState();
+    const monster = state.editingMonster;
+    const container = document.getElementById('spellcasting-list');
+    
+    const spellcasting = monster.spellcasting || [];
+    
+    if (spellcasting.length === 0) {
+        container.innerHTML = '<p class="empty-hint">No spellcasting added</p>';
+        return;
+    }
+    
+    container.innerHTML = spellcasting.map((sc, index) => `
+        <div class="spellcasting-item item-row" data-index="${index}">
+            <div class="spellcasting-content">
+                <input type="text" class="spellcasting-name" value="${escapeHtml(sc.name || 'Spellcasting')}" placeholder="Spellcasting name">
+                <textarea class="spellcasting-header" placeholder="Header (e.g., 'The mage is a 5th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 14, +6 to hit).')">${escapeHtml(formatEntries(sc.headerEntries || []))}</textarea>
+                <textarea class="spellcasting-spells" placeholder="Spells (one per line, format: 'Cantrips: fire bolt, light' or '1st (4 slots): magic missile, shield' or 'At will: detect magic' or '1/day each: fireball, lightning bolt')">${escapeHtml(formatSpellcastingForEdit(sc))}</textarea>
+            </div>
+            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+        </div>
+    `).join('');
+    
+    // Add change handlers
+    container.querySelectorAll('.spellcasting-name').forEach((input, i) => {
+        input.addEventListener('change', () => updateSpellcasting(i, 'name', input.value));
+    });
+    container.querySelectorAll('.spellcasting-header').forEach((textarea, i) => {
+        textarea.addEventListener('change', () => updateSpellcasting(i, 'headerEntries', textarea.value));
+    });
+    container.querySelectorAll('.spellcasting-spells').forEach((textarea, i) => {
+        textarea.addEventListener('change', () => updateSpellcastingSpells(i, textarea.value));
+    });
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeSpellcasting(parseInt(btn.dataset.index)));
+    });
+}
+
 // Format entries array to string
 function formatEntries(entries) {
     if (!entries) return '';
@@ -213,6 +325,32 @@ function updateAction(index, field, value) {
     }
 }
 
+// Update bonus action
+function updateBonusAction(index, field, value) {
+    const state = getState();
+    if (!state.editingMonster.bonus) state.editingMonster.bonus = [];
+    if (!state.editingMonster.bonus[index]) state.editingMonster.bonus[index] = {};
+    
+    if (field === 'entries') {
+        state.editingMonster.bonus[index].entries = parseEntries(value);
+    } else {
+        state.editingMonster.bonus[index][field] = value;
+    }
+}
+
+// Update reaction
+function updateReaction(index, field, value) {
+    const state = getState();
+    if (!state.editingMonster.reaction) state.editingMonster.reaction = [];
+    if (!state.editingMonster.reaction[index]) state.editingMonster.reaction[index] = {};
+    
+    if (field === 'entries') {
+        state.editingMonster.reaction[index].entries = parseEntries(value);
+    } else {
+        state.editingMonster.reaction[index][field] = value;
+    }
+}
+
 // Add new trait
 export function addTrait() {
     const state = getState();
@@ -244,6 +382,185 @@ function removeAction(index) {
     if (state.editingMonster.action) {
         state.editingMonster.action.splice(index, 1);
         renderActions();
+    }
+}
+
+// Add new bonus action
+export function addBonusAction() {
+    const state = getState();
+    if (!state.editingMonster.bonus) state.editingMonster.bonus = [];
+    state.editingMonster.bonus.push({ name: '', entries: [] });
+    renderBonusActions();
+}
+
+// Remove bonus action
+function removeBonusAction(index) {
+    const state = getState();
+    if (state.editingMonster.bonus) {
+        state.editingMonster.bonus.splice(index, 1);
+        renderBonusActions();
+    }
+}
+
+// Add new reaction
+export function addReaction() {
+    const state = getState();
+    if (!state.editingMonster.reaction) state.editingMonster.reaction = [];
+    state.editingMonster.reaction.push({ name: '', entries: [] });
+    renderReactions();
+}
+
+// Remove reaction
+function removeReaction(index) {
+    const state = getState();
+    if (state.editingMonster.reaction) {
+        state.editingMonster.reaction.splice(index, 1);
+        renderReactions();
+    }
+}
+
+// Format spellcasting object to editable text
+function formatSpellcastingForEdit(sc) {
+    const lines = [];
+    
+    // At-will spells
+    if (sc.will && sc.will.length > 0) {
+        lines.push(`At will: ${sc.will.map(cleanSpellName).join(', ')}`);
+    }
+    
+    // Daily spells
+    if (sc.daily) {
+        const dailyOrder = ['3e', '3', '2e', '2', '1e', '1'];
+        dailyOrder.forEach(key => {
+            if (sc.daily[key] && sc.daily[key].length > 0) {
+                const times = key.charAt(0);
+                const each = key.includes('e') ? ' each' : '';
+                lines.push(`${times}/day${each}: ${sc.daily[key].map(cleanSpellName).join(', ')}`);
+            }
+        });
+    }
+    
+    // Spell slots by level
+    if (sc.spells) {
+        Object.keys(sc.spells).sort((a, b) => parseInt(a) - parseInt(b)).forEach(level => {
+            const spellLevel = sc.spells[level];
+            if (spellLevel.spells && spellLevel.spells.length > 0) {
+                if (level === '0') {
+                    lines.push(`Cantrips: ${spellLevel.spells.map(cleanSpellName).join(', ')}`);
+                } else {
+                    const suffix = level === '1' ? 'st' : level === '2' ? 'nd' : level === '3' ? 'rd' : 'th';
+                    const slots = spellLevel.slots ? ` (${spellLevel.slots} slots)` : '';
+                    lines.push(`${level}${suffix}${slots}: ${spellLevel.spells.map(cleanSpellName).join(', ')}`);
+                }
+            }
+        });
+    }
+    
+    return lines.join('\n');
+}
+
+// Clean spell name from 5e.tools format
+function cleanSpellName(spell) {
+    if (typeof spell === 'string') {
+        return spell.replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, '$1').replace(/{@[^}]+}/g, '');
+    }
+    return '';
+}
+
+// Parse spellcasting text back to 5e.tools format
+function parseSpellcastingText(text) {
+    const result = {};
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    lines.forEach(line => {
+        const colonIndex = line.indexOf(':');
+        if (colonIndex === -1) return;
+        
+        const prefix = line.substring(0, colonIndex).trim().toLowerCase();
+        const spellsText = line.substring(colonIndex + 1).trim();
+        const spells = spellsText.split(',').map(s => s.trim()).filter(s => s);
+        
+        if (spells.length === 0) return;
+        
+        if (prefix === 'at will') {
+            result.will = spells;
+        } else if (prefix === 'cantrips') {
+            if (!result.spells) result.spells = {};
+            result.spells['0'] = { spells };
+        } else if (prefix.match(/^\d\/day/)) {
+            // Parse "1/day", "2/day each", etc.
+            const match = prefix.match(/^(\d)\/day( each)?/);
+            if (match) {
+                if (!result.daily) result.daily = {};
+                const key = match[2] ? `${match[1]}e` : match[1];
+                result.daily[key] = spells;
+            }
+        } else if (prefix.match(/^\d+(st|nd|rd|th)/)) {
+            // Parse "1st (4 slots)", "2nd", etc.
+            const match = prefix.match(/^(\d+)(st|nd|rd|th)(\s*\((\d+)\s*slots?\))?/);
+            if (match) {
+                if (!result.spells) result.spells = {};
+                const level = match[1];
+                const slots = match[4] ? parseInt(match[4]) : undefined;
+                result.spells[level] = slots ? { slots, spells } : { spells };
+            }
+        }
+    });
+    
+    return result;
+}
+
+// Update spellcasting field
+function updateSpellcasting(index, field, value) {
+    const state = getState();
+    if (!state.editingMonster.spellcasting) state.editingMonster.spellcasting = [];
+    if (!state.editingMonster.spellcasting[index]) state.editingMonster.spellcasting[index] = { type: 'spellcasting' };
+    
+    if (field === 'headerEntries') {
+        state.editingMonster.spellcasting[index].headerEntries = parseEntries(value);
+    } else {
+        state.editingMonster.spellcasting[index][field] = value;
+    }
+}
+
+// Update spellcasting spells from text
+function updateSpellcastingSpells(index, text) {
+    const state = getState();
+    if (!state.editingMonster.spellcasting) state.editingMonster.spellcasting = [];
+    if (!state.editingMonster.spellcasting[index]) state.editingMonster.spellcasting[index] = { type: 'spellcasting' };
+    
+    const parsed = parseSpellcastingText(text);
+    const sc = state.editingMonster.spellcasting[index];
+    
+    // Clear existing spell data
+    delete sc.will;
+    delete sc.daily;
+    delete sc.spells;
+    
+    // Apply parsed data
+    if (parsed.will) sc.will = parsed.will;
+    if (parsed.daily) sc.daily = parsed.daily;
+    if (parsed.spells) sc.spells = parsed.spells;
+}
+
+// Add new spellcasting
+export function addSpellcasting() {
+    const state = getState();
+    if (!state.editingMonster.spellcasting) state.editingMonster.spellcasting = [];
+    state.editingMonster.spellcasting.push({ 
+        name: 'Spellcasting', 
+        type: 'spellcasting',
+        headerEntries: [] 
+    });
+    renderSpellcasting();
+}
+
+// Remove spellcasting
+function removeSpellcasting(index) {
+    const state = getState();
+    if (state.editingMonster.spellcasting) {
+        state.editingMonster.spellcasting.splice(index, 1);
+        renderSpellcasting();
     }
 }
 
@@ -344,8 +661,14 @@ export default {
     renderForm,
     renderTraits,
     renderActions,
+    renderBonusActions,
+    renderReactions,
+    renderSpellcasting,
     addTrait,
     addAction,
+    addBonusAction,
+    addReaction,
+    addSpellcasting,
     previewMonster,
     saveMonster,
     deleteMonster,

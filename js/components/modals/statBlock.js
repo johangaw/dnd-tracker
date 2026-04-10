@@ -1,7 +1,7 @@
 // Stat Block Modal Component
 
 import * as MonsterAPI from '../../services/monsterApi.js';
-import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, capitalizeFirst } from '../../utils/helpers.js';
+import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
 
 export async function showStatBlockByNameSource(name, source, comment = '') {
     const monster = await MonsterAPI.getMonster(name, source);
@@ -134,16 +134,84 @@ export function renderStatBlock(monster, comment = '') {
     }
 
     // Actions
-    if (monster.action) {
+    if (monster.action || (monster.spellcasting && monster.spellcasting.length > 0)) {
         html += `<div class="section-title">Actions</div>`;
-        monster.action.forEach(action => {
+        
+        // Regular actions
+        if (monster.action) {
+            monster.action.forEach(action => {
+                html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+            });
+        }
+        
+        // Spellcasting (rendered at the end of actions)
+        if (monster.spellcasting && monster.spellcasting.length > 0) {
+            monster.spellcasting.forEach(sc => {
+                html += `<div class="action"><span class="action-name">${sc.name || 'Spellcasting'}.</span> ${formatEntries(sc.headerEntries || [])}</div>`;
+                
+                // At-will spells
+                if (sc.will && sc.will.length > 0) {
+                    html += `<div class="spell-list"><span class="spell-level">At will:</span> ${formatSpellList(sc.will)}</div>`;
+                }
+                
+                // Daily spells (1/day, 2/day, 3/day each)
+                if (sc.daily) {
+                    const dailyOrder = ['3e', '3', '2e', '2', '1e', '1'];
+                    dailyOrder.forEach(key => {
+                        if (sc.daily[key] && sc.daily[key].length > 0) {
+                            const times = key.charAt(0);
+                            const each = key.includes('e') ? ' each' : '';
+                            html += `<div class="spell-list"><span class="spell-level">${times}/day${each}:</span> ${formatSpellList(sc.daily[key])}</div>`;
+                        }
+                    });
+                }
+                
+                // Spell slots by level
+                if (sc.spells) {
+                    Object.keys(sc.spells).sort((a, b) => parseInt(a) - parseInt(b)).forEach(level => {
+                        const spellLevel = sc.spells[level];
+                        if (spellLevel.spells && spellLevel.spells.length > 0) {
+                            let levelLabel;
+                            if (level === '0') {
+                                levelLabel = 'Cantrips (at will):';
+                            } else {
+                                const suffix = level === '1' ? 'st' : level === '2' ? 'nd' : level === '3' ? 'rd' : 'th';
+                                const slots = spellLevel.slots ? ` (${spellLevel.slots} slot${spellLevel.slots > 1 ? 's' : ''})` : '';
+                                levelLabel = `${level}${suffix} level${slots}:`;
+                            }
+                            html += `<div class="spell-list"><span class="spell-level">${levelLabel}</span> ${formatSpellList(spellLevel.spells)}</div>`;
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // Bonus Actions
+    if (monster.bonus) {
+        html += `<div class="section-title">Bonus Actions</div>`;
+        monster.bonus.forEach(action => {
+            html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+        });
+    }
+
+    // Reactions
+    if (monster.reaction) {
+        html += `<div class="section-title">Reactions</div>`;
+        monster.reaction.forEach(action => {
             html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
         });
     }
 
     // Legendary actions
-    if (monster.legendary) {
-        html += `<div class="section-title">Legendary Actions</div>`;
+    if (monster.legendary && monster.legendary.length > 0) {
+        const numActions = monster.legendaryActions || 3;
+        const lairActions = monster.legendaryActionsLair;
+        let actionInfo = `${numActions} action${numActions !== 1 ? 's' : ''}`;
+        if (lairActions && lairActions !== numActions) {
+            actionInfo += `, ${lairActions} in lair`;
+        }
+        html += `<div class="section-title">Legendary Actions <span class="prof-bonus">(${actionInfo})</span></div>`;
         monster.legendary.forEach(action => {
             html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
         });

@@ -87,6 +87,20 @@ export function formatEntries(entries) {
     }).join(' ');
 }
 
+// Format spell list (clean up 5e.tools spell formatting)
+export function formatSpellList(spells) {
+    if (!spells || !Array.isArray(spells)) return '';
+    return spells.map(spell => {
+        if (typeof spell === 'string') {
+            // Clean up {@spell name} tags, keep just the spell name in italics
+            return spell
+                .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, '<i>$1</i>')
+                .replace(/{@[^}]+}/g, '');
+        }
+        return '';
+    }).join(', ');
+}
+
 // Close all modals
 export function closeModals() {
     document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
@@ -123,6 +137,7 @@ export default {
     formatSpeed,
     formatDamageTypes,
     formatEntries,
+    formatSpellList,
     closeModals,
     hideContextMenu,
     showToast

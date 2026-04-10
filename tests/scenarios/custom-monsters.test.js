@@ -278,6 +278,86 @@ describe('Custom Monsters', () => {
             expect(monsters[0].action.length).toBe(1)
             expect(monsters[0].action[0].name).toBe('Multiattack')
         })
+
+        it('adds bonus actions to monster', async () => {
+            await click('#menu-btn')
+            await click('#menu-custom-monsters')
+            await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
+            
+            await type('#monster-name', 'Bonus Monster')
+            await click('#add-bonus-btn')
+            
+            // Should have bonus action form fields
+            expect(exists('.bonus-item')).toBe(true)
+            expect(exists('.bonus-name')).toBe(true)
+            
+            // Fill in bonus action
+            await type('.bonus-name', 'Cunning Action')
+            await type('.bonus-desc', 'Can Dash, Disengage, or Hide as a bonus action')
+            
+            await submitForm('#custom-monster-form')
+            
+            // Check saved monster has bonus action
+            const monsters = CustomMonsters.getCustomMonsters()
+            expect(monsters[0].bonus.length).toBe(1)
+            expect(monsters[0].bonus[0].name).toBe('Cunning Action')
+        })
+
+        it('adds reactions to monster', async () => {
+            await click('#menu-btn')
+            await click('#menu-custom-monsters')
+            await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
+            
+            await type('#monster-name', 'Reaction Monster')
+            await click('#add-reaction-btn')
+            
+            // Should have reaction form fields
+            expect(exists('.reaction-item')).toBe(true)
+            expect(exists('.reaction-name')).toBe(true)
+            
+            // Fill in reaction
+            await type('.reaction-name', 'Parry')
+            await type('.reaction-desc', 'Adds 2 to AC against one melee attack')
+            
+            await submitForm('#custom-monster-form')
+            
+            // Check saved monster has reaction
+            const monsters = CustomMonsters.getCustomMonsters()
+            expect(monsters[0].reaction.length).toBe(1)
+            expect(monsters[0].reaction[0].name).toBe('Parry')
+        })
+
+        it('adds spellcasting to monster', async () => {
+            await click('#menu-btn')
+            await click('#menu-custom-monsters')
+            await click('#new-custom-monster-btn')
+            await click('#choice-create-new')
+            
+            await type('#monster-name', 'Spellcasting Monster')
+            await click('#add-spellcasting-btn')
+            
+            // Should have spellcasting form fields
+            expect(exists('.spellcasting-item')).toBe(true)
+            expect(exists('.spellcasting-name')).toBe(true)
+            expect(exists('.spellcasting-header')).toBe(true)
+            expect(exists('.spellcasting-spells')).toBe(true)
+            
+            // Fill in spellcasting
+            await type('.spellcasting-name', 'Innate Spellcasting')
+            await type('.spellcasting-header', 'The creature can cast spells using Charisma (spell save DC 15).')
+            await type('.spellcasting-spells', 'At will: detect magic, light\n1/day each: fireball, lightning bolt')
+            
+            await submitForm('#custom-monster-form')
+            
+            // Check saved monster has spellcasting
+            const monsters = CustomMonsters.getCustomMonsters()
+            expect(monsters[0].spellcasting.length).toBe(1)
+            expect(monsters[0].spellcasting[0].name).toBe('Innate Spellcasting')
+            expect(monsters[0].spellcasting[0].will).toContain('detect magic')
+            expect(monsters[0].spellcasting[0].daily['1e']).toContain('fireball')
+        })
     })
 
     describe('Edit Custom Monster', () => {
@@ -539,6 +619,137 @@ describe('Custom Monsters', () => {
             
             // Monster should be in the list
             expect(document.querySelector('#monster-list').textContent).toContain('Custom Goblin')
+        })
+    })
+
+    describe('Stat Block Spellcasting', () => {
+        it('renders spellcasting with at-will spells', async () => {
+            const { renderStatBlock } = await import('../../js/components/modals/statBlock.js')
+            
+            const monster = {
+                name: 'Mage',
+                size: ['M'],
+                type: 'humanoid',
+                alignment: ['N'],
+                ac: [{ ac: 12 }],
+                hp: { average: 40 },
+                speed: { walk: 30 },
+                str: 10, dex: 14, con: 12, int: 17, wis: 12, cha: 11,
+                cr: '6',
+                spellcasting: [{
+                    name: 'Innate Spellcasting',
+                    type: 'spellcasting',
+                    headerEntries: ['The mage can innately cast the following spells.'],
+                    will: ['{@spell detect magic}', '{@spell light}']
+                }]
+            }
+            
+            const html = renderStatBlock(monster)
+            
+            expect(html).toContain('Innate Spellcasting')
+            expect(html).toContain('At will:')
+            expect(html).toContain('detect magic')
+            expect(html).toContain('light')
+        })
+
+        it('renders spellcasting with daily spells', async () => {
+            const { renderStatBlock } = await import('../../js/components/modals/statBlock.js')
+            
+            const monster = {
+                name: 'Drow',
+                size: ['M'],
+                type: 'humanoid',
+                alignment: ['N', 'E'],
+                ac: [{ ac: 15 }],
+                hp: { average: 45 },
+                speed: { walk: 30 },
+                str: 10, dex: 14, con: 10, int: 11, wis: 11, cha: 12,
+                cr: '1',
+                spellcasting: [{
+                    name: 'Innate Spellcasting',
+                    type: 'spellcasting',
+                    headerEntries: ['The drow can cast spells using Charisma.'],
+                    daily: {
+                        '1e': ['{@spell darkness}', '{@spell faerie fire}']
+                    }
+                }]
+            }
+            
+            const html = renderStatBlock(monster)
+            
+            expect(html).toContain('Innate Spellcasting')
+            expect(html).toContain('1/day each:')
+            expect(html).toContain('darkness')
+            expect(html).toContain('faerie fire')
+        })
+
+        it('renders spellcasting with spell slots', async () => {
+            const { renderStatBlock } = await import('../../js/components/modals/statBlock.js')
+            
+            const monster = {
+                name: 'Wizard',
+                size: ['M'],
+                type: 'humanoid',
+                alignment: ['N'],
+                ac: [{ ac: 12 }],
+                hp: { average: 40 },
+                speed: { walk: 30 },
+                str: 9, dex: 14, con: 11, int: 17, wis: 12, cha: 11,
+                cr: '6',
+                spellcasting: [{
+                    name: 'Spellcasting',
+                    type: 'spellcasting',
+                    headerEntries: ['The wizard is a 9th-level spellcaster.'],
+                    spells: {
+                        '0': { spells: ['{@spell fire bolt}', '{@spell light}'] },
+                        '1': { slots: 4, spells: ['{@spell magic missile}', '{@spell shield}'] },
+                        '2': { slots: 3, spells: ['{@spell misty step}', '{@spell suggestion}'] }
+                    }
+                }]
+            }
+            
+            const html = renderStatBlock(monster)
+            
+            expect(html).toContain('Spellcasting')
+            expect(html).toContain('Cantrips (at will):')
+            expect(html).toContain('fire bolt')
+            expect(html).toContain('1st level (4 slots):')
+            expect(html).toContain('magic missile')
+            expect(html).toContain('2nd level (3 slots):')
+            expect(html).toContain('misty step')
+        })
+
+        it('renders spellcasting in Actions section', async () => {
+            const { renderStatBlock } = await import('../../js/components/modals/statBlock.js')
+            
+            const monster = {
+                name: 'Caster',
+                size: ['M'],
+                type: 'humanoid',
+                alignment: ['N'],
+                ac: [{ ac: 12 }],
+                hp: { average: 30 },
+                speed: { walk: 30 },
+                str: 10, dex: 12, con: 12, int: 16, wis: 12, cha: 10,
+                cr: '3',
+                spellcasting: [{
+                    name: 'Spellcasting',
+                    type: 'spellcasting',
+                    headerEntries: ['The caster can cast spells.'],
+                    will: ['{@spell fire bolt}']
+                }],
+                action: [{
+                    name: 'Dagger',
+                    entries: ['Melee attack: +4 to hit, 1d4+2 damage.']
+                }]
+            }
+            
+            const html = renderStatBlock(monster)
+            
+            // Actions section should contain both spellcasting and regular actions
+            expect(html).toContain('Actions')
+            expect(html).toContain('Spellcasting')
+            expect(html).toContain('Dagger')
         })
     })
 })
