@@ -16,7 +16,8 @@ import {
   seedEncounter,
   getStoredEncounters,
   setChecked,
-  longPress
+  longPress,
+  reloadApp
 } from '../helpers.js'
 
 describe('Encounter CRUD', () => {
@@ -167,7 +168,8 @@ describe('Encounter CRUD', () => {
         pcs: [{ name: 'Original PC' }],
         monsters: []
       })
-      await initApp()
+      // Use reloadApp() instead of initApp() to avoid re-adding event handlers
+      await reloadApp()
     })
 
     it('opens edit form via context menu', async () => {
@@ -218,7 +220,8 @@ describe('Encounter CRUD', () => {
   describe('Delete Encounter', () => {
     beforeEach(async () => {
       seedEncounter({ id: 'delete-test', title: 'To Be Deleted' })
-      await initApp()
+      // Use reloadApp() instead of initApp() to avoid re-adding event handlers
+      await reloadApp()
     })
 
     it('deletes encounter via context menu', async () => {
@@ -270,7 +273,8 @@ describe('Encounter CRUD', () => {
         pcs: [{ name: 'Hero' }],
         monsters: []
       })
-      await initApp()
+      // Use reloadApp() instead of initApp() to avoid re-adding event handlers
+      await reloadApp()
     })
 
     it('duplicates encounter via context menu', async () => {

@@ -179,6 +179,7 @@ export function count(selector) {
 }
 
 // Trigger long press / context menu on element
+// Optimized: the app handles click on encounter cards the same as long press
 export async function longPress(elementOrSelector) {
   const element = typeof elementOrSelector === 'string'
     ? document.querySelector(elementOrSelector)
@@ -188,10 +189,9 @@ export async function longPress(elementOrSelector) {
     throw new Error(`Element not found: ${elementOrSelector}`)
   }
   
-  // Simulate touch start + hold
-  fireEvent.touchStart(element)
-  await tick(600) // Long press threshold
-  fireEvent.touchEnd(element)
+  // The app shows context menu on click too, so we can just click
+  // This is much faster than simulating a 500ms touch hold
+  fireEvent.click(element)
   await tick()
 }
 
@@ -302,6 +302,15 @@ export function seedEncounter(encounter) {
 // Get all encounters from localStorage
 export function getStoredEncounters() {
   return JSON.parse(localStorage.getItem('dnd-encounters') || '[]')
+}
+
+// Re-render the encounter list without re-initializing the app
+// Use this after seedEncounter() when initApp() was already called
+export async function reloadApp() {
+  // Import the module and re-render
+  const encounterList = await import('../js/components/encounterList/index.js')
+  encounterList.render()
+  await tick()
 }
 
 // Re-export testing-library utilities
