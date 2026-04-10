@@ -366,6 +366,25 @@
                         <div id="spellcasting-list" class="item-list"></div>
                     </div>
 
+                    <!-- Legendary Actions -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Legendary Actions</h3>
+                            <button type="button" id="add-legendary-btn" class="btn btn-small">+ Add Legendary</button>
+                        </div>
+                        <div class="legendary-config">
+                            <label>
+                                Actions per round:
+                                <input type="number" id="legendary-actions-count" min="1" max="5" value="3">
+                            </label>
+                            <label>
+                                In lair (0 = same):
+                                <input type="number" id="legendary-actions-lair" min="0" max="6" value="0">
+                            </label>
+                        </div>
+                        <div id="legendary-list" class="item-list"></div>
+                    </div>
+
                     <div class="form-actions">
                         <button type="button" id="preview-monster-btn" class="btn">Preview</button>
                         <button type="submit" class="btn btn-primary">Save Monster</button>

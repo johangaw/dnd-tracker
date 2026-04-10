@@ -386,6 +386,11 @@ function initEventHandlers() {
         CustomMonsterEdit.addSpellcasting();
     });
 
+    // Add legendary action button
+    document.getElementById('add-legendary-btn').addEventListener('click', () => {
+        CustomMonsterEdit.addLegendaryAction();
+    });
+
     // CR change - update proficiency bonus
     document.getElementById('monster-cr').addEventListener('change', () => {
         CustomMonsterEdit.onCRChange();

@@ -91,7 +91,8 @@
 .action-item,
 .bonus-item,
 .reaction-item,
-.spellcasting-item {
+.spellcasting-item,
+.legendary-item {
     display: flex;
     gap: 8px;
     align-items: flex-start;
@@ -105,7 +106,8 @@
 .action-content,
 .bonus-content,
 .reaction-content,
-.spellcasting-content {
+.spellcasting-content,
+.legendary-content {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -116,7 +118,8 @@
 .action-name,
 .bonus-name,
 .reaction-name,
-.spellcasting-name {
+.spellcasting-name,
+.legendary-name {
     font-weight: bold;
 }
 
@@ -125,9 +128,35 @@
 .bonus-desc,
 .reaction-desc,
 .spellcasting-header,
-.spellcasting-spells {
+.spellcasting-spells,
+.legendary-desc {
     min-height: 60px;
     resize: vertical;
+}
+
+/* Legendary actions config */
+.legendary-config {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.legendary-config label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.legendary-config input {
+    width: 60px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
 }
 
 .empty-hint {

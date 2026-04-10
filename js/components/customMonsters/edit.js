@@ -66,6 +66,7 @@ export function renderForm() {
     renderBonusActions();
     renderReactions();
     renderSpellcasting();
+    renderLegendaryActions();
     
     // Show delete button only for existing monsters
     const deleteBtn = document.getElementById('delete-monster-btn');
@@ -280,6 +281,45 @@ export function renderSpellcasting() {
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => removeSpellcasting(parseInt(btn.dataset.index)));
+    });
+}
+
+// Render legendary actions list
+export function renderLegendaryActions() {
+    const state = getState();
+    const monster = state.editingMonster;
+    const container = document.getElementById('legendary-list');
+    
+    // Set legendary action counts
+    document.getElementById('legendary-actions-count').value = monster.legendaryActions || 3;
+    document.getElementById('legendary-actions-lair').value = monster.legendaryActionsLair || 0;
+    
+    const legendary = monster.legendary || [];
+    
+    if (legendary.length === 0) {
+        container.innerHTML = '<p class="empty-hint">No legendary actions added</p>';
+        return;
+    }
+    
+    container.innerHTML = legendary.map((action, index) => `
+        <div class="legendary-item item-row" data-index="${index}">
+            <div class="legendary-content">
+                <input type="text" class="legendary-name" value="${escapeHtml(action.name || '')}" placeholder="Legendary action name (e.g., 'Attack' or 'Wing Attack (Costs 2 Actions)')">
+                <textarea class="legendary-desc" placeholder="Description">${escapeHtml(formatEntries(action.entries))}</textarea>
+            </div>
+            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+        </div>
+    `).join('');
+    
+    // Add change handlers
+    container.querySelectorAll('.legendary-name').forEach((input, i) => {
+        input.addEventListener('change', () => updateLegendaryAction(i, 'name', input.value));
+    });
+    container.querySelectorAll('.legendary-desc').forEach((textarea, i) => {
+        textarea.addEventListener('change', () => updateLegendaryAction(i, 'entries', textarea.value));
+    });
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeLegendaryAction(parseInt(btn.dataset.index)));
     });
 }
 
@@ -564,6 +604,36 @@ function removeSpellcasting(index) {
     }
 }
 
+// Update legendary action
+function updateLegendaryAction(index, field, value) {
+    const state = getState();
+    if (!state.editingMonster.legendary) state.editingMonster.legendary = [];
+    if (!state.editingMonster.legendary[index]) state.editingMonster.legendary[index] = {};
+    
+    if (field === 'entries') {
+        state.editingMonster.legendary[index].entries = parseEntries(value);
+    } else {
+        state.editingMonster.legendary[index][field] = value;
+    }
+}
+
+// Add new legendary action
+export function addLegendaryAction() {
+    const state = getState();
+    if (!state.editingMonster.legendary) state.editingMonster.legendary = [];
+    state.editingMonster.legendary.push({ name: '', entries: [] });
+    renderLegendaryActions();
+}
+
+// Remove legendary action
+function removeLegendaryAction(index) {
+    const state = getState();
+    if (state.editingMonster.legendary) {
+        state.editingMonster.legendary.splice(index, 1);
+        renderLegendaryActions();
+    }
+}
+
 // Collect form data into monster object
 function collectFormData() {
     const state = getState();
@@ -590,6 +660,21 @@ function collectFormData() {
     monster.int = parseInt(document.getElementById('monster-int').value) || 10;
     monster.wis = parseInt(document.getElementById('monster-wis').value) || 10;
     monster.cha = parseInt(document.getElementById('monster-cha').value) || 10;
+    
+    // Legendary actions config
+    const legendaryCount = parseInt(document.getElementById('legendary-actions-count').value) || 3;
+    const legendaryLair = parseInt(document.getElementById('legendary-actions-lair').value) || 0;
+    if (monster.legendary && monster.legendary.length > 0) {
+        monster.legendaryActions = legendaryCount;
+        if (legendaryLair > 0 && legendaryLair !== legendaryCount) {
+            monster.legendaryActionsLair = legendaryLair;
+        } else {
+            delete monster.legendaryActionsLair;
+        }
+    } else {
+        delete monster.legendaryActions;
+        delete monster.legendaryActionsLair;
+    }
     
     monster.source = 'Custom';
     monster.isCustom = true;
@@ -664,11 +749,13 @@ export default {
     renderBonusActions,
     renderReactions,
     renderSpellcasting,
+    renderLegendaryActions,
     addTrait,
     addAction,
     addBonusAction,
     addReaction,
     addSpellcasting,
+    addLegendaryAction,
     previewMonster,
     saveMonster,
     deleteMonster,
