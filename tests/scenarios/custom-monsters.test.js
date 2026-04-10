@@ -460,6 +460,13 @@ describe('Custom Monsters', () => {
             
             expect(document.getElementById('custom-monster-edit-view').classList.contains('active')).toBe(true)
         })
+
+        it('opens baseline search from choice modal', async () => {
+            await click('#new-custom-monster-btn')
+            await click('#choice-from-existing')
+            
+            expect(isVisible('#baseline-search-modal')).toBe(true)
+        })
     })
 
     describe('Integration with Encounter Search', () => {

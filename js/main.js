@@ -329,6 +329,14 @@ function initEventHandlers() {
         CustomMonsterEdit.init();
     });
 
+    // Choice modal - From Existing
+    document.getElementById('choice-from-existing').addEventListener('click', () => {
+        closeModals();
+        document.getElementById('baseline-search-input').value = '';
+        document.getElementById('baseline-search-results').innerHTML = '';
+        document.getElementById('baseline-search-modal').classList.add('active');
+    });
+
     // Choice modal - Import JSON
     document.getElementById('choice-import-json').addEventListener('click', () => {
         closeModals();
