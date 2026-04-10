@@ -88,7 +88,10 @@
 
 /* Trait/Action Items */
 .trait-item,
-.action-item {
+.action-item,
+.bonus-item,
+.reaction-item,
+.spellcasting-item {
     display: flex;
     gap: 8px;
     align-items: flex-start;
@@ -99,7 +102,10 @@
 }
 
 .trait-content,
-.action-content {
+.action-content,
+.bonus-content,
+.reaction-content,
+.spellcasting-content {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -107,12 +113,19 @@
 }
 
 .trait-name,
-.action-name {
+.action-name,
+.bonus-name,
+.reaction-name,
+.spellcasting-name {
     font-weight: bold;
 }
 
 .trait-desc,
-.action-desc {
+.action-desc,
+.bonus-desc,
+.reaction-desc,
+.spellcasting-header,
+.spellcasting-spells {
     min-height: 60px;
     resize: vertical;
 }
