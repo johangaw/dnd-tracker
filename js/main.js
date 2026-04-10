@@ -404,9 +404,6 @@ function initEventHandlers() {
                         prompt('Copy this link to share:', url);
                     });
                     break;
-                case 'use-baseline':
-                    CustomMonsterEdit.initFromBaseline(monster);
-                    break;
                 case 'delete':
                     if (confirm(`Delete "${monster.name}"?`)) {
                         CustomMonsters.deleteCustomMonster(monsterId);

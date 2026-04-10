@@ -380,16 +380,6 @@ describe('Custom Monsters', () => {
             expect(url).toContain('?importMonster=')
         })
 
-        it('uses monster as baseline', async () => {
-            await click('.monster-card')
-            const monsterMenu = document.getElementById('monster-context-menu')
-            await click(monsterMenu.querySelector('[data-action="use-baseline"]'))
-            
-            expect(document.getElementById('custom-monster-edit-view').classList.contains('active')).toBe(true)
-            // Should have new ID and modified name
-            expect(getValue('#monster-name')).toBe('Context Monster (Custom)')
-        })
-
         it('deletes monster from context menu', async () => {
             vi.spyOn(window, 'confirm').mockReturnValue(true)
             
