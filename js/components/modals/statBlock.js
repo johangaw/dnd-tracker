@@ -188,7 +188,7 @@ export function renderStatBlock(monster, comment = '') {
     }
 
     // Bonus Actions
-    if (monster.bonus) {
+    if (monster.bonus && monster.bonus.length > 0) {
         html += `<div class="section-title">Bonus Actions</div>`;
         monster.bonus.forEach(action => {
             html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
@@ -196,7 +196,7 @@ export function renderStatBlock(monster, comment = '') {
     }
 
     // Reactions
-    if (monster.reaction) {
+    if (monster.reaction && monster.reaction.length > 0) {
         html += `<div class="section-title">Reactions</div>`;
         monster.reaction.forEach(action => {
             html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
