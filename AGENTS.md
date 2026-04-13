@@ -21,3 +21,6 @@
 - Components go in `js/components/`
 - Services go in `js/services/`
 - Utilities go in `js/utils/`
+
+## Code version control
+- Do not commit changes unless explicitly told so or if you were able to verify the changes yourself.
