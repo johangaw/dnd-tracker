@@ -1,6 +1,7 @@
 // Stat Block Modal Component
 
 import * as MonsterAPI from '../../services/monsterApi.js';
+import { getLegendaryGroup, formatLegendaryEntries } from '../../services/legendaryGroups.js';
 import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, formatName, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
 
 /**
@@ -31,13 +32,22 @@ export async function showStatBlockByNameSource(name, source, comment = '') {
 
     const modal = document.getElementById('stat-block-modal');
     document.getElementById('stat-block-name').textContent = monster.name;
-    document.getElementById('stat-block-content').innerHTML = renderStatBlock(monster, comment);
     
+    // Render base stat block
+    let html = renderStatBlock(monster, comment);
+    
+    // Fetch and append lair actions/regional effects if monster has legendaryGroup
+    const lairHtml = await renderLairSection(monster);
+    if (lairHtml) {
+        html += lairHtml;
+    }
+    
+    document.getElementById('stat-block-content').innerHTML = html;
     modal.classList.add('active');
 }
 
 // Show stat block for a monster object directly (used for custom monsters)
-export function showStatBlock(monster, comment = '') {
+export async function showStatBlock(monster, comment = '') {
     if (!monster) {
         alert('Could not load monster stats');
         return;
@@ -45,9 +55,46 @@ export function showStatBlock(monster, comment = '') {
 
     const modal = document.getElementById('stat-block-modal');
     document.getElementById('stat-block-name').textContent = monster.name;
-    document.getElementById('stat-block-content').innerHTML = renderStatBlock(monster, comment);
     
+    // Render base stat block
+    let html = renderStatBlock(monster, comment);
+    
+    // Fetch and append lair actions/regional effects if monster has legendaryGroup
+    const lairHtml = await renderLairSection(monster);
+    if (lairHtml) {
+        html += lairHtml;
+    }
+    
+    document.getElementById('stat-block-content').innerHTML = html;
     modal.classList.add('active');
+}
+
+/**
+ * Render lair actions and regional effects section
+ * @param {Object} monster - The monster object
+ * @returns {Promise<string>} HTML string for lair section
+ */
+async function renderLairSection(monster) {
+    const legendaryGroup = await getLegendaryGroup(monster);
+    if (!legendaryGroup) return '';
+    
+    let html = '';
+    
+    // Lair Actions
+    if (legendaryGroup.lairActions && legendaryGroup.lairActions.length > 0) {
+        html += `<div class="divider"></div>`;
+        html += `<div class="section-title lair-title">Lair Actions</div>`;
+        html += `<div class="lair-section">${formatLegendaryEntries(legendaryGroup.lairActions, formatEntries)}</div>`;
+    }
+    
+    // Regional Effects
+    if (legendaryGroup.regionalEffects && legendaryGroup.regionalEffects.length > 0) {
+        html += `<div class="divider"></div>`;
+        html += `<div class="section-title lair-title">Regional Effects</div>`;
+        html += `<div class="lair-section">${formatLegendaryEntries(legendaryGroup.regionalEffects, formatEntries)}</div>`;
+    }
+    
+    return html;
 }
 
 export function renderStatBlock(monster, comment = '') {

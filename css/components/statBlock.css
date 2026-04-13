@@ -195,3 +195,31 @@
 #dm-notes-input::placeholder {
     color: var(--text-muted);
 }
+
+/* Lair Actions and Regional Effects */
+.stat-block .lair-title {
+    color: #4a6741;
+    border-bottom-color: #4a6741;
+}
+
+.stat-block .lair-section {
+    font-size: 0.85rem;
+}
+
+.stat-block .lair-section p.lair-text {
+    margin: 6px 0;
+}
+
+.stat-block .lair-section ul.lair-list {
+    margin: 6px 0 6px 20px;
+    padding: 0;
+}
+
+.stat-block .lair-section ul.lair-list li {
+    margin: 6px 0;
+}
+
+.stat-block .lair-section .lair-subheader {
+    margin: 10px 0 4px;
+    font-weight: 600;
+}

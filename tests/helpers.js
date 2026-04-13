@@ -2,6 +2,34 @@
 import { fireEvent, waitFor, getByText, queryByText, getByPlaceholderText, getByRole } from '@testing-library/dom'
 import { mockIndex, mockBestiary, getMockMonster } from './mocks/monsters.js'
 
+// Mock legendary groups data
+const mockLegendaryGroups = {
+  legendaryGroup: [
+    {
+      name: 'Aboleth',
+      source: 'MM',
+      lairActions: [
+        'When fighting inside its lair, an aboleth can invoke the ambient magic to take lair actions.',
+        {
+          type: 'list',
+          items: [
+            'The aboleth casts phantasmal force on any number of creatures it can see within 60 feet of it.'
+          ]
+        }
+      ],
+      regionalEffects: [
+        'The region containing an aboleth\'s lair is warped by the creature\'s presence.',
+        {
+          type: 'list',
+          items: [
+            'Underground surfaces within 1 mile of the aboleth\'s lair are slimy and wet.'
+          ]
+        }
+      ]
+    }
+  ]
+}
+
 // Setup fetch mock for monster data
 export function setupFetchMock() {
   globalThis.fetch = async (url) => {
@@ -18,6 +46,14 @@ export function setupFetchMock() {
       return {
         ok: true,
         json: async () => mockBestiary
+      }
+    }
+    
+    // Handle legendary groups
+    if (url.includes('legendarygroups.json')) {
+      return {
+        ok: true,
+        json: async () => mockLegendaryGroups
       }
     }
     

@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { initApp, click, tick, exists, getText } from '../helpers.js'
 import { formatEntries, formatName } from '../../js/utils/helpers.js'
 import { renderStatBlock } from '../../js/components/modals/statBlock.js'
+import { getLegendaryGroup, formatLegendaryEntries } from '../../js/services/legendaryGroups.js'
+import legendaryGroupsService from '../../js/services/legendaryGroups.js'
 
 describe('Stat Block', () => {
     beforeEach(async () => {
@@ -12,6 +14,8 @@ describe('Stat Block', () => {
     afterEach(() => {
         localStorage.clear()
         vi.restoreAllMocks()
+        // Reset legendary groups cache
+        legendaryGroupsService.resetCache()
     })
 
     describe('formatEntries', () => {
@@ -223,6 +227,78 @@ describe('Stat Block', () => {
             }
             const html = renderStatBlock(monster)
             expect(html).toContain('onerror="this.style.display=\'none\'"')
+        })
+    })
+
+    describe('Legendary Groups', () => {
+        it('returns null for monster without legendaryGroup', async () => {
+            const monster = { name: 'Goblin', source: 'MM' }
+            const result = await getLegendaryGroup(monster)
+            expect(result).toBeNull()
+        })
+
+        it('returns legendary group data for monster with legendaryGroup', async () => {
+            const monster = {
+                name: 'Aboleth',
+                source: 'MM',
+                legendaryGroup: { name: 'Aboleth', source: 'MM' }
+            }
+            const result = await getLegendaryGroup(monster)
+            expect(result).toBeTruthy()
+            expect(result.name).toBe('Aboleth')
+            expect(result.lairActions).toBeDefined()
+        })
+
+        it('formats simple text entries', () => {
+            const entries = ['This is a simple text entry.']
+            const html = formatLegendaryEntries(entries, formatEntries)
+            expect(html).toContain('This is a simple text entry.')
+            expect(html).toContain('lair-text')
+        })
+
+        it('formats list entries', () => {
+            const entries = [
+                {
+                    type: 'list',
+                    items: ['First item', 'Second item']
+                }
+            ]
+            const html = formatLegendaryEntries(entries, formatEntries)
+            expect(html).toContain('<ul class="lair-list">')
+            expect(html).toContain('First item')
+            expect(html).toContain('Second item')
+        })
+
+        it('formats named list items', () => {
+            const entries = [
+                {
+                    type: 'list',
+                    items: [
+                        {
+                            type: 'item',
+                            name: 'Teleport',
+                            entries: ['The creature teleports up to 60 feet.']
+                        }
+                    ]
+                }
+            ]
+            const html = formatLegendaryEntries(entries, formatEntries)
+            expect(html).toContain('<strong>Teleport.</strong>')
+            expect(html).toContain('teleports up to 60 feet')
+        })
+
+        it('formats entries with 5e.tools tags', () => {
+            const entries = [
+                {
+                    type: 'list',
+                    items: ['The target must succeed on a {@dc 15} Wisdom saving throw or be {@condition Frightened|XPHB}.']
+                }
+            ]
+            const html = formatLegendaryEntries(entries, formatEntries)
+            expect(html).toContain('DC 15')
+            expect(html).toContain('Frightened')
+            expect(html).not.toContain('{@dc')
+            expect(html).not.toContain('{@condition')
         })
     })
 })
