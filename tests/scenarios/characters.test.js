@@ -318,6 +318,51 @@ describe('Character List Component', () => {
         expect(content).toContain('Test Wizard')
         expect(content).toContain('Wizard 5')
     })
+
+    it('opens character view when clicking view in context menu', async () => {
+        // Create a character with ability scores and skills
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Gandalf the Grey'
+        character.class = 'Wizard'
+        character.level = 10
+        character.abilities = { str: 10, dex: 14, con: 12, int: 18, wis: 16, cha: 14 }
+        character.skillProficiencies = { arcana: true, history: true, perception: true }
+        character.armorClass = 15
+        character.hitPointsMax = 52
+        character.hitPointsCurrent = 52
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card to open context menu
+        const card = document.querySelector('.character-card')
+        expect(card).toBeTruthy()
+        await click(card)
+        await tick()
+        
+        // Click view action
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Verify character view is active and shows character data
+        expect(exists('#character-view-section.active')).toBe(true)
+        const viewContent = getText('#character-view-content')
+        expect(viewContent).toContain('Gandalf the Grey')
+        expect(viewContent).toContain('Wizard')
+        
+        // Verify ability scores are displayed
+        expect(viewContent).toContain('18') // INT score
+        expect(viewContent).toContain('+4') // INT modifier
+        
+        // Verify skills section is rendered with skill names
+        expect(viewContent).toContain('Arcana')
+        expect(viewContent).toContain('History')
+        expect(viewContent).toContain('Perception')
+    })
 })
 
 describe('Skills Configuration', () => {

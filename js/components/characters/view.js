@@ -94,50 +94,52 @@ export function render(characterId) {
                 </div>
             </section>
 
-            <!-- Ability Scores & Skills Section (Grouped) -->
+            <!-- Ability Scores Section -->
             <section class="character-abilities-section">
-                <h2>Abilities & Skills</h2>
-                <div class="abilities-skills-grouped">
+                <h2>Ability Scores</h2>
+                <div class="abilities-grid">
                     ${Characters.ABILITIES.map(ability => {
                         const score = character.abilities?.[ability] || 10;
                         const mod = Characters.getAbilityModifier(score);
                         const saveMod = Characters.getSavingThrowModifier(character, ability);
                         const hasSaveProf = character.saveProficiencies?.[ability];
-                        const skills = Characters.SKILLS_BY_ABILITY[ability] || [];
                         
                         return `
-                            <div class="ability-group">
-                                <div class="ability-box">
-                                    <div class="ability-name">${Characters.ABILITY_NAMES[ability]}</div>
-                                    <div class="ability-score">${score}</div>
-                                    <div class="ability-mod">${Characters.formatModifier(mod)}</div>
-                                    <div class="ability-save ${hasSaveProf ? 'proficient' : ''}">
-                                        Save: ${Characters.formatModifier(saveMod)}
-                                        ${hasSaveProf ? ' ●' : ''}
-                                    </div>
+                            <div class="ability-box">
+                                <div class="ability-name">${Characters.ABILITY_NAMES[ability]}</div>
+                                <div class="ability-score">${score}</div>
+                                <div class="ability-mod">${Characters.formatModifier(mod)}</div>
+                                <div class="ability-save ${hasSaveProf ? 'proficient' : ''}">
+                                    Save: ${Characters.formatModifier(saveMod)}
+                                    ${hasSaveProf ? ' ●' : ''}
                                 </div>
-                                ${skills.length > 0 ? `
-                                    <div class="ability-skills">
-                                        ${skills.map(skillKey => {
-                                            const skillMod = Characters.getSkillModifier(character, skillKey);
-                                            const isProf = character.skillProficiencies?.[skillKey];
-                                            const isExpert = character.skillExpertise?.[skillKey];
-                                            
-                                            return `
-                                                <div class="skill-row ${isProf ? 'proficient' : ''} ${isExpert ? 'expertise' : ''}">
-                                                    <span class="skill-prof-indicator">${isExpert ? '◆' : isProf ? '●' : '○'}</span>
-                                                    <span class="skill-mod">${Characters.formatModifier(skillMod)}</span>
-                                                    <span class="skill-name">${Characters.SKILL_NAMES[skillKey]}</span>
-                                                </div>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                ` : ''}
                             </div>
                         `;
                     }).join('')}
                 </div>
                 <div class="proficiency-bonus">Proficiency Bonus: +${profBonus}</div>
+            </section>
+
+            <!-- Skills Section -->
+            <section class="character-skills-section">
+                <h2>Skills</h2>
+                <div class="skills-list">
+                    ${Object.keys(Characters.SKILL_NAMES).sort().map(skillKey => {
+                        const skillMod = Characters.getSkillModifier(character, skillKey);
+                        const isProf = character.skillProficiencies?.[skillKey];
+                        const isExpert = character.skillExpertise?.[skillKey];
+                        const ability = Characters.SKILLS[skillKey];
+                        
+                        return `
+                            <div class="skill-row ${isProf ? 'proficient' : ''} ${isExpert ? 'expertise' : ''}">
+                                <span class="skill-prof-indicator">${isExpert ? '◆' : isProf ? '●' : '○'}</span>
+                                <span class="skill-mod">${Characters.formatModifier(skillMod)}</span>
+                                <span class="skill-name">${Characters.SKILL_NAMES[skillKey]}</span>
+                                <span class="skill-ability">(${ability.substring(0, 3).toUpperCase()})</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
                 <div class="passive-perception">
                     Passive Perception: ${Characters.getPassivePerception(character)}
                 </div>

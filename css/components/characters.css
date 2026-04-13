@@ -74,6 +74,7 @@
 /* Character Sheet */
 .character-sheet {
     padding-bottom: 24px;
+    overflow: hidden;
 }
 
 .character-sheet section {
@@ -81,6 +82,7 @@
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
+    overflow: hidden;
 }
 
 /* Header Section */
@@ -262,57 +264,6 @@
     font-size: 1rem;
     color: var(--text-secondary);
     text-transform: uppercase;
-}
-
-/* Grouped Abilities & Skills (View) */
-.abilities-skills-grouped {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-}
-
-@media (min-width: 500px) {
-    .abilities-skills-grouped {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 768px) {
-    .abilities-skills-grouped {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.ability-group {
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.ability-group .ability-box {
-    text-align: center;
-    padding: 8px;
-    background: var(--bg-card);
-    border-radius: 8px;
-}
-
-.ability-group .ability-skills {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.ability-group .skill-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    background: var(--bg-card);
 }
 
 .abilities-grid {
@@ -739,109 +690,67 @@
 /* Abilities Edit Grid */
 .abilities-edit-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     overflow: hidden;
 }
 
 @media (min-width: 400px) {
     .abilities-edit-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (min-width: 600px) {
     .abilities-edit-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(6, 1fr);
     }
 }
 
-/* Abilities & Skills Edit Grid (Grouped) */
-.abilities-skills-edit-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-}
-
-@media (min-width: 500px) {
-    .abilities-skills-edit-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 768px) {
-    .abilities-skills-edit-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.ability-group-edit {
+/* Ability Edit Box (compact box for each ability) */
+.ability-edit-box {
     background: var(--bg-secondary);
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-
-.ability-group-edit .ability-edit-row {
-    background: var(--bg-card);
-}
-
-.ability-skills-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.ability-skills-list .skill-edit-row {
-    background: var(--bg-card);
-}
-
-.ability-edit-row {
-    display: grid;
-    grid-template-columns: 36px 50px 36px auto;
     align-items: center;
     gap: 4px;
-    padding: 8px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    min-width: 0;
-}
-
-@media (min-width: 400px) {
-    .ability-edit-row {
-        grid-template-columns: 40px 60px 40px 1fr;
-        gap: 8px;
-    }
-}
-
-.ability-edit-row label:first-child {
-    font-weight: bold;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.ability-edit-row input[type="number"] {
-    text-align: center;
-    font-weight: bold;
-    min-width: 0;
-}
-
-.ability-mod-display {
-    font-weight: 500;
-    color: var(--color-primary);
     text-align: center;
 }
 
-.save-label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.ability-edit-box > label:first-child {
+    font-weight: bold;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
+    text-transform: uppercase;
+}
+
+.ability-edit-box input[type="number"] {
+    width: 50px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 6px;
+}
+
+.ability-edit-box .ability-mod-display {
+    font-weight: 500;
+    color: var(--color-primary);
+    font-size: 0.95rem;
+}
+
+.save-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.save-checkbox input[type="checkbox"] {
+    margin: 0;
 }
 
 /* Skills Edit Grid */
@@ -864,6 +773,8 @@
     padding: 6px 8px;
     background: var(--bg-secondary);
     border-radius: 4px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .skill-edit-row label {
@@ -871,6 +782,10 @@
     align-items: center;
     gap: 6px;
     font-size: 0.85rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .expertise-label {

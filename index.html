@@ -506,95 +506,75 @@
                         </div>
                     </div>
 
-                    <!-- Abilities & Skills (Grouped) -->
+                    <!-- Ability Scores -->
                     <div class="form-section">
                         <div class="section-header">
-                            <h3>Abilities & Skills</h3>
+                            <h3>Ability Scores</h3>
                         </div>
-                        <div class="abilities-skills-edit-grid">
-                            <!-- STR -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>STR</label>
-                                    <input type="number" id="char-str" min="1" max="30" value="10">
-                                    <span id="char-str-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-str"> Save</label>
-                                </div>
-                                <div class="ability-skills-list">
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-athletics"> Athletics</label><label class="expertise-label"><input type="checkbox" id="char-expertise-athletics"> Exp</label></div>
-                                </div>
+                        <div class="abilities-edit-grid">
+                            <div class="ability-edit-box">
+                                <label>STR</label>
+                                <input type="number" id="char-str" min="1" max="30" value="10">
+                                <span id="char-str-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-str"> Save</label>
                             </div>
-                            <!-- DEX -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>DEX</label>
-                                    <input type="number" id="char-dex" min="1" max="30" value="10">
-                                    <span id="char-dex-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-dex"> Save</label>
-                                </div>
-                                <div class="ability-skills-list">
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-acrobatics"> Acrobatics</label><label class="expertise-label"><input type="checkbox" id="char-expertise-acrobatics"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-sleightOfHand"> Sleight of Hand</label><label class="expertise-label"><input type="checkbox" id="char-expertise-sleightOfHand"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-stealth"> Stealth</label><label class="expertise-label"><input type="checkbox" id="char-expertise-stealth"> Exp</label></div>
-                                </div>
+                            <div class="ability-edit-box">
+                                <label>DEX</label>
+                                <input type="number" id="char-dex" min="1" max="30" value="10">
+                                <span id="char-dex-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-dex"> Save</label>
                             </div>
-                            <!-- CON -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>CON</label>
-                                    <input type="number" id="char-con" min="1" max="30" value="10">
-                                    <span id="char-con-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-con"> Save</label>
-                                </div>
-                                <!-- CON has no associated skills -->
+                            <div class="ability-edit-box">
+                                <label>CON</label>
+                                <input type="number" id="char-con" min="1" max="30" value="10">
+                                <span id="char-con-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-con"> Save</label>
                             </div>
-                            <!-- INT -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>INT</label>
-                                    <input type="number" id="char-int" min="1" max="30" value="10">
-                                    <span id="char-int-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-int"> Save</label>
-                                </div>
-                                <div class="ability-skills-list">
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-arcana"> Arcana</label><label class="expertise-label"><input type="checkbox" id="char-expertise-arcana"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-history"> History</label><label class="expertise-label"><input type="checkbox" id="char-expertise-history"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-investigation"> Investigation</label><label class="expertise-label"><input type="checkbox" id="char-expertise-investigation"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-nature"> Nature</label><label class="expertise-label"><input type="checkbox" id="char-expertise-nature"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-religion"> Religion</label><label class="expertise-label"><input type="checkbox" id="char-expertise-religion"> Exp</label></div>
-                                </div>
+                            <div class="ability-edit-box">
+                                <label>INT</label>
+                                <input type="number" id="char-int" min="1" max="30" value="10">
+                                <span id="char-int-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-int"> Save</label>
                             </div>
-                            <!-- WIS -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>WIS</label>
-                                    <input type="number" id="char-wis" min="1" max="30" value="10">
-                                    <span id="char-wis-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-wis"> Save</label>
-                                </div>
-                                <div class="ability-skills-list">
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-animalHandling"> Animal Handling</label><label class="expertise-label"><input type="checkbox" id="char-expertise-animalHandling"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-insight"> Insight</label><label class="expertise-label"><input type="checkbox" id="char-expertise-insight"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-medicine"> Medicine</label><label class="expertise-label"><input type="checkbox" id="char-expertise-medicine"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-perception"> Perception</label><label class="expertise-label"><input type="checkbox" id="char-expertise-perception"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-survival"> Survival</label><label class="expertise-label"><input type="checkbox" id="char-expertise-survival"> Exp</label></div>
-                                </div>
+                            <div class="ability-edit-box">
+                                <label>WIS</label>
+                                <input type="number" id="char-wis" min="1" max="30" value="10">
+                                <span id="char-wis-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-wis"> Save</label>
                             </div>
-                            <!-- CHA -->
-                            <div class="ability-group-edit">
-                                <div class="ability-edit-row">
-                                    <label>CHA</label>
-                                    <input type="number" id="char-cha" min="1" max="30" value="10">
-                                    <span id="char-cha-mod" class="ability-mod-display">+0</span>
-                                    <label class="save-label"><input type="checkbox" id="char-save-cha"> Save</label>
-                                </div>
-                                <div class="ability-skills-list">
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-deception"> Deception</label><label class="expertise-label"><input type="checkbox" id="char-expertise-deception"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-intimidation"> Intimidation</label><label class="expertise-label"><input type="checkbox" id="char-expertise-intimidation"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-performance"> Performance</label><label class="expertise-label"><input type="checkbox" id="char-expertise-performance"> Exp</label></div>
-                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-persuasion"> Persuasion</label><label class="expertise-label"><input type="checkbox" id="char-expertise-persuasion"> Exp</label></div>
-                                </div>
+                            <div class="ability-edit-box">
+                                <label>CHA</label>
+                                <input type="number" id="char-cha" min="1" max="30" value="10">
+                                <span id="char-cha-mod" class="ability-mod-display">+0</span>
+                                <label class="save-checkbox"><input type="checkbox" id="char-save-cha"> Save</label>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Skills</h3>
+                        </div>
+                        <div class="skills-edit-grid">
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-acrobatics"> Acrobatics</label><span class="skill-ability">(Dex)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-acrobatics"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-animalHandling"> Animal Handling</label><span class="skill-ability">(Wis)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-animalHandling"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-arcana"> Arcana</label><span class="skill-ability">(Int)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-arcana"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-athletics"> Athletics</label><span class="skill-ability">(Str)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-athletics"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-deception"> Deception</label><span class="skill-ability">(Cha)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-deception"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-history"> History</label><span class="skill-ability">(Int)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-history"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-insight"> Insight</label><span class="skill-ability">(Wis)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-insight"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-intimidation"> Intimidation</label><span class="skill-ability">(Cha)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-intimidation"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-investigation"> Investigation</label><span class="skill-ability">(Int)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-investigation"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-medicine"> Medicine</label><span class="skill-ability">(Wis)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-medicine"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-nature"> Nature</label><span class="skill-ability">(Int)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-nature"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-perception"> Perception</label><span class="skill-ability">(Wis)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-perception"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-performance"> Performance</label><span class="skill-ability">(Cha)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-performance"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-persuasion"> Persuasion</label><span class="skill-ability">(Cha)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-persuasion"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-religion"> Religion</label><span class="skill-ability">(Int)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-religion"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-sleightOfHand"> Sleight of Hand</label><span class="skill-ability">(Dex)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-sleightOfHand"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-stealth"> Stealth</label><span class="skill-ability">(Dex)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-stealth"> Exp</label></div>
+                            <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-survival"> Survival</label><span class="skill-ability">(Wis)</span><label class="expertise-label"><input type="checkbox" id="char-expertise-survival"> Exp</label></div>
                         </div>
                     </div>
 
