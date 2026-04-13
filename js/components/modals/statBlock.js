@@ -3,6 +3,24 @@
 import * as MonsterAPI from '../../services/monsterApi.js';
 import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, formatName, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
 
+/**
+ * Generate the 5e.tools token image URL for a monster
+ * URL format: https://5e.tools/img/bestiary/tokens/{SOURCE}/{NAME}.webp
+ * @param {Object} monster - The monster object with name and source properties
+ * @returns {string|null} The token URL or null if monster has no source
+ */
+function getTokenUrl(monster) {
+    if (!monster || !monster.name) return null;
+    
+    // Use the monster's source, defaulting to MM (Monster Manual) for custom monsters
+    const source = monster.source || 'MM';
+    
+    // URL encode the monster name (spaces become %20, etc.)
+    const encodedName = encodeURIComponent(monster.name);
+    
+    return `https://5e.tools/img/bestiary/tokens/${source}/${encodedName}.webp`;
+}
+
 export async function showStatBlockByNameSource(name, source, comment = '') {
     const monster = await MonsterAPI.getMonster(name, source);
     
@@ -37,10 +55,19 @@ export function renderStatBlock(monster, comment = '') {
     const type = formatType(monster.type);
     const alignment = formatAlignment(monster.alignment);
     
+    // Generate token image URL (5e.tools format)
+    const tokenUrl = getTokenUrl(monster);
+    const tokenHtml = tokenUrl 
+        ? `<img class="monster-token" src="${tokenUrl}" alt="${escapeHtml(monster.name)}" onerror="this.style.display='none'">`
+        : '';
+    
     let html = `
         <div class="monster-header">
-            <div class="monster-name">${escapeHtml(monster.name)}</div>
-            <div class="monster-type">${size} ${type}, ${alignment}</div>
+            ${tokenHtml}
+            <div class="monster-header-text">
+                <div class="monster-name">${escapeHtml(monster.name)}</div>
+                <div class="monster-type">${size} ${type}, ${alignment}</div>
+            </div>
         </div>
         <div class="divider"></div>
         <div class="stat-row"><span class="stat-label">Armor Class</span> ${MonsterAPI.getAC(monster)}</div>
