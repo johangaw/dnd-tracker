@@ -62,13 +62,37 @@ export function formatDamageTypes(types) {
     return types.map(t => typeof t === 'string' ? t : t.special || JSON.stringify(t)).join(', ');
 }
 
+// Convert spell name to aidedd.org URL format
+function spellNameToUrl(name) {
+    return name.toLowerCase()
+        .replace(/'/g, '-')      // apostrophes become hyphens
+        .replace(/[^a-z0-9-]/g, '-')  // non-alphanumeric becomes hyphens
+        .replace(/-+/g, '-')     // collapse multiple hyphens
+        .replace(/^-|-$/g, '');  // trim leading/trailing hyphens
+}
+
+// Generate aidedd.org spell link
+function spellLink(name) {
+    const url = `https://www.aidedd.org/spell/${spellNameToUrl(name)}`;
+    return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>`;
+}
+
+// Format action/trait names (handles {@recharge} tags)
+export function formatName(name) {
+    if (!name) return '';
+    return escapeHtml(name)
+        .replace(/\{@recharge\}/g, '(Recharge 6)')
+        .replace(/\{@recharge (\d)\}/g, '(Recharge $1-6)')
+        .replace(/\{@recharge (\d)\|[^}]*\}/g, '(Recharge $1-6)');
+}
+
 // Format 5e.tools entries (clean up formatting tags)
 export function formatEntries(entries) {
     if (!entries) return '';
     return entries.map(e => {
         if (typeof e === 'string') {
-            // Clean up 5e.tools formatting tags
-            return e
+            // Clean up 5e.tools formatting tags first, then escape remaining HTML
+            let cleaned = e
                 .replace(/{@atk ([^}]+)}/g, '$1')
                 .replace(/{@hit (\d+)}/g, '+$1')
                 .replace(/{@damage ([^}]+)}/g, '$1')
@@ -77,14 +101,16 @@ export function formatEntries(entries) {
                 .replace(/{@condition ([^}]+)}/g, '$1')
                 .replace(/{@skill ([^}]+)}/g, '$1')
                 .replace(/{@creature ([^}]+)}/g, '$1')
-                .replace(/{@spell ([^}]+)}/g, '$1')
+                .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, (_, name) => spellLink(name))
                 .replace(/{@item ([^}]+)}/g, '$1')
-                .replace(/{@recharge( \d)?(\|[^}]*)?}/g, (_, n) => n ? `(Recharge ${n.trim()}-6)` : '(Recharge 6)')
+                .replace(/{@recharge(\|[^}]*)?}/g, '(Recharge 6)')
+                .replace(/{@recharge (\d)(\|[^}]*)?}/g, '(Recharge $1-6)')
                 .replace(/{@h}/g, 'Hit: ')
                 .replace(/{@[^}]+}/g, '');
+            return cleaned;
         }
         return '';
-    }).join(' ');
+    }).join('<span class="entry-break"></span>');
 }
 
 // Format spell list (clean up 5e.tools spell formatting)
@@ -92,9 +118,12 @@ export function formatSpellList(spells) {
     if (!spells || !Array.isArray(spells)) return '';
     return spells.map(spell => {
         if (typeof spell === 'string') {
-            // Clean up {@spell name} tags, keep just the spell name in italics
+            // Clean up {@spell name} tags, create links to aidedd.org
             return spell
-                .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, '<i>$1</i>')
+                .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, (_, name) => {
+                    const url = `https://www.aidedd.org/spell/${spellNameToUrl(name)}`;
+                    return `<a href="${url}" target="_blank" rel="noopener"><i>${escapeHtml(name)}</i></a>`;
+                })
                 .replace(/{@[^}]+}/g, '');
         }
         return '';

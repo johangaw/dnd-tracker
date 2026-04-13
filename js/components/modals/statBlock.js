@@ -1,7 +1,7 @@
 // Stat Block Modal Component
 
 import * as MonsterAPI from '../../services/monsterApi.js';
-import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
+import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, formatName, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
 
 export async function showStatBlockByNameSource(name, source, comment = '') {
     const monster = await MonsterAPI.getMonster(name, source);
@@ -129,7 +129,7 @@ export function renderStatBlock(monster, comment = '') {
     // Traits
     if (monster.trait) {
         monster.trait.forEach(trait => {
-            html += `<div class="trait"><span class="trait-name">${trait.name}.</span> ${formatEntries(trait.entries)}</div>`;
+            html += `<div class="trait"><span class="trait-name">${formatName(trait.name)}.</span> ${formatEntries(trait.entries)}</div>`;
         });
     }
 
@@ -140,14 +140,14 @@ export function renderStatBlock(monster, comment = '') {
         // Regular actions
         if (monster.action) {
             monster.action.forEach(action => {
-                html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+                html += `<div class="action"><span class="action-name">${formatName(action.name)}.</span> ${formatEntries(action.entries)}</div>`;
             });
         }
         
         // Spellcasting (rendered at the end of actions)
         if (monster.spellcasting && monster.spellcasting.length > 0) {
             monster.spellcasting.forEach(sc => {
-                html += `<div class="action"><span class="action-name">${sc.name || 'Spellcasting'}.</span> ${formatEntries(sc.headerEntries || [])}</div>`;
+                html += `<div class="action"><span class="action-name">${formatName(sc.name) || 'Spellcasting'}.</span> ${formatEntries(sc.headerEntries || [])}</div>`;
                 
                 // At-will spells
                 if (sc.will && sc.will.length > 0) {
@@ -191,7 +191,7 @@ export function renderStatBlock(monster, comment = '') {
     if (monster.bonus && monster.bonus.length > 0) {
         html += `<div class="section-title">Bonus Actions</div>`;
         monster.bonus.forEach(action => {
-            html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+            html += `<div class="action"><span class="action-name">${formatName(action.name)}.</span> ${formatEntries(action.entries)}</div>`;
         });
     }
 
@@ -199,7 +199,7 @@ export function renderStatBlock(monster, comment = '') {
     if (monster.reaction && monster.reaction.length > 0) {
         html += `<div class="section-title">Reactions</div>`;
         monster.reaction.forEach(action => {
-            html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+            html += `<div class="action"><span class="action-name">${formatName(action.name)}.</span> ${formatEntries(action.entries)}</div>`;
         });
     }
 
@@ -213,7 +213,7 @@ export function renderStatBlock(monster, comment = '') {
         }
         html += `<div class="section-title">Legendary Actions <span class="prof-bonus">(${actionInfo})</span></div>`;
         monster.legendary.forEach(action => {
-            html += `<div class="action"><span class="action-name">${action.name}.</span> ${formatEntries(action.entries)}</div>`;
+            html += `<div class="action"><span class="action-name">${formatName(action.name)}.</span> ${formatEntries(action.entries)}</div>`;
         });
     }
 

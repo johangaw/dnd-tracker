@@ -91,6 +91,12 @@
     font-style: italic;
 }
 
+/* Entry line breaks (half-line spacing) */
+.stat-block .entry-break {
+    display: block;
+    height: 0.5em;
+}
+
 /* DM Notes in stat block */
 .stat-block .dm-notes-title {
     color: var(--accent);
@@ -104,6 +110,28 @@
     padding: 10px 12px;
     margin-top: 8px;
     white-space: pre-wrap;
+    font-style: italic;
+}
+
+/* Spell links */
+.stat-block a {
+    color: #922610;
+    text-decoration: none;
+    border-bottom: 1px dotted #922610;
+}
+
+.stat-block a:hover {
+    color: #6a1c0c;
+    border-bottom-style: solid;
+}
+
+/* Spell lists */
+.stat-block .spell-list {
+    margin: 4px 0 4px 16px;
+    font-size: 0.85rem;
+}
+
+.stat-block .spell-level {
     font-style: italic;
 }
 
