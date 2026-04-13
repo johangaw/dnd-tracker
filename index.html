@@ -436,6 +436,409 @@
                 </form>
             </section>
 
+            <!-- Characters List View -->
+            <section id="characters-view" class="view">
+                <div id="characters-list" class="list"></div>
+                <button id="new-character-btn" class="fab" aria-label="New Character">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
+            </section>
+
+            <!-- Character View (Read-only) -->
+            <section id="character-view-section" class="view">
+                <div class="view-header">
+                    <button id="character-view-back" class="back-btn" aria-label="Back">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <button id="character-view-edit" class="btn">Edit</button>
+                </div>
+                <div id="character-view-content"></div>
+            </section>
+
+            <!-- Character Edit View -->
+            <section id="character-edit-view" class="view">
+                <form id="character-form" class="form">
+                    <!-- Basic Info -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Basic Info</h3>
+                        </div>
+                        <div class="form-group">
+                            <label for="char-name">Character Name *</label>
+                            <input type="text" id="char-name" placeholder="Character name..." required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-class">Class</label>
+                                <input type="text" id="char-class" placeholder="Fighter, Wizard...">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-level">Level</label>
+                                <input type="number" id="char-level" min="1" max="20" value="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="char-subclass">Subclass</label>
+                            <input type="text" id="char-subclass" placeholder="Champion, Evocation...">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-species">Species</label>
+                                <input type="text" id="char-species" placeholder="Human, Elf...">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-background">Background</label>
+                                <input type="text" id="char-background" placeholder="Soldier, Sage...">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-alignment">Alignment</label>
+                                <input type="text" id="char-alignment" placeholder="Lawful Good...">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-xp">Experience Points</label>
+                                <input type="number" id="char-xp" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="proficiency-display">
+                            Proficiency Bonus: <span id="char-prof-bonus">+2</span>
+                        </div>
+                    </div>
+
+                    <!-- Abilities & Skills (Grouped) -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Abilities & Skills</h3>
+                        </div>
+                        <div class="abilities-skills-edit-grid">
+                            <!-- STR -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>STR</label>
+                                    <input type="number" id="char-str" min="1" max="30" value="10">
+                                    <span id="char-str-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-str"> Save</label>
+                                </div>
+                                <div class="ability-skills-list">
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-athletics"> Athletics</label><label class="expertise-label"><input type="checkbox" id="char-expertise-athletics"> Exp</label></div>
+                                </div>
+                            </div>
+                            <!-- DEX -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>DEX</label>
+                                    <input type="number" id="char-dex" min="1" max="30" value="10">
+                                    <span id="char-dex-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-dex"> Save</label>
+                                </div>
+                                <div class="ability-skills-list">
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-acrobatics"> Acrobatics</label><label class="expertise-label"><input type="checkbox" id="char-expertise-acrobatics"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-sleightOfHand"> Sleight of Hand</label><label class="expertise-label"><input type="checkbox" id="char-expertise-sleightOfHand"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-stealth"> Stealth</label><label class="expertise-label"><input type="checkbox" id="char-expertise-stealth"> Exp</label></div>
+                                </div>
+                            </div>
+                            <!-- CON -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>CON</label>
+                                    <input type="number" id="char-con" min="1" max="30" value="10">
+                                    <span id="char-con-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-con"> Save</label>
+                                </div>
+                                <!-- CON has no associated skills -->
+                            </div>
+                            <!-- INT -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>INT</label>
+                                    <input type="number" id="char-int" min="1" max="30" value="10">
+                                    <span id="char-int-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-int"> Save</label>
+                                </div>
+                                <div class="ability-skills-list">
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-arcana"> Arcana</label><label class="expertise-label"><input type="checkbox" id="char-expertise-arcana"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-history"> History</label><label class="expertise-label"><input type="checkbox" id="char-expertise-history"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-investigation"> Investigation</label><label class="expertise-label"><input type="checkbox" id="char-expertise-investigation"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-nature"> Nature</label><label class="expertise-label"><input type="checkbox" id="char-expertise-nature"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-religion"> Religion</label><label class="expertise-label"><input type="checkbox" id="char-expertise-religion"> Exp</label></div>
+                                </div>
+                            </div>
+                            <!-- WIS -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>WIS</label>
+                                    <input type="number" id="char-wis" min="1" max="30" value="10">
+                                    <span id="char-wis-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-wis"> Save</label>
+                                </div>
+                                <div class="ability-skills-list">
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-animalHandling"> Animal Handling</label><label class="expertise-label"><input type="checkbox" id="char-expertise-animalHandling"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-insight"> Insight</label><label class="expertise-label"><input type="checkbox" id="char-expertise-insight"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-medicine"> Medicine</label><label class="expertise-label"><input type="checkbox" id="char-expertise-medicine"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-perception"> Perception</label><label class="expertise-label"><input type="checkbox" id="char-expertise-perception"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-survival"> Survival</label><label class="expertise-label"><input type="checkbox" id="char-expertise-survival"> Exp</label></div>
+                                </div>
+                            </div>
+                            <!-- CHA -->
+                            <div class="ability-group-edit">
+                                <div class="ability-edit-row">
+                                    <label>CHA</label>
+                                    <input type="number" id="char-cha" min="1" max="30" value="10">
+                                    <span id="char-cha-mod" class="ability-mod-display">+0</span>
+                                    <label class="save-label"><input type="checkbox" id="char-save-cha"> Save</label>
+                                </div>
+                                <div class="ability-skills-list">
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-deception"> Deception</label><label class="expertise-label"><input type="checkbox" id="char-expertise-deception"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-intimidation"> Intimidation</label><label class="expertise-label"><input type="checkbox" id="char-expertise-intimidation"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-performance"> Performance</label><label class="expertise-label"><input type="checkbox" id="char-expertise-performance"> Exp</label></div>
+                                    <div class="skill-edit-row"><label><input type="checkbox" id="char-skill-persuasion"> Persuasion</label><label class="expertise-label"><input type="checkbox" id="char-expertise-persuasion"> Exp</label></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Combat Stats -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Combat</h3>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-ac">Armor Class</label>
+                                <input type="number" id="char-ac" min="1" max="30" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-ac-desc">AC Description</label>
+                                <input type="text" id="char-ac-desc" placeholder="(leather armor)">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-init-bonus">Initiative Bonus</label>
+                                <input type="number" id="char-init-bonus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-speed">Speed (ft)</label>
+                                <input type="number" id="char-speed" min="0" value="30">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-hp-max">HP Max</label>
+                                <input type="number" id="char-hp-max" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-hp-current">HP Current</label>
+                                <input type="number" id="char-hp-current" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-hp-temp">Temp HP</label>
+                                <input type="number" id="char-hp-temp" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="char-hit-dice">Hit Dice</label>
+                                <input type="text" id="char-hit-dice" placeholder="1d10">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-hit-dice-used">Used</label>
+                                <input type="number" id="char-hit-dice-used" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row death-saves-edit">
+                            <div class="form-group">
+                                <label for="char-death-success">Death Save Successes</label>
+                                <input type="number" id="char-death-success" min="0" max="3" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-death-failure">Death Save Failures</label>
+                                <input type="number" id="char-death-failure" min="0" max="3" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attacks -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="attacks-content">
+                            <h3>Attacks</h3>
+                            <button type="button" id="add-attack-btn" class="add-item-btn">+ Add</button>
+                        </div>
+                        <div id="attacks-content" class="section-content">
+                            <div id="attacks-list" class="item-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Features & Traits -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="features-content">
+                            <h3>Features & Traits</h3>
+                            <button type="button" id="add-feature-btn" class="add-item-btn">+ Add</button>
+                        </div>
+                        <div id="features-content" class="section-content">
+                            <div id="features-list" class="item-list"></div>
+                            <div class="form-group">
+                                <label for="char-traits">Other Traits</label>
+                                <textarea id="char-traits" rows="3" placeholder="Additional traits, abilities, etc."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Proficiencies & Languages -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="proficiencies-content">
+                            <h3>Proficiencies & Languages</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="proficiencies-content" class="section-content">
+                            <div class="form-group">
+                                <label for="char-armor-prof">Armor Proficiencies</label>
+                                <input type="text" id="char-armor-prof" placeholder="Light, Medium, Heavy, Shields">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-weapon-prof">Weapon Proficiencies</label>
+                                <input type="text" id="char-weapon-prof" placeholder="Simple, Martial, Longsword">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-tool-prof">Tool Proficiencies</label>
+                                <input type="text" id="char-tool-prof" placeholder="Thieves' tools, Smith's tools">
+                            </div>
+                            <div class="form-group">
+                                <label for="char-languages">Languages</label>
+                                <input type="text" id="char-languages" placeholder="Common, Elvish, Dwarvish">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Equipment -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="equipment-content">
+                            <h3>Equipment</h3>
+                            <button type="button" id="add-equipment-btn" class="add-item-btn">+ Add</button>
+                        </div>
+                        <div id="equipment-content" class="section-content">
+                            <div class="currency-edit-row">
+                                <div class="currency-input">
+                                    <label for="char-cp">CP</label>
+                                    <input type="number" id="char-cp" min="0" value="0">
+                                </div>
+                                <div class="currency-input">
+                                    <label for="char-sp">SP</label>
+                                    <input type="number" id="char-sp" min="0" value="0">
+                                </div>
+                                <div class="currency-input">
+                                    <label for="char-ep">EP</label>
+                                    <input type="number" id="char-ep" min="0" value="0">
+                                </div>
+                                <div class="currency-input">
+                                    <label for="char-gp">GP</label>
+                                    <input type="number" id="char-gp" min="0" value="0">
+                                </div>
+                                <div class="currency-input">
+                                    <label for="char-pp">PP</label>
+                                    <input type="number" id="char-pp" min="0" value="0">
+                                </div>
+                            </div>
+                            <div id="equipment-list" class="item-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Personality -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="personality-content">
+                            <h3>Personality</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="personality-content" class="section-content">
+                            <div class="form-group">
+                                <label for="char-personality">Personality Traits</label>
+                                <textarea id="char-personality" rows="2" placeholder="Your character's personality traits..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="char-ideals">Ideals</label>
+                                <textarea id="char-ideals" rows="2" placeholder="What drives your character..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="char-bonds">Bonds</label>
+                                <textarea id="char-bonds" rows="2" placeholder="People, places, or things important to your character..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="char-flaws">Flaws</label>
+                                <textarea id="char-flaws" rows="2" placeholder="Your character's weaknesses..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spellcasting -->
+                    <div class="form-section collapsible">
+                        <div class="section-header" data-toggle="spellcasting-content">
+                            <h3>Spellcasting</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="spellcasting-content" class="section-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="char-spell-ability">Spellcasting Ability</label>
+                                    <select id="char-spell-ability">
+                                        <option value="">None</option>
+                                        <option value="int">Intelligence</option>
+                                        <option value="wis">Wisdom</option>
+                                        <option value="cha">Charisma</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="char-spell-dc">Spell Save DC</label>
+                                    <input type="number" id="char-spell-dc" min="0" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="char-spell-attack">Spell Attack</label>
+                                    <input type="number" id="char-spell-attack" value="0">
+                                </div>
+                            </div>
+                            <div class="spell-slots-edit-section">
+                                <h4>Spell Slots</h4>
+                                <div id="spell-slots-edit"></div>
+                            </div>
+                            <div class="spells-section">
+                                <h4>Cantrips <button type="button" id="add-cantrip-btn" class="add-item-btn">+ Add</button></h4>
+                                <div id="cantrips-list" class="spell-list"></div>
+                            </div>
+                            <div class="spells-section">
+                                <h4>Spells Known <button type="button" id="add-spell-btn" class="add-item-btn">+ Add</button></h4>
+                                <div id="spells-known-list" class="spell-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3>Notes</h3>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="char-notes" rows="4" placeholder="Additional notes, backstory, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="cancel-character-btn" class="btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Character</button>
+                        <button type="button" id="delete-character-btn" class="btn btn-danger hidden">Delete</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Character Context Menu -->
+            <div id="character-context-menu" class="context-menu hidden">
+                <button class="context-item" data-action="view">View</button>
+                <button class="context-item" data-action="edit">Edit</button>
+                <button class="context-item" data-action="copy">Duplicate</button>
+                <button class="context-item" data-action="copy-json">Copy JSON</button>
+                <button class="context-item" data-action="share">Share Link</button>
+                <button class="context-item danger" data-action="delete">Delete</button>
+            </div>
+
             <!-- Monster Stat Block Modal -->
             <div id="stat-block-modal" class="modal">
                 <div class="modal-content modal-large">
@@ -686,6 +1089,7 @@
 
             <!-- App Menu (Navigation Dropdown) -->
             <div id="app-menu" class="app-menu hidden">
+                <button class="app-menu-item" id="menu-characters">Characters</button>
                 <button class="app-menu-item" id="menu-custom-monsters">Custom Monsters</button>
             </div>
 

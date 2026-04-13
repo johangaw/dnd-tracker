@@ -188,8 +188,8 @@ describe('Encounter CRUD', () => {
       // Context menu should appear
       expect(isVisible('#context-menu')).toBe(true)
       
-      // Click edit
-      await click('[data-action="edit"]')
+      // Click edit (use specific selector to avoid matching character context menu)
+      await click('#context-menu [data-action="edit"]')
       
       // Should open edit view with data loaded
       expect(isVisible('#encounter-edit-view')).toBe(true)
@@ -199,7 +199,7 @@ describe('Encounter CRUD', () => {
     it('saves changes to existing encounter', async () => {
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="edit"]')
+      await click('#context-menu [data-action="edit"]')
       
       // Change the title
       const titleInput = document.querySelector('#encounter-title')
@@ -220,7 +220,7 @@ describe('Encounter CRUD', () => {
     it('shows delete button when editing existing encounter', async () => {
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="edit"]')
+      await click('#context-menu [data-action="edit"]')
       
       expect(isVisible('#delete-encounter-btn')).toBe(true)
     })
@@ -244,7 +244,7 @@ describe('Encounter CRUD', () => {
       const originalConfirm = window.confirm
       window.confirm = () => true
       
-      await click('[data-action="delete"]')
+      await click('#context-menu [data-action="delete"]')
       
       window.confirm = originalConfirm
       
@@ -264,7 +264,7 @@ describe('Encounter CRUD', () => {
       const originalConfirm = window.confirm
       window.confirm = () => false
       
-      await click('[data-action="delete"]')
+      await click('#context-menu [data-action="delete"]')
       
       window.confirm = originalConfirm
       
@@ -289,7 +289,7 @@ describe('Encounter CRUD', () => {
     it('duplicates encounter via context menu', async () => {
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="copy"]')
+      await click('#context-menu [data-action="copy"]')
       
       // Should now have two encounters
       expect(count('.encounter-card')).toBe(2)
@@ -307,7 +307,7 @@ describe('Encounter CRUD', () => {
     it('duplicated encounter has different ID', async () => {
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="copy"]')
+      await click('#context-menu [data-action="copy"]')
       
       const encounters = getStoredEncounters()
       const ids = encounters.map(e => e.id)
@@ -327,7 +327,7 @@ describe('Encounter CRUD', () => {
       
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="copy-json"]')
+      await click('#context-menu [data-action="copy-json"]')
       
       // Should have copied JSON to clipboard
       expect(clipboardContent).toContain('Original Encounter')

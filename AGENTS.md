@@ -4,7 +4,7 @@
 
 1. **Always create tests for new features** - Every new feature must have corresponding tests that verify its behavior.
 
-2. **Always run tests before committing** - Run `npm test` and ensure all tests pass before creating a commit.
+2. **Always run tests for larger tasks** - Run `npm test` and ensure all tests pass before compleating the task
 
 3. **Test file location** - Tests go in `tests/scenarios/` directory, named `<feature>.test.js`.
 

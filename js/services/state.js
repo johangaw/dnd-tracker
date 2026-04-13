@@ -12,7 +12,8 @@ const state = {
     editingMonsterIndex: null,
     importingEncounter: null,
     editingMonster: null,
-    importingMonster: null
+    importingMonster: null,
+    editingCharacter: null
 };
 
 export function getState() {
@@ -22,7 +23,13 @@ export function getState() {
 export function setView(view) {
     state.currentView = view;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`${view}-view`).classList.add('active');
+    
+    // Map view names to element IDs
+    const viewIdMap = {
+        'character-view': 'character-view-section'
+    };
+    const viewId = viewIdMap[view] || `${view}-view`;
+    document.getElementById(viewId)?.classList.add('active');
     
     // Update header
     const backBtn = document.getElementById('back-btn');
@@ -48,6 +55,18 @@ export function setView(view) {
         case 'custom-monster-edit':
             backBtn.classList.remove('hidden');
             title.textContent = state.editingMonster?.id ? 'Edit Monster' : 'New Monster';
+            break;
+        case 'characters':
+            backBtn.classList.remove('hidden');
+            title.textContent = 'Characters';
+            break;
+        case 'character-view':
+            backBtn.classList.remove('hidden');
+            title.textContent = 'Character Sheet';
+            break;
+        case 'character-edit':
+            backBtn.classList.remove('hidden');
+            title.textContent = state.editingCharacter?.id ? 'Edit Character' : 'New Character';
             break;
     }
 }
@@ -92,6 +111,10 @@ export function setImportingMonster(monster) {
     state.importingMonster = monster;
 }
 
+export function setEditingCharacter(character) {
+    state.editingCharacter = character;
+}
+
 // Default export for backward compatibility
 export default {
     getState,
@@ -105,5 +128,6 @@ export default {
     setEditingMonsterIndex,
     setImportingEncounter,
     setEditingMonster,
-    setImportingMonster
+    setImportingMonster,
+    setEditingCharacter
 };

@@ -1,0 +1,1103 @@
+/* Character Sheets Styles */
+
+/* Character Cards (List View) */
+.character-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.character-card:active {
+    transform: scale(0.98);
+}
+
+.character-card-header {
+    margin-bottom: 8px;
+}
+
+.character-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.character-card-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.character-card-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.character-card-stats span {
+    background: var(--bg-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: var(--text-primary);
+}
+
+/* Character View (Read-only) */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-btn:hover {
+    background: var(--bg-secondary);
+}
+
+/* Character Sheet */
+.character-sheet {
+    padding-bottom: 24px;
+}
+
+.character-sheet section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+/* Header Section */
+.character-header-section {
+    text-align: center;
+}
+
+.character-name {
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.character-subtitle {
+    font-size: 1rem;
+    color: var(--color-primary);
+    margin-bottom: 8px;
+}
+
+.character-info-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.character-xp {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Combat Stats Section */
+.combat-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.combat-stat-box {
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.combat-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.combat-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.combat-stat-note {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* HP Section */
+.hp-section {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.hp-box {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.hp-current {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-success, #4caf50);
+}
+
+.hp-divider {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.hp-max {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.hp-temp {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    margin-left: 8px;
+}
+
+.hp-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+/* Combat Extras (Hit Dice & Death Saves) */
+.combat-extras-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.hit-dice-box,
+.death-saves-box {
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.hit-dice-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.hit-dice-label,
+.death-saves-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.hit-dice-used {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.death-saves-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.success-label,
+.failure-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-right: 4px;
+}
+
+.death-save-box {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.death-save-box.success.filled {
+    background: var(--color-success, #4caf50);
+    border-color: var(--color-success, #4caf50);
+}
+
+.death-save-box.failure.filled {
+    background: var(--color-danger, #dc3545);
+    border-color: var(--color-danger, #dc3545);
+}
+
+/* Ability Scores Section */
+.character-abilities-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+/* Grouped Abilities & Skills (View) */
+.abilities-skills-grouped {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+@media (min-width: 500px) {
+    .abilities-skills-grouped {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .abilities-skills-grouped {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.ability-group {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ability-group .ability-box {
+    text-align: center;
+    padding: 8px;
+    background: var(--bg-card);
+    border-radius: 8px;
+}
+
+.ability-group .ability-skills {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ability-group .skill-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+}
+
+.abilities-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+@media (min-width: 480px) {
+    .abilities-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.ability-box {
+    text-align: center;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.ability-name {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.ability-score {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.ability-mod {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.ability-save {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.ability-save.proficient {
+    color: var(--color-primary);
+}
+
+.proficiency-bonus {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Skills Section */
+.character-skills-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.skills-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 4px;
+}
+
+.skill-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.skill-row.proficient {
+    background: var(--bg-secondary);
+}
+
+.skill-row.expertise {
+    background: rgba(var(--color-primary-rgb, 69, 39, 160), 0.2);
+}
+
+.skill-prof-indicator {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.skill-row.proficient .skill-prof-indicator,
+.skill-row.expertise .skill-prof-indicator {
+    color: var(--color-primary);
+}
+
+.skill-mod {
+    font-weight: bold;
+    min-width: 28px;
+    text-align: right;
+    color: var(--text-primary);
+}
+
+.skill-name {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.skill-ability {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.passive-perception {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Attacks Section */
+.character-attacks-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.attacks-table {
+    font-size: 0.9rem;
+}
+
+.attacks-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 8px;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.attack-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.attack-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.attack-bonus {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.attack-damage {
+    color: var(--text-secondary);
+}
+
+/* Features Section */
+.character-features-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.features-list .feature-item {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.features-list .feature-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.features-list .feature-item strong {
+    color: var(--text-primary);
+}
+
+.features-list .feature-item p {
+    margin: 4px 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.traits-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+/* Equipment Section */
+.character-equipment-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.currency-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.currency {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.currency.pp { background: #e8e0f0; color: #6a4c93; }
+.currency.gp { background: #fff3cd; color: #856404; }
+.currency.ep { background: #e8e8e8; color: #555; }
+.currency.sp { background: #f5f5f5; color: #666; }
+.currency.cp { background: #f4e4d4; color: #8b4513; }
+
+.equipment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.equipment-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.equipment-list li:last-child {
+    border-bottom: none;
+}
+
+/* Proficiencies Section */
+.character-proficiencies-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.proficiency-group {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.proficiency-group strong {
+    color: var(--text-secondary);
+}
+
+.proficiency-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Personality Section */
+.character-personality-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.personality-box {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.personality-box:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.personality-box strong {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.personality-box p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+/* Spellcasting Section */
+.character-spellcasting-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.spellcasting-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.spellcasting-stats span {
+    background: var(--bg-secondary);
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.spell-slots-container h3,
+.spell-level-group h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.spell-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.spell-slot-level {
+    min-width: 30px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.spell-slot-boxes {
+    display: flex;
+    gap: 4px;
+}
+
+.spell-slot-box {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-primary);
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.spell-slot-box.used {
+    background: var(--color-primary);
+}
+
+.spell-slot-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.spell-level-group {
+    margin-top: 12px;
+}
+
+.spells-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.spells-list li {
+    background: var(--bg-secondary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* Notes Section */
+.character-notes-section h2 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.notes-content {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+/* Character Edit Form Styles */
+
+/* Proficiency display in edit form */
+.proficiency-display {
+    text-align: center;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.proficiency-display #char-prof-bonus {
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+/* Abilities Edit Grid */
+.abilities-edit-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow: hidden;
+}
+
+@media (min-width: 400px) {
+    .abilities-edit-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 600px) {
+    .abilities-edit-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Abilities & Skills Edit Grid (Grouped) */
+.abilities-skills-edit-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+@media (min-width: 500px) {
+    .abilities-skills-edit-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .abilities-skills-edit-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.ability-group-edit {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ability-group-edit .ability-edit-row {
+    background: var(--bg-card);
+}
+
+.ability-skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ability-skills-list .skill-edit-row {
+    background: var(--bg-card);
+}
+
+.ability-edit-row {
+    display: grid;
+    grid-template-columns: 36px 50px 36px auto;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    min-width: 0;
+}
+
+@media (min-width: 400px) {
+    .ability-edit-row {
+        grid-template-columns: 40px 60px 40px 1fr;
+        gap: 8px;
+    }
+}
+
+.ability-edit-row label:first-child {
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.ability-edit-row input[type="number"] {
+    text-align: center;
+    font-weight: bold;
+    min-width: 0;
+}
+
+.ability-mod-display {
+    font-weight: 500;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+.save-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Skills Edit Grid */
+.skills-edit-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+}
+
+@media (min-width: 500px) {
+    .skills-edit-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.skill-edit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.skill-edit-row label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.expertise-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Death Saves Edit */
+.death-saves-edit {
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+/* Attacks Edit */
+.attack-item {
+    display: grid;
+    grid-template-columns: 2fr 60px 2fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.attack-item input {
+    width: 100%;
+}
+
+/* Equipment Edit */
+.currency-edit-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.currency-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.currency-input label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+.currency-input input {
+    width: 60px;
+    text-align: center;
+}
+
+.equipment-item {
+    display: grid;
+    grid-template-columns: 1fr 60px auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.equipment-item .equipment-qty {
+    width: 60px;
+    text-align: center;
+}
+
+/* Feature Edit Item */
+.feature-item.item-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.feature-item .feature-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.feature-item .feature-desc {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Spell Slots Edit */
+.spell-slots-edit-section h4,
+.spells-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.spell-slot-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.slot-level {
+    min-width: 30px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.slot-total,
+.slot-used {
+    width: 50px;
+    text-align: center;
+}
+
+.slot-separator {
+    color: var(--text-secondary);
+}
+
+.slot-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Spell List Edit */
+.spell-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spell-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.spell-item .spell-name {
+    flex: 1;
+}
+
+.spell-item .remove-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: var(--bg-primary);
+    color: var(--color-danger, #dc3545);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.spell-item .remove-btn:hover {
+    background: var(--color-danger, #dc3545);
+    color: white;
+}
+
+/* Collapsible Sections */
+.form-section.collapsible .section-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-section.collapsible .toggle-icon {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+}
+
+.form-section.collapsible.collapsed .section-content {
+    display: none;
+}
+
+.form-section.collapsible.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+/* Add Item Button */
+.add-item-btn {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.add-item-btn:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Remove Button */
+.remove-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: var(--bg-primary);
+    color: var(--color-danger, #dc3545);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.remove-btn:hover {
+    background: var(--color-danger, #dc3545);
+    color: white;
+}

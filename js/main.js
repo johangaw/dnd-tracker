@@ -3,6 +3,7 @@
 import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
+import * as Characters from './services/characters.js';
 import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster } from './services/state.js';
 import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
 
@@ -16,6 +17,9 @@ import * as EncounterEdit from './components/encounterEdit/index.js';
 import * as CombatTracker from './components/combatTracker/index.js';
 import * as CustomMonsterList from './components/customMonsters/list.js';
 import * as CustomMonsterEdit from './components/customMonsters/edit.js';
+import * as CharacterList from './components/characters/list.js';
+import * as CharacterView from './components/characters/view.js';
+import * as CharacterEdit from './components/characters/edit.js';
 import { showStatBlock } from './components/modals/statBlock.js';
 
 // Track initialization to prevent duplicate event handlers
@@ -42,6 +46,15 @@ function initEventHandlers() {
         } else if (state.currentView === 'custom-monster-edit') {
             setView('custom-monsters');
             CustomMonsterList.render();
+        } else if (state.currentView === 'characters') {
+            setView('encounter-list');
+            EncounterList.render();
+        } else if (state.currentView === 'character-view') {
+            setView('characters');
+            CharacterList.render();
+        } else if (state.currentView === 'character-edit') {
+            setView('characters');
+            CharacterList.render();
         }
     });
 
@@ -367,6 +380,12 @@ function initEventHandlers() {
         CustomMonsterList.render();
     });
 
+    document.getElementById('menu-characters')?.addEventListener('click', () => {
+        hideAppMenu();
+        setView('characters');
+        CharacterList.render();
+    });
+
     // === Custom Monster Events ===
     
     // New custom monster button - show choice modal
@@ -502,6 +521,144 @@ function initEventHandlers() {
             }
 
             CustomMonsterList.hideContextMenu();
+        });
+    });
+
+    // === Character Events ===
+    
+    // New character button
+    document.getElementById('new-character-btn')?.addEventListener('click', () => {
+        CharacterEdit.init();
+    });
+
+    // Character view back button
+    document.getElementById('character-view-back')?.addEventListener('click', () => {
+        setView('characters');
+        CharacterList.render();
+    });
+
+    // Character view edit button
+    document.getElementById('character-view-edit')?.addEventListener('click', () => {
+        const characterId = CharacterView.getCurrentCharacterId();
+        const character = Characters.getCharacter(characterId);
+        if (character) {
+            CharacterEdit.init(character);
+        }
+    });
+
+    // Character form submit
+    document.getElementById('character-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        CharacterEdit.saveCharacter();
+    });
+
+    // Cancel character edit
+    document.getElementById('cancel-character-btn')?.addEventListener('click', () => {
+        setView('characters');
+        CharacterList.render();
+    });
+
+    // Delete character button
+    document.getElementById('delete-character-btn')?.addEventListener('click', () => {
+        CharacterEdit.deleteCharacter();
+    });
+
+    // Character level change - update proficiency
+    document.getElementById('char-level')?.addEventListener('change', () => {
+        CharacterEdit.updateProficiencyDisplay();
+    });
+
+    // Ability score changes - update modifiers
+    Characters.ABILITIES.forEach(ability => {
+        document.getElementById(`char-${ability}`)?.addEventListener('change', () => {
+            CharacterEdit.updateAbilityModifiers();
+        });
+    });
+
+    // Add buttons for character edit
+    document.getElementById('add-feature-btn')?.addEventListener('click', () => {
+        CharacterEdit.addFeature();
+    });
+
+    document.getElementById('add-equipment-btn')?.addEventListener('click', () => {
+        CharacterEdit.addEquipment();
+    });
+
+    document.getElementById('add-attack-btn')?.addEventListener('click', () => {
+        CharacterEdit.addAttack();
+    });
+
+    document.getElementById('add-cantrip-btn')?.addEventListener('click', () => {
+        CharacterEdit.addCantrip();
+    });
+
+    document.getElementById('add-spell-btn')?.addEventListener('click', () => {
+        CharacterEdit.addSpell();
+    });
+
+    // Collapsible section toggles
+    document.querySelectorAll('.form-section.collapsible .section-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Don't toggle if clicking on a button inside the header
+            if (e.target.closest('.add-item-btn')) return;
+            
+            const section = header.closest('.form-section');
+            section.classList.toggle('collapsed');
+        });
+    });
+
+    // Character context menu actions
+    document.querySelectorAll('#character-context-menu .context-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const menu = document.getElementById('character-context-menu');
+            const characterId = menu.dataset.characterId;
+            const action = item.dataset.action;
+            const character = Characters.getCharacter(characterId);
+
+            if (!character) {
+                CharacterList.hideContextMenu();
+                return;
+            }
+
+            switch (action) {
+                case 'view':
+                    setView('character-view');
+                    CharacterView.render(characterId);
+                    break;
+                case 'edit':
+                    CharacterEdit.init(character);
+                    break;
+                case 'copy':
+                    const copy = Characters.duplicateCharacter(character);
+                    Characters.saveCharacter(copy);
+                    CharacterList.render();
+                    showToast(`Duplicated "${character.name}"`);
+                    break;
+                case 'copy-json':
+                    const jsonStr = Characters.exportCharacterToJSON(character);
+                    navigator.clipboard.writeText(jsonStr).then(() => {
+                        showToast('Character JSON copied to clipboard!');
+                    }).catch(() => {
+                        prompt('Copy this JSON:', jsonStr);
+                    });
+                    break;
+                case 'share':
+                    const url = Characters.exportCharacterToURL(character);
+                    navigator.clipboard.writeText(url).then(() => {
+                        showToast('Share link copied to clipboard!');
+                    }).catch(() => {
+                        prompt('Copy this link to share:', url);
+                    });
+                    break;
+                case 'delete':
+                    if (confirm(`Delete "${character.name}"?`)) {
+                        Characters.deleteCharacter(characterId);
+                        CharacterList.render();
+                    }
+                    break;
+            }
+
+            CharacterList.hideContextMenu();
         });
     });
 

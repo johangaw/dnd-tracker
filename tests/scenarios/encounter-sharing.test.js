@@ -61,7 +61,7 @@ describe('Encounter Sharing', () => {
       
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="share"]')
+      await click('#context-menu [data-action="share"]')
       
       // Restore mocks
       window.alert = originalAlert
@@ -95,7 +95,7 @@ describe('Encounter Sharing', () => {
       
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="share"]')
+      await click('#context-menu [data-action="share"]')
       
       window.alert = originalAlert
       
@@ -343,7 +343,7 @@ describe('Encounter Sharing', () => {
       
       const card = document.querySelector('.encounter-card')
       await longPress(card)
-      await click('[data-action="share"]')
+      await click('#context-menu [data-action="share"]')
       
       // Clear storage and import
       localStorage.clear()
