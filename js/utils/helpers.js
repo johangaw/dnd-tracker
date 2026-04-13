@@ -92,17 +92,21 @@ export function formatEntries(entries) {
     return entries.map(e => {
         if (typeof e === 'string') {
             // Clean up 5e.tools formatting tags first, then escape remaining HTML
+            // Note: Many tags have optional source suffix like {@condition Grappled|XPHB} - strip the |SOURCE part
             let cleaned = e
                 .replace(/{@atk ([^}]+)}/g, '$1')
                 .replace(/{@hit (\d+)}/g, '+$1')
-                .replace(/{@damage ([^}]+)}/g, '$1')
-                .replace(/{@dice ([^}]+)}/g, '$1')
+                .replace(/{@damage ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@dice ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@dc (\d+)}/g, 'DC $1')
-                .replace(/{@condition ([^}]+)}/g, '$1')
-                .replace(/{@skill ([^}]+)}/g, '$1')
-                .replace(/{@creature ([^}]+)}/g, '$1')
+                .replace(/{@condition ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@skill ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@creature ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, (_, name) => spellLink(name))
-                .replace(/{@item ([^}]+)}/g, '$1')
+                .replace(/{@item ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@sense ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@status ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@action ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@recharge(\|[^}]*)?}/g, '(Recharge 6)')
                 .replace(/{@recharge (\d)(\|[^}]*)?}/g, '(Recharge $1-6)')
                 .replace(/{@h}/g, 'Hit: ')
