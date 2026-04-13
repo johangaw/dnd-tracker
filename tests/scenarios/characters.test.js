@@ -390,3 +390,180 @@ describe('Skills Configuration', () => {
         })
     })
 })
+
+describe('Character HP', () => {
+    beforeEach(async () => {
+        await initApp()
+    })
+
+    afterEach(() => {
+        localStorage.clear()
+        vi.restoreAllMocks()
+    })
+
+    describe('getEffectiveMaxHp', () => {
+        it('returns max HP when no reduction', () => {
+            const character = Characters.createEmptyCharacter()
+            character.hitPointsMax = 50
+            character.hitPointsMaxReduction = 0
+            
+            expect(Characters.getEffectiveMaxHp(character)).toBe(50)
+        })
+
+        it('subtracts reduction from max HP', () => {
+            const character = Characters.createEmptyCharacter()
+            character.hitPointsMax = 50
+            character.hitPointsMaxReduction = 10
+            
+            expect(Characters.getEffectiveMaxHp(character)).toBe(40)
+        })
+
+        it('returns 0 if reduction exceeds max HP', () => {
+            const character = Characters.createEmptyCharacter()
+            character.hitPointsMax = 30
+            character.hitPointsMaxReduction = 50
+            
+            expect(Characters.getEffectiveMaxHp(character)).toBe(0)
+        })
+
+        it('handles missing reduction field', () => {
+            const character = Characters.createEmptyCharacter()
+            character.hitPointsMax = 50
+            delete character.hitPointsMaxReduction
+            
+            expect(Characters.getEffectiveMaxHp(character)).toBe(50)
+        })
+    })
+
+    describe('HP Modal', () => {
+        it('opens HP modal when clicking HP in character view', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'HP Test Character'
+            character.hitPointsMax = 50
+            character.hitPointsCurrent = 45
+            character.hitPointsTemp = 5
+            character.hitPointsMaxReduction = 0
+            Characters.saveCharacter(character)
+            
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Click on character card to open context menu
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            
+            // Click view action
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Click on HP section to open modal
+            const hpSection = document.querySelector('.hp-clickable')
+            expect(hpSection).toBeTruthy()
+            await click(hpSection)
+            await tick()
+            
+            // Verify modal is open (uses shared #hp-modal)
+            expect(exists('#hp-modal.active')).toBe(true)
+            
+            // Verify modal displays correct values
+            expect(document.getElementById('current-hp').textContent).toBe('45')
+            expect(document.getElementById('hp-temp-input').value).toBe('5')
+            expect(document.getElementById('max-hp').textContent).toBe('50')
+            
+            // Verify character fields are shown
+            expect(exists('#hp-character-fields.hidden')).toBe(false)
+        })
+
+        it('saves HP changes from modal', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'HP Save Test'
+            character.hitPointsMax = 100
+            character.hitPointsCurrent = 100
+            character.hitPointsTemp = 0
+            character.hitPointsMaxReduction = 0
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Open HP modal
+            await click('.hp-clickable')
+            await tick()
+            
+            // First set temp HP (won't affect current HP)
+            document.getElementById('hp-temp-input').value = '10'
+            document.getElementById('hp-temp-input').dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Set damage amount (-25)
+            const hpInput = document.getElementById('hp-custom-amount')
+            hpInput.value = '-25'
+            hpInput.dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Set max reduction (this caps current HP to 95)
+            document.getElementById('hp-max-reduction').value = '5'
+            document.getElementById('hp-max-reduction').dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Save (uses Apply button which saves for characters)
+            await click('#hp-apply-btn')
+            await tick()
+            
+            // Verify character was updated:
+            // - Max reduction 5 caps current HP from 100 to 95
+            // - 25 damage: 10 absorbed by temp HP, 15 hits current HP
+            // - Final: 95 - 15 = 80 HP, temp HP reduced from 10 to 0
+            const updated = Characters.getCharacter(character.id)
+            expect(updated.hitPointsCurrent).toBe(80)
+            expect(updated.hitPointsTemp).toBe(0)  // temp HP absorbed 10 damage
+            expect(updated.hitPointsMaxReduction).toBe(5)
+        })
+
+        it('displays max HP reduction in character view', async () => {
+            // Create a character with max HP reduction
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Reduced HP Test'
+            character.hitPointsMax = 50
+            character.hitPointsCurrent = 35
+            character.hitPointsMaxReduction = 10
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify effective max HP is displayed (50 - 10 = 40)
+            const hpMax = document.querySelector('.hp-max')
+            expect(hpMax.textContent).toBe('40')
+            
+            // Verify reduction note is displayed
+            const reductionNote = document.querySelector('.hp-reduction-note')
+            expect(reductionNote).toBeTruthy()
+            expect(reductionNote.textContent).toContain('-10')
+        })
+    })
+})

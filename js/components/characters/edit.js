@@ -62,6 +62,7 @@ export function renderForm() {
     setInputValue('char-hp-max', character.hitPointsMax);
     setInputValue('char-hp-current', character.hitPointsCurrent);
     setInputValue('char-hp-temp', character.hitPointsTemp);
+    setInputValue('char-hp-max-reduction', character.hitPointsMaxReduction);
     setInputValue('char-hit-dice', character.hitDiceTotal);
     setInputValue('char-hit-dice-used', character.hitDiceUsed);
     
@@ -512,6 +513,7 @@ function collectFormData() {
     character.hitPointsMax = parseInt(document.getElementById('char-hp-max')?.value) || 0;
     character.hitPointsCurrent = parseInt(document.getElementById('char-hp-current')?.value) || 0;
     character.hitPointsTemp = parseInt(document.getElementById('char-hp-temp')?.value) || 0;
+    character.hitPointsMaxReduction = parseInt(document.getElementById('char-hp-max-reduction')?.value) || 0;
     character.hitDiceTotal = document.getElementById('char-hit-dice')?.value.trim() || '';
     character.hitDiceUsed = parseInt(document.getElementById('char-hit-dice-used')?.value) || 0;
     

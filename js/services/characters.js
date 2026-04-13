@@ -177,6 +177,13 @@ export function getInitiativeModifier(character) {
     return getAbilityModifier(character.abilities.dex);
 }
 
+// Get effective max HP (accounting for max HP reduction)
+export function getEffectiveMaxHp(character) {
+    const maxHp = character.hitPointsMax || 0;
+    const reduction = character.hitPointsMaxReduction || 0;
+    return Math.max(0, maxHp - reduction);
+}
+
 // Create a new empty character with default values
 export function createEmptyCharacter() {
     return {
@@ -224,6 +231,7 @@ export function createEmptyCharacter() {
         hitPointsMax: 0,
         hitPointsCurrent: 0,
         hitPointsTemp: 0,
+        hitPointsMaxReduction: 0, // For effects that reduce max HP (e.g., certain undead attacks)
         hitDiceTotal: '',
         hitDiceUsed: 0,
         deathSaves: {

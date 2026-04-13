@@ -64,14 +64,15 @@ export function render(characterId) {
                     </div>
                 </div>
                 
-                <div class="hp-section">
+                <div class="hp-section hp-clickable" data-character-id="${character.id}" title="Click to update HP">
                     <div class="hp-box">
                         <div class="hp-current">${character.hitPointsCurrent ?? character.hitPointsMax ?? '-'}</div>
                         <div class="hp-divider">/</div>
-                        <div class="hp-max">${character.hitPointsMax || '-'}</div>
+                        <div class="hp-max">${Characters.getEffectiveMaxHp(character) || '-'}</div>
                         ${character.hitPointsTemp ? `<div class="hp-temp">+${character.hitPointsTemp} temp</div>` : ''}
                     </div>
                     <div class="hp-label">Hit Points</div>
+                    ${character.hitPointsMaxReduction ? `<div class="hp-reduction-note">(-${character.hitPointsMaxReduction} max HP)</div>` : ''}
                 </div>
 
                 <div class="combat-extras-grid">
@@ -306,6 +307,13 @@ export function render(characterId) {
             ` : ''}
         </div>
     `;
+
+    // Add click handler for HP section
+    container.querySelector('.hp-clickable')?.addEventListener('click', () => {
+        if (window.openCharacterHpModal) {
+            window.openCharacterHpModal(characterId);
+        }
+    });
 }
 
 // Helper function to render death save boxes

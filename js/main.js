@@ -299,30 +299,52 @@ function initEventHandlers() {
     });
 
     // HP adjustment buttons (add to the input field value)
+    // Works for both monsters (CombatTracker) and characters
     document.querySelectorAll('.hp-controls .hp-adj-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const amount = parseInt(btn.dataset.amount);
-            CombatTracker.addToHPDelta(amount);
+            if (window.isCharacterHpModalActive && window.isCharacterHpModalActive()) {
+                window.addToCharacterHPDelta(amount);
+            } else {
+                CombatTracker.addToHPDelta(amount);
+            }
         });
     });
 
     // HP custom amount input - update preview on change
     document.getElementById('hp-custom-amount').addEventListener('input', () => {
-        CombatTracker.updateHPPreview();
+        if (window.isCharacterHpModalActive && window.isCharacterHpModalActive()) {
+            window.updateCharacterHPPreview();
+        } else {
+            CombatTracker.updateHPPreview();
+        }
     });
 
     document.getElementById('hp-reset-btn').addEventListener('click', () => {
         CombatTracker.resetHPDelta();
+        // Reset also clears preview for character mode
+        if (window.isCharacterHpModalActive && window.isCharacterHpModalActive()) {
+            document.getElementById('hp-preview').classList.add('hidden');
+            document.getElementById('hp-custom-amount').classList.remove('damage', 'heal');
+        }
     });
 
     document.getElementById('hp-apply-btn').addEventListener('click', () => {
-        CombatTracker.applyHPDelta();
+        if (window.isCharacterHpModalActive && window.isCharacterHpModalActive()) {
+            window.saveCharacterHP();
+        } else {
+            CombatTracker.applyHPDelta();
+        }
     });
 
     // Allow Enter key in HP input to apply
     document.getElementById('hp-custom-amount').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            CombatTracker.applyHPDelta();
+            if (window.isCharacterHpModalActive && window.isCharacterHpModalActive()) {
+                window.saveCharacterHP();
+            } else {
+                CombatTracker.applyHPDelta();
+            }
         }
     });
 
@@ -595,6 +617,253 @@ function initEventHandlers() {
     document.getElementById('add-spell-btn')?.addEventListener('click', () => {
         CharacterEdit.addSpell();
     });
+
+    // Character HP Modal - uses shared #hp-modal
+    let characterHpModalCharacterId = null;
+    let characterHpModalCurrentHp = 0;
+    let characterHpModalTempHp = 0;
+    let characterHpModalEffectiveMax = 0;
+
+    function openCharacterHpModal(characterId) {
+        const character = Characters.getCharacter(characterId);
+        if (!character) return;
+
+        characterHpModalCharacterId = characterId;
+        const modal = document.getElementById('hp-modal');
+        const characterFields = document.getElementById('hp-character-fields');
+        const instanceSelector = document.getElementById('hp-instance-selector');
+        const tempDisplay = document.getElementById('hp-temp-display');
+        
+        // Calculate effective max HP
+        characterHpModalEffectiveMax = Characters.getEffectiveMaxHp(character);
+        characterHpModalCurrentHp = character.hitPointsCurrent ?? 0;
+        characterHpModalTempHp = character.hitPointsTemp || 0;
+
+        // Set up modal for character mode
+        document.getElementById('hp-modal-title').textContent = `${character.name} - HP`;
+        document.getElementById('current-hp').textContent = characterHpModalCurrentHp;
+        document.getElementById('max-hp').textContent = characterHpModalEffectiveMax;
+        document.getElementById('hp-custom-amount').value = '0';
+        
+        // Show temp HP in display if present
+        if (characterHpModalTempHp > 0) {
+            document.getElementById('hp-temp-value').textContent = characterHpModalTempHp;
+            tempDisplay.classList.remove('hidden');
+        } else {
+            tempDisplay.classList.add('hidden');
+        }
+        
+        // Show character-specific fields
+        characterFields.classList.remove('hidden');
+        document.getElementById('hp-temp-input').value = characterHpModalTempHp;
+        document.getElementById('hp-max-reduction').value = character.hitPointsMaxReduction || 0;
+        
+        // Hide instance selector (not used for characters)
+        instanceSelector.classList.add('hidden');
+        
+        // Hide HP preview initially
+        document.getElementById('hp-preview').classList.add('hidden');
+        
+        // Update HP display styling
+        updateCharacterHPDisplayStyle();
+
+        modal.classList.add('active');
+    }
+    
+    function updateCharacterHPDisplayStyle() {
+        const display = document.querySelector('#hp-modal .hp-display');
+        const percent = characterHpModalCurrentHp / characterHpModalEffectiveMax;
+        display.classList.remove('low', 'critical');
+        if (percent <= 0.25) display.classList.add('critical');
+        else if (percent <= 0.5) display.classList.add('low');
+    }
+    
+    function updateCharacterHPDisplay() {
+        document.getElementById('current-hp').textContent = characterHpModalCurrentHp;
+        document.getElementById('max-hp').textContent = characterHpModalEffectiveMax;
+        
+        // Update temp HP display
+        const tempDisplay = document.getElementById('hp-temp-display');
+        if (characterHpModalTempHp > 0) {
+            document.getElementById('hp-temp-value').textContent = characterHpModalTempHp;
+            tempDisplay.classList.remove('hidden');
+        } else {
+            tempDisplay.classList.add('hidden');
+        }
+        
+        // Also update the input field
+        document.getElementById('hp-temp-input').value = characterHpModalTempHp;
+        
+        updateCharacterHPDisplayStyle();
+    }
+    
+    function isCharacterHpModalActive() {
+        return characterHpModalCharacterId !== null;
+    }
+
+    // Update effective max display when reduction changes
+    document.getElementById('hp-max-reduction')?.addEventListener('input', () => {
+        if (!isCharacterHpModalActive()) return;
+        const character = Characters.getCharacter(characterHpModalCharacterId);
+        if (!character) return;
+
+        const reduction = parseInt(document.getElementById('hp-max-reduction').value) || 0;
+        characterHpModalEffectiveMax = Math.max(0, (character.hitPointsMax || 0) - reduction);
+        
+        // Cap current HP at effective max
+        if (characterHpModalCurrentHp > characterHpModalEffectiveMax) {
+            characterHpModalCurrentHp = characterHpModalEffectiveMax;
+        }
+        
+        updateCharacterHPDisplay();
+    });
+    
+    // Update temp HP when input changes
+    document.getElementById('hp-temp-input')?.addEventListener('input', () => {
+        if (!isCharacterHpModalActive()) return;
+        characterHpModalTempHp = parseInt(document.getElementById('hp-temp-input').value) || 0;
+        updateCharacterHPDisplay();
+    });
+
+    // Apply HP delta for character (handles temp HP for damage)
+    function applyCharacterHPDelta() {
+        if (!isCharacterHpModalActive()) return;
+        
+        const input = document.getElementById('hp-custom-amount');
+        const delta = parseInt(input.value) || 0;
+        
+        if (delta === 0) return;
+        
+        if (delta < 0) {
+            // Damage: reduce temp HP first, then current
+            let damage = Math.abs(delta);
+            if (characterHpModalTempHp > 0) {
+                const tempDamage = Math.min(characterHpModalTempHp, damage);
+                characterHpModalTempHp -= tempDamage;
+                damage -= tempDamage;
+            }
+            characterHpModalCurrentHp = Math.max(0, characterHpModalCurrentHp - damage);
+        } else {
+            // Healing: increase current HP up to effective max (doesn't affect temp HP)
+            characterHpModalCurrentHp = Math.min(characterHpModalEffectiveMax, characterHpModalCurrentHp + delta);
+        }
+        
+        updateCharacterHPDisplay();
+        input.value = '0';
+        document.getElementById('hp-preview').classList.add('hidden');
+        input.classList.remove('damage', 'heal');
+    }
+    
+    // Add to HP delta for character (just updates input and preview)
+    function addToCharacterHPDelta(amount) {
+        const input = document.getElementById('hp-custom-amount');
+        const currentValue = parseInt(input.value) || 0;
+        input.value = currentValue + amount;
+        updateCharacterHPPreview();
+    }
+    
+    // Update HP preview for character
+    function updateCharacterHPPreview() {
+        const input = document.getElementById('hp-custom-amount');
+        const preview = document.getElementById('hp-preview');
+        const previewValue = document.getElementById('hp-preview-value');
+        
+        const delta = parseInt(input.value) || 0;
+        
+        if (delta === 0) {
+            preview.classList.add('hidden');
+            input.classList.remove('damage', 'heal');
+            return;
+        }
+        
+        preview.classList.remove('hidden');
+        input.classList.remove('damage', 'heal');
+        input.classList.add(delta < 0 ? 'damage' : 'heal');
+        
+        // Calculate preview considering temp HP for damage
+        let previewHp;
+        if (delta < 0) {
+            let damage = Math.abs(delta);
+            let tempRemaining = characterHpModalTempHp;
+            if (tempRemaining > 0) {
+                const tempDamage = Math.min(tempRemaining, damage);
+                damage -= tempDamage;
+            }
+            previewHp = Math.max(0, characterHpModalCurrentHp - damage);
+        } else {
+            previewHp = Math.min(characterHpModalEffectiveMax, characterHpModalCurrentHp + delta);
+        }
+        
+        previewValue.textContent = previewHp;
+        previewValue.classList.toggle('dead', previewHp <= 0);
+    }
+    
+    // Save character HP and close modal
+    function saveCharacterHP() {
+        if (!isCharacterHpModalActive()) return;
+
+        const character = Characters.getCharacter(characterHpModalCharacterId);
+        if (!character) return;
+        
+        // Apply any pending HP delta before saving
+        const input = document.getElementById('hp-custom-amount');
+        const delta = parseInt(input.value) || 0;
+        
+        if (delta !== 0) {
+            if (delta < 0) {
+                // Damage: reduce temp HP first, then current
+                let damage = Math.abs(delta);
+                if (characterHpModalTempHp > 0) {
+                    const tempDamage = Math.min(characterHpModalTempHp, damage);
+                    characterHpModalTempHp -= tempDamage;
+                    damage -= tempDamage;
+                }
+                characterHpModalCurrentHp = Math.max(0, characterHpModalCurrentHp - damage);
+            } else {
+                // Healing: increase current HP up to effective max
+                characterHpModalCurrentHp = Math.min(characterHpModalEffectiveMax, characterHpModalCurrentHp + delta);
+            }
+        }
+
+        character.hitPointsCurrent = characterHpModalCurrentHp;
+        character.hitPointsTemp = characterHpModalTempHp;
+        character.hitPointsMaxReduction = parseInt(document.getElementById('hp-max-reduction').value) || 0;
+
+        Characters.saveCharacter(character);
+        closeModals();
+        
+        // Refresh the character view if we're on it
+        const currentState = getState();
+        if (currentState.currentView === 'character-view') {
+            CharacterView.render(characterHpModalCharacterId);
+        }
+
+        showToast('HP updated');
+        characterHpModalCharacterId = null;
+    }
+    
+    // Reset character HP modal on close
+    function resetCharacterHpModal() {
+        characterHpModalCharacterId = null;
+        characterHpModalCurrentHp = 0;
+        characterHpModalTempHp = 0;
+        characterHpModalEffectiveMax = 0;
+        
+        // Hide character-specific fields
+        document.getElementById('hp-character-fields')?.classList.add('hidden');
+        document.getElementById('hp-temp-display')?.classList.add('hidden');
+    }
+
+    // Expose openCharacterHpModal for use by CharacterView
+    window.openCharacterHpModal = openCharacterHpModal;
+    
+    // Expose character HP functions for the shared HP modal handlers
+    window.isCharacterHpModalActive = isCharacterHpModalActive;
+    window.applyCharacterHPDelta = applyCharacterHPDelta;
+    window.addToCharacterHPDelta = addToCharacterHPDelta;
+    window.updateCharacterHPPreview = updateCharacterHPPreview;
+    window.saveCharacterHP = saveCharacterHP;
+    window.resetCharacterHpModal = resetCharacterHpModal;
 
     // Collapsible section toggles
     document.querySelectorAll('.form-section.collapsible .section-header').forEach(header => {

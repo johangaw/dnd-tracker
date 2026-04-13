@@ -424,3 +424,39 @@
 .hp-actions #hp-apply-btn {
     flex: 1;
 }
+
+/* Character-specific fields in HP modal */
+.hp-character-fields {
+    margin-bottom: 16px;
+}
+
+.hp-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.hp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hp-field label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.hp-field input {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+}
+
+.hp-temp-display {
+    color: var(--warning, #f59e0b);
+    font-weight: 600;
+}
