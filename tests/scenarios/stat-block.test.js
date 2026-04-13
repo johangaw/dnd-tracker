@@ -15,12 +15,19 @@ describe('Stat Block', () => {
     })
 
     describe('formatEntries', () => {
-        it('strips source suffix from condition tags', () => {
+        it('creates condition link with source', () => {
             const entries = ['{@condition Grappled|XPHB}']
             const result = formatEntries(entries)
-            expect(result).toBe('Grappled')
+            expect(result).toContain('href="https://5e.tools/conditionsdiseases.html#grappled_xphb"')
+            expect(result).toContain('Grappled')
             expect(result).not.toContain('|')
-            expect(result).not.toContain('XPHB')
+        })
+
+        it('creates condition link without source (defaults to xphb)', () => {
+            const entries = ['{@condition Frightened}']
+            const result = formatEntries(entries)
+            expect(result).toContain('href="https://5e.tools/conditionsdiseases.html#frightened_xphb"')
+            expect(result).toContain('Frightened')
         })
 
         it('strips source suffix from skill tags', () => {
@@ -71,12 +78,6 @@ describe('Stat Block', () => {
             expect(result).toBe('Dodge')
         })
 
-        it('handles tags without source suffix', () => {
-            const entries = ['{@condition Frightened}']
-            const result = formatEntries(entries)
-            expect(result).toBe('Frightened')
-        })
-
         it('formats hit tags correctly', () => {
             const entries = ['{@hit 5}']
             const result = formatEntries(entries)
@@ -112,6 +113,7 @@ describe('Stat Block', () => {
             const entries = ['The target must make a {@dc 15} Wisdom saving throw or be {@condition Frightened|XPHB} for 1 minute.']
             const result = formatEntries(entries)
             expect(result).toContain('DC 15')
+            expect(result).toContain('href="https://5e.tools/conditionsdiseases.html#frightened_xphb"')
             expect(result).toContain('Frightened')
             expect(result).not.toContain('|XPHB')
         })

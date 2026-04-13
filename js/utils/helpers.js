@@ -77,6 +77,15 @@ function spellLink(name) {
     return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>`;
 }
 
+// Generate 5e.tools condition link
+// URL format: https://5e.tools/conditionsdiseases.html#blinded_xphb
+function conditionLink(name, source = 'xphb') {
+    const urlName = name.toLowerCase().replace(/\s+/g, '%20');
+    const urlSource = source.toLowerCase();
+    const url = `https://5e.tools/conditionsdiseases.html#${urlName}_${urlSource}`;
+    return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>`;
+}
+
 // Format action/trait names (handles {@recharge} tags)
 export function formatName(name) {
     if (!name) return '';
@@ -99,7 +108,8 @@ export function formatEntries(entries) {
                 .replace(/{@damage ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@dice ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@dc (\d+)}/g, 'DC $1')
-                .replace(/{@condition ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@condition ([^|}]+)\|([^}]+)}/g, (_, name, source) => conditionLink(name, source))
+                .replace(/{@condition ([^|}]+)}/g, (_, name) => conditionLink(name))
                 .replace(/{@skill ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@creature ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@spell ([^|}]+)(\|[^}]*)?}/g, (_, name) => spellLink(name))
