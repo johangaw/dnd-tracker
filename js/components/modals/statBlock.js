@@ -132,9 +132,10 @@ export function renderStatBlock(monster, comment = '') {
         html += `<div class="stat-row"><span class="stat-label">Damage Vulnerabilities</span> ${formatDamageTypes(monster.vulnerable)}</div>`;
     }
 
-    // Condition immunities
+    // Condition immunities (strip source suffix like "Grappled|XPHB" -> "Grappled")
     if (monster.conditionImmune && monster.conditionImmune.length > 0) {
-        html += `<div class="stat-row"><span class="stat-label">Condition Immunities</span> ${monster.conditionImmune.join(', ')}</div>`;
+        const conditions = monster.conditionImmune.map(c => c.split('|')[0]).join(', ');
+        html += `<div class="stat-row"><span class="stat-label">Condition Immunities</span> ${conditions}</div>`;
     }
 
     // Senses
