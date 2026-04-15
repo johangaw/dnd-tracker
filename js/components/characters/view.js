@@ -77,10 +77,12 @@ export function render(characterId) {
                 </div>
 
                 <div class="combat-extras-grid">
-                    <div class="hit-dice-box">
-                        <div class="hit-dice-value">${escapeHtml(character.hitDiceTotal) || '-'}</div>
-                        <div class="hit-dice-label">Hit Dice</div>
-                        ${character.hitDiceUsed ? `<div class="hit-dice-used">(${character.hitDiceUsed} used)</div>` : ''}
+                    <div class="hit-dice-box clickable" id="hit-dice-view-box">
+                        <div class="hit-dice-label">Hit Dice (${escapeHtml(parseHitDiceType(character.hitDiceTotal)) || '?'})</div>
+                        <div class="hit-dice-circles">
+                            ${renderHitDiceCircles(character.level || 1, character.hitDiceUsed || 0)}
+                        </div>
+                        <div class="hit-dice-count">${(character.level || 1) - (character.hitDiceUsed || 0)} / ${character.level || 1}</div>
                     </div>
                     <div class="death-saves-box" id="death-saves-view-box">
                         <div class="death-saves-label">Death Saves</div>
@@ -344,6 +346,11 @@ export function render(characterId) {
     container.querySelector('#death-save-view-failure')?.addEventListener('click', () => {
         handleViewDeathSaveClick('failure');
     });
+
+    // Add click handler for hit dice box
+    container.querySelector('#hit-dice-view-box')?.addEventListener('click', () => {
+        handleHitDiceClick();
+    });
 }
 
 // Handle spell slot click - expend a slot
@@ -414,6 +421,51 @@ function renderDeathSaveCircles(count, type) {
         circles.push(`<span class="death-save-circle ${type} ${filled ? 'filled' : ''}" data-index="${i}"></span>`);
     }
     return circles.join('');
+}
+
+// Get hit dice type from string (e.g., "5d8" -> "d8")
+function parseHitDiceType(hitDiceTotal) {
+    if (!hitDiceTotal) return '';
+    const match = hitDiceTotal.match(/d\d+/i);
+    return match ? match[0] : '';
+}
+
+// Render hit dice circles (similar to spell slots)
+function renderHitDiceCircles(total, used) {
+    const circles = [];
+    const available = total - used;
+    
+    // Render available dice first (filled circles)
+    for (let i = 0; i < available; i++) {
+        circles.push(`<span class="hit-dice-circle available"></span>`);
+    }
+    // Render used dice (empty circles)
+    for (let i = 0; i < used; i++) {
+        circles.push(`<span class="hit-dice-circle used"></span>`);
+    }
+    return circles.join('');
+}
+
+// Handle hit dice click - use one hit die
+function handleHitDiceClick() {
+    if (!currentCharacterId) return;
+    
+    const character = Characters.getCharacter(currentCharacterId);
+    if (!character) return;
+    
+    const total = character.level || 1;
+    const used = character.hitDiceUsed || 0;
+    const available = total - used;
+    
+    // Only use if there are available hit dice
+    if (available <= 0) return;
+    
+    // Use one hit die
+    character.hitDiceUsed = used + 1;
+    
+    // Save and re-render
+    Characters.saveCharacter(character);
+    render(currentCharacterId);
 }
 
 // Helper to check if character has money
