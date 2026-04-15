@@ -625,12 +625,21 @@ function initEventHandlers() {
         CharacterEdit.addAttack();
     });
 
-    document.getElementById('add-cantrip-btn')?.addEventListener('click', () => {
-        CharacterEdit.addCantrip();
+    // Spell Picker Modal
+    document.getElementById('spell-search-input')?.addEventListener('input', () => {
+        CharacterEdit.renderSpellPickerResults();
     });
 
-    document.getElementById('add-spell-btn')?.addEventListener('click', () => {
-        CharacterEdit.addSpell();
+    document.getElementById('spell-level-filter')?.addEventListener('change', () => {
+        CharacterEdit.renderSpellPickerResults();
+    });
+
+    document.getElementById('spell-school-filter')?.addEventListener('change', () => {
+        CharacterEdit.renderSpellPickerResults();
+    });
+
+    document.getElementById('spell-picker-modal')?.querySelector('.close-modal')?.addEventListener('click', () => {
+        CharacterEdit.closeSpellPicker();
     });
 
     // Character HP Modal - uses shared #hp-modal

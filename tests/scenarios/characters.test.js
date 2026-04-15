@@ -987,4 +987,323 @@ describe('Character HP', () => {
             expect(exists('.spell-slots-container')).toBe(false)
         })
     })
+
+    describe('Spell Picker', () => {
+        it('opens spell picker modal when clicking Add Cantrip button', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Picker Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Click Add Cantrip button
+            await click('#add-cantrip-btn')
+            await tick()
+            
+            // Verify spell picker modal is open
+            expect(exists('#spell-picker-modal.active')).toBe(true)
+            expect(getText('#spell-picker-title')).toBe('Select Cantrip')
+            
+            // Verify level filter is set to cantrips and disabled
+            const levelFilter = document.getElementById('spell-level-filter')
+            expect(levelFilter.value).toBe('0')
+            expect(levelFilter.disabled).toBe(true)
+        })
+
+        it('opens spell picker modal when clicking Add Spell button', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Picker Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Click Add Spell button
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Verify spell picker modal is open
+            expect(exists('#spell-picker-modal.active')).toBe(true)
+            expect(getText('#spell-picker-title')).toBe('Select Spell')
+            
+            // Verify level filter is NOT disabled for regular spells
+            const levelFilter = document.getElementById('spell-level-filter')
+            expect(levelFilter.disabled).toBe(false)
+        })
+
+        it('filters spells by search query', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Search Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Type exact search query to get single result
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'magic missile'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Verify Magic Missile is shown in results
+            const results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBe(1)
+            expect(results[0].querySelector('.spell-result-name').textContent).toBe('Magic Missile')
+        })
+
+        it('filters spells by level', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Level Filter Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Select 9th level filter
+            const levelFilter = document.getElementById('spell-level-filter')
+            levelFilter.value = '9'
+            levelFilter.dispatchEvent(new Event('change', { bubbles: true }))
+            await tick()
+            
+            // Verify only 9th level spells are shown
+            const results = document.querySelectorAll('.spell-result-item')
+            results.forEach(result => {
+                const levelBadge = result.querySelector('.spell-result-level')
+                expect(levelBadge.textContent).toBe('9th')
+            })
+        })
+
+        it('adds selected spell to character', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Add Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Search for Fireball
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'fireball'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Click on Fireball to select it
+            await click('.spell-result-item')
+            await tick()
+            
+            // Verify modal is closed
+            expect(exists('#spell-picker-modal.active')).toBe(false)
+            
+            // Verify spell is added to the list
+            const spellsList = document.getElementById('spells-known-list')
+            expect(spellsList.textContent).toContain('Fireball')
+        })
+
+        it('adds selected cantrip to character', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Cantrip Add Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open cantrip picker
+            await click('#add-cantrip-btn')
+            await tick()
+            
+            // Search for Fire Bolt
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'fire bolt'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Click on Fire Bolt to select it
+            await click('.spell-result-item')
+            await tick()
+            
+            // Verify cantrip is added to the list
+            const cantripsList = document.getElementById('cantrips-list')
+            expect(cantripsList.textContent).toContain('Fire Bolt')
+        })
+
+        it('displays spell links to aidedd.org', async () => {
+            // Create a character with spells
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Links Test'
+            character.spellsKnown = ['Fireball', 'Lightning Bolt']
+            character.cantripsKnown = ['Fire Bolt']
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Verify spell links have correct href
+            const fireballLink = document.querySelector('#spells-known-list a[href*="fireball"]')
+            expect(fireballLink).toBeDefined()
+            expect(fireballLink.href).toContain('aidedd.org/spell/fireball')
+            
+            const fireboltLink = document.querySelector('#cantrips-list a[href*="fire-bolt"]')
+            expect(fireboltLink).toBeDefined()
+            expect(fireboltLink.href).toContain('aidedd.org/spell/fire-bolt')
+        })
+
+        it('prevents duplicate spells', async () => {
+            // Create a character with Magic Missile already (no other matches)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'No Duplicates Test'
+            character.spellsKnown = ['Magic Missile']
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Verify Magic Missile is already shown
+            let spellsList = document.getElementById('spells-known-list')
+            let spellMatches = spellsList.querySelectorAll('a[href*="magic-missile"]')
+            expect(spellMatches.length).toBe(1)
+            
+            // Open spell picker and try to add Magic Missile again
+            await click('#add-spell-btn')
+            await tick()
+            
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'magic missile'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Should find exactly one result
+            const results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBe(1)
+            expect(results[0].dataset.spellName).toBe('Magic Missile')
+            await click(results[0])
+            await tick()
+            
+            // Verify there's still only one Magic Missile (duplicate was prevented)
+            spellsList = document.getElementById('spells-known-list')
+            spellMatches = spellsList.querySelectorAll('a[href*="magic-missile"]')
+            expect(spellMatches.length).toBe(1)
+        })
+
+        it('closes spell picker with close button', async () => {
+            // Create and edit a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Close Modal Test'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            expect(exists('#spell-picker-modal.active')).toBe(true)
+            
+            // Click close button
+            await click('#spell-picker-modal .close-modal')
+            await tick()
+            
+            // Verify modal is closed
+            expect(exists('#spell-picker-modal.active')).toBe(false)
+        })
+    })
 })

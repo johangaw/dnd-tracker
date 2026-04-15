@@ -782,11 +782,11 @@
                                 <div id="spell-slots-edit"></div>
                             </div>
                             <div class="spells-section">
-                                <h4>Cantrips <button type="button" id="add-cantrip-btn" class="add-item-btn">+ Add</button></h4>
+                                <h4>Cantrips</h4>
                                 <div id="cantrips-list" class="spell-list"></div>
                             </div>
                             <div class="spells-section">
-                                <h4>Spells Known <button type="button" id="add-spell-btn" class="add-item-btn">+ Add</button></h4>
+                                <h4>Prepared Spells</h4>
                                 <div id="spells-known-list" class="spell-list"></div>
                             </div>
                         </div>
@@ -1154,6 +1154,48 @@
                                 Import JSON
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spell Picker Modal -->
+            <div id="spell-picker-modal" class="modal">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h2 id="spell-picker-title">Select Spell</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="search-container">
+                            <input type="text" id="spell-search-input" placeholder="Search spells..." autocomplete="off">
+                            <div class="spell-filters">
+                                <select id="spell-level-filter">
+                                    <option value="">All Levels</option>
+                                    <option value="0">Cantrips</option>
+                                    <option value="1">1st Level</option>
+                                    <option value="2">2nd Level</option>
+                                    <option value="3">3rd Level</option>
+                                    <option value="4">4th Level</option>
+                                    <option value="5">5th Level</option>
+                                    <option value="6">6th Level</option>
+                                    <option value="7">7th Level</option>
+                                    <option value="8">8th Level</option>
+                                    <option value="9">9th Level</option>
+                                </select>
+                                <select id="spell-school-filter">
+                                    <option value="">All Schools</option>
+                                    <option value="Abjuration">Abjuration</option>
+                                    <option value="Conjuration">Conjuration</option>
+                                    <option value="Divination">Divination</option>
+                                    <option value="Enchantment">Enchantment</option>
+                                    <option value="Evocation">Evocation</option>
+                                    <option value="Illusion">Illusion</option>
+                                    <option value="Necromancy">Necromancy</option>
+                                    <option value="Transmutation">Transmutation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="spell-picker-results" class="spell-picker-results"></div>
                     </div>
                 </div>
             </div>

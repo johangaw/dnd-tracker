@@ -2,6 +2,7 @@
 
 import * as Characters from '../../services/characters.js';
 import { escapeHtml } from '../../utils/helpers.js';
+import { getSpellUrl } from '../../services/spells.js';
 
 let currentCharacterId = null;
 
@@ -282,16 +283,22 @@ export function render(characterId) {
                         <div class="spell-level-group">
                             <h3>Cantrips</h3>
                             <ul class="spells-list">
-                                ${character.cantripsKnown.map(spell => `<li>${escapeHtml(typeof spell === 'string' ? spell : spell.name)}</li>`).join('')}
+                                ${character.cantripsKnown.map(spell => {
+                                    const spellName = typeof spell === 'string' ? spell : spell.name;
+                                    return `<li><a href="${getSpellUrl(spellName)}" target="_blank" rel="noopener noreferrer">${escapeHtml(spellName)}</a></li>`;
+                                }).join('')}
                             </ul>
                         </div>
                     ` : ''}
                     
                     ${character.spellsKnown?.length > 0 ? `
                         <div class="spell-level-group">
-                            <h3>Spells</h3>
+                            <h3>Prepared Spells</h3>
                             <ul class="spells-list">
-                                ${character.spellsKnown.map(spell => `<li>${escapeHtml(typeof spell === 'string' ? spell : spell.name)}</li>`).join('')}
+                                ${character.spellsKnown.map(spell => {
+                                    const spellName = typeof spell === 'string' ? spell : spell.name;
+                                    return `<li><a href="${getSpellUrl(spellName)}" target="_blank" rel="noopener noreferrer">${escapeHtml(spellName)}</a></li>`;
+                                }).join('')}
                             </ul>
                         </div>
                     ` : ''}

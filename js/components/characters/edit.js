@@ -1,6 +1,7 @@
 // Character Edit Component - Character sheet editor
 
 import * as Characters from '../../services/characters.js';
+import * as Spells from '../../services/spells.js';
 import { getState, setView } from '../../services/state.js';
 import { escapeHtml } from '../../utils/helpers.js';
 import CharacterList from './list.js';
@@ -397,26 +398,39 @@ export function renderSpells() {
     const cantripsContainer = document.getElementById('cantrips-list');
     if (cantripsContainer) {
         const cantrips = character.cantripsKnown || [];
-        cantripsContainer.innerHTML = cantrips.length === 0 
+        let html = cantrips.length === 0 
             ? '<p class="empty-hint">No cantrips added</p>'
             : cantrips.map((spell, index) => {
                 const name = typeof spell === 'string' ? spell : spell.name;
+                const url = Spells.getSpellUrl(name);
                 return `
                     <div class="spell-item" data-index="${index}">
-                        <input type="text" class="spell-name" value="${escapeHtml(name || '')}" placeholder="Cantrip name">
+                        <div class="spell-display">
+                            <a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
+                        </div>
                         <button type="button" class="remove-btn" data-index="${index}">&times;</button>
                     </div>
                 `;
             }).join('');
         
-        cantripsContainer.querySelectorAll('.spell-name').forEach((input, i) => {
-            input.addEventListener('change', () => { character.cantripsKnown[i] = input.value; });
-        });
+        html += `
+            <button type="button" class="add-spell-btn" id="add-cantrip-btn">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Add Cantrip
+            </button>
+        `;
+        
+        cantripsContainer.innerHTML = html;
+        
         cantripsContainer.querySelectorAll('.remove-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 character.cantripsKnown.splice(parseInt(btn.dataset.index), 1);
                 renderSpells();
             });
+        });
+        
+        document.getElementById('add-cantrip-btn')?.addEventListener('click', () => {
+            openSpellPicker('cantrip');
         });
     }
     
@@ -424,45 +438,176 @@ export function renderSpells() {
     const spellsContainer = document.getElementById('spells-known-list');
     if (spellsContainer) {
         const spells = character.spellsKnown || [];
-        spellsContainer.innerHTML = spells.length === 0 
+        let html = spells.length === 0 
             ? '<p class="empty-hint">No spells added</p>'
             : spells.map((spell, index) => {
                 const name = typeof spell === 'string' ? spell : spell.name;
+                const url = Spells.getSpellUrl(name);
                 return `
                     <div class="spell-item" data-index="${index}">
-                        <input type="text" class="spell-name" value="${escapeHtml(name || '')}" placeholder="Spell name">
+                        <div class="spell-display">
+                            <a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
+                        </div>
                         <button type="button" class="remove-btn" data-index="${index}">&times;</button>
                     </div>
                 `;
             }).join('');
         
-        spellsContainer.querySelectorAll('.spell-name').forEach((input, i) => {
-            input.addEventListener('change', () => { character.spellsKnown[i] = input.value; });
-        });
+        html += `
+            <button type="button" class="add-spell-btn" id="add-spell-btn">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Add Spell
+            </button>
+        `;
+        
+        spellsContainer.innerHTML = html;
+        
         spellsContainer.querySelectorAll('.remove-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 character.spellsKnown.splice(parseInt(btn.dataset.index), 1);
                 renderSpells();
             });
         });
+        
+        document.getElementById('add-spell-btn')?.addEventListener('click', () => {
+            openSpellPicker('spell');
+        });
     }
 }
 
-// Add cantrip
-export function addCantrip() {
-    const state = getState();
-    const character = state.editingCharacter;
-    if (!character.cantripsKnown) character.cantripsKnown = [];
-    character.cantripsKnown.push('');
-    renderSpells();
+// Current spell picker mode ('cantrip' or 'spell')
+let spellPickerMode = null;
+
+// Open spell picker modal
+export function openSpellPicker(mode) {
+    spellPickerMode = mode;
+    const modal = document.getElementById('spell-picker-modal');
+    const title = document.getElementById('spell-picker-title');
+    const searchInput = document.getElementById('spell-search-input');
+    const levelFilter = document.getElementById('spell-level-filter');
+    const schoolFilter = document.getElementById('spell-school-filter');
+    
+    // Set title and default filter based on mode
+    if (mode === 'cantrip') {
+        title.textContent = 'Select Cantrip';
+        levelFilter.value = '0';
+        levelFilter.disabled = true;
+    } else {
+        title.textContent = 'Select Spell';
+        levelFilter.value = '';
+        levelFilter.disabled = false;
+    }
+    
+    // Reset other filters
+    searchInput.value = '';
+    schoolFilter.value = '';
+    
+    // Render initial results
+    renderSpellPickerResults();
+    
+    // Show modal
+    modal.classList.add('active');
+    searchInput.focus();
 }
 
-// Add spell
-export function addSpell() {
+// Close spell picker modal
+export function closeSpellPicker() {
+    const modal = document.getElementById('spell-picker-modal');
+    modal.classList.remove('active');
+    spellPickerMode = null;
+}
+
+// Render spell picker search results
+export function renderSpellPickerResults() {
+    const resultsContainer = document.getElementById('spell-picker-results');
+    const searchQuery = document.getElementById('spell-search-input').value;
+    const levelFilter = document.getElementById('spell-level-filter').value;
+    const schoolFilter = document.getElementById('spell-school-filter').value;
+    
+    // Get filtered spells
+    let spells = Spells.getAllSpells();
+    
+    // Filter by level
+    if (levelFilter !== '') {
+        const level = parseInt(levelFilter);
+        spells = spells.filter(s => s.level === level);
+    } else if (spellPickerMode === 'cantrip') {
+        spells = spells.filter(s => s.level === 0);
+    } else if (spellPickerMode === 'spell') {
+        // For spells, exclude cantrips by default unless explicitly selected
+        spells = spells.filter(s => s.level > 0);
+    }
+    
+    // Filter by school
+    if (schoolFilter) {
+        spells = spells.filter(s => s.school === schoolFilter);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        spells = spells.filter(s => s.name.toLowerCase().includes(query));
+    }
+    
+    // Limit results
+    const limitedSpells = spells.slice(0, 50);
+    
+    if (limitedSpells.length === 0) {
+        resultsContainer.innerHTML = '<p class="empty-hint" style="padding: 16px; text-align: center;">No spells found</p>';
+        return;
+    }
+    
+    resultsContainer.innerHTML = limitedSpells.map(spell => {
+        const levelText = Spells.formatSpellLevel(spell.level);
+        return `
+            <div class="spell-result-item" data-spell-name="${escapeHtml(spell.name)}">
+                <div class="spell-result-header">
+                    <span class="spell-result-name">${escapeHtml(spell.name)}</span>
+                    <span class="spell-result-level">${levelText}</span>
+                </div>
+                <div class="spell-result-details">
+                    <span>${spell.school}</span>
+                    <span>${spell.castingTime}</span>
+                    <span>${spell.range}</span>
+                    ${spell.concentration ? '<span class="spell-concentration">Concentration</span>' : ''}
+                    ${spell.ritual ? '<span class="spell-ritual">Ritual</span>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    if (spells.length > 50) {
+        resultsContainer.innerHTML += `<p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">Showing 50 of ${spells.length} results. Type to narrow down.</p>`;
+    }
+    
+    // Add click handlers
+    resultsContainer.querySelectorAll('.spell-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectSpell(item.dataset.spellName);
+        });
+    });
+}
+
+// Select a spell from the picker
+function selectSpell(spellName) {
     const state = getState();
     const character = state.editingCharacter;
-    if (!character.spellsKnown) character.spellsKnown = [];
-    character.spellsKnown.push('');
+    
+    if (spellPickerMode === 'cantrip') {
+        if (!character.cantripsKnown) character.cantripsKnown = [];
+        // Avoid duplicates
+        if (!character.cantripsKnown.includes(spellName)) {
+            character.cantripsKnown.push(spellName);
+        }
+    } else {
+        if (!character.spellsKnown) character.spellsKnown = [];
+        // Avoid duplicates
+        if (!character.spellsKnown.includes(spellName)) {
+            character.spellsKnown.push(spellName);
+        }
+    }
+    
+    closeSpellPicker();
     renderSpells();
 }
 
@@ -603,8 +748,9 @@ export default {
     addAttack,
     renderSpellSlots,
     renderSpells,
-    addCantrip,
-    addSpell,
+    openSpellPicker,
+    closeSpellPicker,
+    renderSpellPickerResults,
     saveCharacter,
     deleteCharacter,
     cancelEdit

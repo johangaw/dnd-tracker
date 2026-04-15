@@ -678,6 +678,16 @@
     font-size: 0.85rem;
 }
 
+.spells-list li a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.spells-list li a:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
 /* Notes Section */
 .character-notes-section h2 {
     margin: 0 0 12px 0;
@@ -1063,4 +1073,134 @@
     font-size: 0.8rem;
     color: var(--color-danger, #dc3545);
     margin-top: 4px;
+}
+
+/* Spell Picker Modal */
+.spell-filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.spell-filters select {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.spell-picker-results {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.spell-result-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: background-color 0.15s;
+}
+
+.spell-result-item:last-child {
+    border-bottom: none;
+}
+
+.spell-result-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.spell-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.spell-result-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.spell-result-level {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.spell-result-details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+}
+
+.spell-result-details span {
+    white-space: nowrap;
+}
+
+.spell-concentration {
+    color: var(--accent) !important;
+    font-weight: 500;
+}
+
+.spell-ritual {
+    color: var(--color-success, #28a745) !important;
+    font-weight: 500;
+}
+
+/* Spell display in character edit - with link */
+.spell-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.spell-display a {
+    color: var(--accent);
+    text-decoration: none;
+    flex: 1;
+}
+
+.spell-display a:hover {
+    text-decoration: underline;
+}
+
+.add-spell-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+}
+
+.add-spell-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-tertiary);
+}
+
+.add-spell-btn svg {
+    width: 16px;
+    height: 16px;
 }
