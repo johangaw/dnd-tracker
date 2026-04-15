@@ -565,5 +565,153 @@ describe('Character HP', () => {
             expect(reductionNote).toBeTruthy()
             expect(reductionNote.textContent).toContain('-10')
         })
+
+        it('shows character sheet with updated HP after modal save', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'HP Update View Test'
+            character.hitPointsMax = 50
+            character.hitPointsCurrent = 50
+            character.hitPointsTemp = 0
+            character.hitPointsMaxReduction = 0
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify initial HP display
+            expect(document.querySelector('.hp-current').textContent).toBe('50')
+            expect(document.querySelector('.hp-max').textContent).toBe('50')
+            
+            // Open HP modal
+            await click('.hp-clickable')
+            await tick()
+            
+            // Verify modal is open
+            expect(exists('#hp-modal.active')).toBe(true)
+            
+            // Apply 15 damage
+            const hpInput = document.getElementById('hp-custom-amount')
+            hpInput.value = '-15'
+            hpInput.dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Save and close modal
+            await click('#hp-apply-btn')
+            await tick()
+            
+            // Verify modal is closed
+            expect(exists('#hp-modal.active')).toBe(false)
+            
+            // Verify character view is still visible
+            expect(exists('#character-view-section.active')).toBe(true)
+            
+            // Verify character sheet shows updated HP values
+            expect(document.querySelector('.hp-current').textContent).toBe('35')
+            expect(document.querySelector('.hp-max').textContent).toBe('50')
+            
+            // Verify the character name is still displayed (confirms we're on the right view)
+            expect(document.querySelector('.character-name').textContent).toBe('HP Update View Test')
+        })
+
+        it('shows updated temp HP in character sheet after modal save', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Temp HP View Test'
+            character.hitPointsMax = 30
+            character.hitPointsCurrent = 30
+            character.hitPointsTemp = 0
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify no temp HP initially
+            expect(document.querySelector('.hp-temp')).toBeFalsy()
+            
+            // Open HP modal and add temp HP
+            await click('.hp-clickable')
+            await tick()
+            
+            document.getElementById('hp-temp-input').value = '8'
+            document.getElementById('hp-temp-input').dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Save and close modal
+            await click('#hp-apply-btn')
+            await tick()
+            
+            // Verify character sheet shows temp HP
+            const tempHpElement = document.querySelector('.hp-temp')
+            expect(tempHpElement).toBeTruthy()
+            expect(tempHpElement.textContent).toContain('8')
+        })
+
+        it('shows updated max HP reduction in character sheet after modal save', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Max Reduction View Test'
+            character.hitPointsMax = 40
+            character.hitPointsCurrent = 40
+            character.hitPointsMaxReduction = 0
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify no reduction note initially
+            expect(document.querySelector('.hp-reduction-note')).toBeFalsy()
+            expect(document.querySelector('.hp-max').textContent).toBe('40')
+            
+            // Open HP modal and add max HP reduction
+            await click('.hp-clickable')
+            await tick()
+            
+            document.getElementById('hp-max-reduction').value = '10'
+            document.getElementById('hp-max-reduction').dispatchEvent(new Event('input'))
+            await tick()
+            
+            // Save and close modal
+            await click('#hp-apply-btn')
+            await tick()
+            
+            // Verify character sheet shows reduced max HP
+            expect(document.querySelector('.hp-max').textContent).toBe('30')
+            
+            // Verify reduction note is displayed
+            const reductionNote = document.querySelector('.hp-reduction-note')
+            expect(reductionNote).toBeTruthy()
+            expect(reductionNote.textContent).toContain('-10')
+            
+            // Current HP should be capped to effective max
+            expect(document.querySelector('.hp-current').textContent).toBe('30')
+        })
     })
 })
