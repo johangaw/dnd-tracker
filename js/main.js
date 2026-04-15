@@ -605,6 +605,11 @@ function initEventHandlers() {
         CharacterEdit.updateProficiencyDisplay();
     });
 
+    // Character class change - update subclass suggestions
+    document.getElementById('char-class')?.addEventListener('input', () => {
+        CharacterEdit.updateSubclassSuggestions();
+    });
+
     // Ability score changes - update modifiers
     Characters.ABILITIES.forEach(ability => {
         document.getElementById(`char-${ability}`)?.addEventListener('change', () => {
@@ -635,6 +640,10 @@ function initEventHandlers() {
     });
 
     document.getElementById('spell-school-filter')?.addEventListener('change', () => {
+        CharacterEdit.renderSpellPickerResults();
+    });
+
+    document.getElementById('spell-class-filter-toggle')?.addEventListener('change', () => {
         CharacterEdit.renderSpellPickerResults();
     });
 

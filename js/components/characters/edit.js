@@ -2,6 +2,7 @@
 
 import * as Characters from '../../services/characters.js';
 import * as Spells from '../../services/spells.js';
+import * as ClassSpellLists from '../../data/classSpellLists.js';
 import { getState, setView } from '../../services/state.js';
 import { escapeHtml } from '../../utils/helpers.js';
 import CharacterList from './list.js';
@@ -107,6 +108,9 @@ export function renderForm() {
     
     // Notes
     setInputValue('char-notes', character.notes);
+    
+    // Update subclass suggestions based on class
+    updateSubclassSuggestions();
     
     // Show delete button only for existing characters
     const deleteBtn = document.getElementById('delete-character-btn');
@@ -478,14 +482,28 @@ export function renderSpells() {
 // Current spell picker mode ('cantrip' or 'spell')
 let spellPickerMode = null;
 
+// Get current class/subclass from form fields
+function getCurrentClassFromForm() {
+    const classInput = document.getElementById('char-class');
+    const subclassInput = document.getElementById('char-subclass');
+    return {
+        class: classInput?.value?.trim() || '',
+        subclass: subclassInput?.value?.trim() || ''
+    };
+}
+
 // Open spell picker modal
 export function openSpellPicker(mode) {
     spellPickerMode = mode;
+    
     const modal = document.getElementById('spell-picker-modal');
     const title = document.getElementById('spell-picker-title');
     const searchInput = document.getElementById('spell-search-input');
     const levelFilter = document.getElementById('spell-level-filter');
     const schoolFilter = document.getElementById('spell-school-filter');
+    const classFilterContainer = document.getElementById('spell-class-filter-container');
+    const classFilterToggle = document.getElementById('spell-class-filter-toggle');
+    const classFilterLabel = document.getElementById('spell-class-filter-label');
     
     // Set title and default filter based on mode
     if (mode === 'cantrip') {
@@ -501,6 +519,33 @@ export function openSpellPicker(mode) {
     // Reset other filters
     searchInput.value = '';
     schoolFilter.value = '';
+    
+    // Get class/subclass from form fields (not saved character)
+    const { class: charClass, subclass: charSubclass } = getCurrentClassFromForm();
+    
+    // Show/hide class filter based on whether character has a spellcasting class OR subclass
+    const hasSpellcastingClass = charClass && ClassSpellLists.isSpellcastingClass(charClass);
+    const hasSpellcastingSubclass = charSubclass && ClassSpellLists.isSpellcastingSubclass(charSubclass);
+    
+    if (hasSpellcastingClass || hasSpellcastingSubclass) {
+        classFilterContainer.style.display = 'block';
+        classFilterToggle.checked = true; // Default to showing class spells
+        
+        // Update label to show class/subclass name
+        let label;
+        if (hasSpellcastingSubclass && !hasSpellcastingClass) {
+            // Subclass grants spellcasting (e.g., Eldritch Knight, Arcane Trickster)
+            label = `Show only ${charSubclass} spells`;
+        } else if (charSubclass) {
+            label = `Show only ${charClass} (${charSubclass}) spells`;
+        } else {
+            label = `Show only ${charClass} spells`;
+        }
+        classFilterLabel.textContent = label;
+    } else {
+        classFilterContainer.style.display = 'none';
+        classFilterToggle.checked = false;
+    }
     
     // Render initial results
     renderSpellPickerResults();
@@ -523,9 +568,26 @@ export function renderSpellPickerResults() {
     const searchQuery = document.getElementById('spell-search-input').value;
     const levelFilter = document.getElementById('spell-level-filter').value;
     const schoolFilter = document.getElementById('spell-school-filter').value;
+    const classFilterToggle = document.getElementById('spell-class-filter-toggle');
+    
+    // Get class/subclass from form fields
+    const { class: charClass, subclass: charSubclass } = getCurrentClassFromForm();
     
     // Get filtered spells
     let spells = Spells.getAllSpells();
+    
+    // Filter by class/subclass if toggle is checked
+    if (classFilterToggle?.checked) {
+        // Check if we have spellcasting from class or subclass
+        const hasSpellcastingClass = charClass && ClassSpellLists.isSpellcastingClass(charClass);
+        const hasSpellcastingSubclass = charSubclass && ClassSpellLists.isSpellcastingSubclass(charSubclass);
+        
+        if (hasSpellcastingClass || hasSpellcastingSubclass) {
+            const availableSpells = ClassSpellLists.getAvailableSpells(charClass, charSubclass);
+            const availableSet = new Set(availableSpells.map(s => s.toLowerCase()));
+            spells = spells.filter(s => availableSet.has(s.name.toLowerCase()));
+        }
+    }
     
     // Filter by level
     if (levelFilter !== '') {
@@ -735,6 +797,22 @@ export function cancelEdit() {
     setView('characters');
 }
 
+// Update subclass suggestions based on current class
+export function updateSubclassSuggestions() {
+    const classInput = document.getElementById('char-class');
+    const subclassDatalist = document.getElementById('subclass-suggestions');
+    
+    if (!classInput || !subclassDatalist) return;
+    
+    const className = classInput.value.trim();
+    const subclasses = ClassSpellLists.getSubclassesForClass(className);
+    
+    // Clear and repopulate datalist
+    subclassDatalist.innerHTML = subclasses
+        .map(sc => `<option value="${sc}">`)
+        .join('');
+}
+
 export default {
     init,
     renderForm,
@@ -751,6 +829,7 @@ export default {
     openSpellPicker,
     closeSpellPicker,
     renderSpellPickerResults,
+    updateSubclassSuggestions,
     saveCharacter,
     deleteCharacter,
     cancelEdit

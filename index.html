@@ -467,7 +467,21 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="char-class">Class</label>
-                                <input type="text" id="char-class" placeholder="Fighter, Wizard...">
+                                <input type="text" id="char-class" placeholder="Fighter, Wizard..." list="class-suggestions" autocomplete="off">
+                                <datalist id="class-suggestions">
+                                    <option value="Barbarian">
+                                    <option value="Bard">
+                                    <option value="Cleric">
+                                    <option value="Druid">
+                                    <option value="Fighter">
+                                    <option value="Monk">
+                                    <option value="Paladin">
+                                    <option value="Ranger">
+                                    <option value="Rogue">
+                                    <option value="Sorcerer">
+                                    <option value="Warlock">
+                                    <option value="Wizard">
+                                </datalist>
                             </div>
                             <div class="form-group">
                                 <label for="char-level">Level</label>
@@ -476,7 +490,8 @@
                         </div>
                         <div class="form-group">
                             <label for="char-subclass">Subclass</label>
-                            <input type="text" id="char-subclass" placeholder="Champion, Evocation...">
+                            <input type="text" id="char-subclass" placeholder="Champion, Evocation..." list="subclass-suggestions" autocomplete="off">
+                            <datalist id="subclass-suggestions"></datalist>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -1193,6 +1208,12 @@
                                     <option value="Necromancy">Necromancy</option>
                                     <option value="Transmutation">Transmutation</option>
                                 </select>
+                            </div>
+                            <div class="spell-class-filter" id="spell-class-filter-container" style="display: none;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="spell-class-filter-toggle">
+                                    <span id="spell-class-filter-label">Show only class spells</span>
+                                </label>
                             </div>
                         </div>
                         <div id="spell-picker-results" class="spell-picker-results"></div>

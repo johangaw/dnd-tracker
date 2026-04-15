@@ -1305,5 +1305,191 @@ describe('Character HP', () => {
             // Verify modal is closed
             expect(exists('#spell-picker-modal.active')).toBe(false)
         })
+
+        it('shows class filter toggle for spellcasting classes', async () => {
+            // Create a Wizard character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Class Filter Test'
+            character.class = 'Wizard'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Verify class filter is visible and checked by default
+            const classFilterContainer = document.getElementById('spell-class-filter-container')
+            expect(classFilterContainer.style.display).toBe('block')
+            
+            const toggle = document.getElementById('spell-class-filter-toggle')
+            expect(toggle.checked).toBe(true)
+            
+            // Verify label shows class name
+            const label = document.getElementById('spell-class-filter-label')
+            expect(label.textContent).toContain('Wizard')
+        })
+
+        it('hides class filter toggle for non-spellcasting classes', async () => {
+            // Create a Fighter character (non-spellcaster)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Non-caster Test'
+            character.class = 'Fighter'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Verify class filter is hidden
+            const classFilterContainer = document.getElementById('spell-class-filter-container')
+            expect(classFilterContainer.style.display).toBe('none')
+        })
+
+        it('filters spells by class when toggle is checked', async () => {
+            // Create a Wizard character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Wizard Spell Filter Test'
+            character.class = 'Wizard'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Toggle should be checked by default, showing only Wizard spells
+            // Search for Fireball (a Wizard spell)
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'fireball'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Fireball should be found
+            let results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBeGreaterThan(0)
+            
+            // Search for Healing Word (NOT a Wizard spell)
+            searchInput.value = 'healing word'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Healing Word should NOT be found when filtered to Wizard spells
+            results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBe(0)
+        })
+
+        it('shows all spells when class filter toggle is unchecked', async () => {
+            // Create a Wizard character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Unfiltered Spell Test'
+            character.class = 'Wizard'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Uncheck the class filter toggle
+            const toggle = document.getElementById('spell-class-filter-toggle')
+            toggle.checked = false
+            toggle.dispatchEvent(new Event('change', { bubbles: true }))
+            await tick()
+            
+            // Search for Healing Word (NOT a Wizard spell)
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'healing word'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Healing Word SHOULD be found when class filter is off
+            const results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBeGreaterThan(0)
+        })
+
+        it('includes subclass spells when filtering', async () => {
+            // Create a Cleric with Life Domain
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Subclass Spell Test'
+            character.class = 'Cleric'
+            character.subclass = 'Life Domain'
+            Characters.saveCharacter(character)
+            
+            // Navigate to character edit
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="edit"]')
+            await tick()
+            
+            // Open spell picker
+            await click('#add-spell-btn')
+            await tick()
+            
+            // Verify label shows subclass
+            const label = document.getElementById('spell-class-filter-label')
+            expect(label.textContent).toContain('Life Domain')
+            
+            // Search for Beacon of Hope (Life Domain spell)
+            const searchInput = document.getElementById('spell-search-input')
+            searchInput.value = 'beacon of hope'
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }))
+            await tick()
+            
+            // Beacon of Hope should be found (it's both on Cleric list AND Life Domain list)
+            const results = document.querySelectorAll('.spell-result-item')
+            expect(results.length).toBe(1)
+        })
     })
 })

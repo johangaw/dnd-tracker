@@ -1100,6 +1100,26 @@
     border-radius: 4px;
 }
 
+.spell-class-filter {
+    margin-top: 8px;
+    padding: 8px 0;
+}
+
+.spell-class-filter .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.spell-class-filter .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
 .spell-result-item {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border-color);
