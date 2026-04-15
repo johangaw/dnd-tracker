@@ -805,6 +805,9 @@ function initEventHandlers() {
         const character = Characters.getCharacter(characterHpModalCharacterId);
         if (!character) return;
         
+        // Save the character ID before closeModals resets it
+        const characterId = characterHpModalCharacterId;
+        
         // Apply any pending HP delta before saving
         const input = document.getElementById('hp-custom-amount');
         const delta = parseInt(input.value) || 0;
@@ -835,11 +838,10 @@ function initEventHandlers() {
         // Refresh the character view if we're on it
         const currentState = getState();
         if (currentState.currentView === 'character-view') {
-            CharacterView.render(characterHpModalCharacterId);
+            CharacterView.render(characterId);
         }
 
         showToast('HP updated');
-        characterHpModalCharacterId = null;
     }
     
     // Reset character HP modal on close
