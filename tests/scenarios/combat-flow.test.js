@@ -1,7 +1,7 @@
 // Combat Flow Tests
 // Tests for combat tracker: initiative, turns, HP management
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { 
   initApp, 
   click, 
@@ -30,6 +30,11 @@ describe('Combat Flow', () => {
         autoAddMonsters: true
       })
       await initApp()
+    })
+
+    afterEach(() => {
+      // Clear any pending timers to prevent test interference
+      vi.clearAllTimers()
     })
 
     it('opens initiative setup when running encounter', async () => {
@@ -173,6 +178,10 @@ describe('Combat Flow', () => {
       await click('#start-combat-btn')
     })
 
+    afterEach(() => {
+      vi.clearAllTimers()
+    })
+
     it('advances to next turn', async () => {
       // First combatant should be active
       let turnItems = getAll('.turn-item')
@@ -254,6 +263,10 @@ describe('Combat Flow', () => {
       await type(initInputs[1], '5')
       
       await click('#start-combat-btn')
+    })
+
+    afterEach(() => {
+      vi.clearAllTimers()
     })
 
     it('opens HP modal for monsters', async () => {
@@ -398,6 +411,10 @@ describe('Combat Flow', () => {
       await click('#start-combat-btn')
     })
 
+    afterEach(() => {
+      vi.clearAllTimers()
+    })
+
     it('opens initiative edit modal when clicking initiative', async () => {
       const initDisplay = document.querySelector('.turn-init.clickable')
       await click(initDisplay)
@@ -449,6 +466,10 @@ describe('Combat Flow', () => {
       await type(initInputs[2], '10')
       
       await click('#start-combat-btn')
+    })
+
+    afterEach(() => {
+      vi.clearAllTimers()
     })
 
     it('removes combatant from turn order', async () => {

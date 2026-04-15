@@ -225,37 +225,44 @@
     color: var(--text-secondary);
 }
 
-.death-saves-row {
+.death-saves-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.death-save-item {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    margin-top: 4px;
+    gap: 6px;
+    padding: 10px 8px;
+    background: var(--bg-tertiary, rgba(0,0,0,0.2));
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
 }
 
-.success-label,
-.failure-label {
-    font-size: 0.75rem;
+.death-save-item:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.1));
+    transform: scale(1.02);
+}
+
+.death-save-item:active {
+    transform: scale(0.98);
+}
+
+.death-save-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
     color: var(--text-secondary);
-    margin-right: 4px;
 }
 
-.death-save-box {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--text-secondary);
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.death-save-box.success.filled {
-    background: var(--color-success, #4caf50);
-    border-color: var(--color-success, #4caf50);
-}
-
-.death-save-box.failure.filled {
-    background: var(--color-danger, #dc3545);
-    border-color: var(--color-danger, #dc3545);
+.death-save-circles {
+    display: flex;
+    gap: 6px;
 }
 
 /* Ability Scores Section */
@@ -825,11 +832,19 @@
     color: var(--text-secondary);
 }
 
-/* Death Saves Edit */
-.death-saves-edit {
-    padding: 8px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
+/* Death Save Circles (View Page) */
+
+.death-save-circle {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--text-tertiary, #666);
+    opacity: 0.4;
+}
+
+.death-save-circle.filled {
+    background: var(--accent);
+    opacity: 1;
 }
 
 /* Attacks Edit */

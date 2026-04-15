@@ -82,15 +82,21 @@ export function render(characterId) {
                         <div class="hit-dice-label">Hit Dice</div>
                         ${character.hitDiceUsed ? `<div class="hit-dice-used">(${character.hitDiceUsed} used)</div>` : ''}
                     </div>
-                    <div class="death-saves-box">
+                    <div class="death-saves-box" id="death-saves-view-box">
                         <div class="death-saves-label">Death Saves</div>
-                        <div class="death-saves-row">
-                            <span class="success-label">S:</span>
-                            ${renderDeathSaveBoxes(character.deathSaves?.successes || 0, 'success')}
-                        </div>
-                        <div class="death-saves-row">
-                            <span class="failure-label">F:</span>
-                            ${renderDeathSaveBoxes(character.deathSaves?.failures || 0, 'failure')}
+                        <div class="death-saves-grid">
+                            <div class="death-save-item success" id="death-save-view-success">
+                                <span class="death-save-type">Success</span>
+                                <div class="death-save-circles">
+                                    ${renderDeathSaveCircles(character.deathSaves?.successes || 0, 'success')}
+                                </div>
+                            </div>
+                            <div class="death-save-item failure" id="death-save-view-failure">
+                                <span class="death-save-type">Failure</span>
+                                <div class="death-save-circles">
+                                    ${renderDeathSaveCircles(character.deathSaves?.failures || 0, 'failure')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -329,6 +335,15 @@ export function render(characterId) {
             handleSpellSlotClick(characterId, level);
         });
     });
+
+    // Add click handlers for death save items (entire box is clickable)
+    container.querySelector('#death-save-view-success')?.addEventListener('click', () => {
+        handleViewDeathSaveClick('success');
+    });
+
+    container.querySelector('#death-save-view-failure')?.addEventListener('click', () => {
+        handleViewDeathSaveClick('failure');
+    });
 }
 
 // Handle spell slot click - expend a slot
@@ -349,7 +364,39 @@ function handleSpellSlotClick(characterId, level) {
     }
 }
 
-// Helper function to render death save boxes
+// Handle death save circle click in view mode
+// Clicking adds one circle; if all 3 are filled, clears all
+export function handleViewDeathSaveClick(type) {
+    if (!currentCharacterId) return;
+    
+    const character = Characters.getCharacter(currentCharacterId);
+    if (!character) return;
+    
+    // Get current count
+    if (!character.deathSaves) {
+        character.deathSaves = { successes: 0, failures: 0 };
+    }
+    
+    const currentValue = type === 'success' 
+        ? character.deathSaves.successes 
+        : character.deathSaves.failures;
+    
+    // If all 3 filled, clear to 0; otherwise add one
+    const newValue = currentValue >= 3 ? 0 : currentValue + 1;
+    
+    // Update character state
+    if (type === 'success') {
+        character.deathSaves.successes = newValue;
+    } else {
+        character.deathSaves.failures = newValue;
+    }
+    
+    // Save and re-render
+    Characters.saveCharacter(character);
+    render(currentCharacterId);
+}
+
+// Helper function to render death save boxes (legacy - static display)
 function renderDeathSaveBoxes(count, type) {
     const boxes = [];
     for (let i = 0; i < 3; i++) {
@@ -357,6 +404,16 @@ function renderDeathSaveBoxes(count, type) {
         boxes.push(`<span class="death-save-box ${type} ${filled ? 'filled' : ''}"></span>`);
     }
     return boxes.join('');
+}
+
+// Helper function to render clickable death save circles
+function renderDeathSaveCircles(count, type) {
+    const circles = [];
+    for (let i = 0; i < 3; i++) {
+        const filled = i < count;
+        circles.push(`<span class="death-save-circle ${type} ${filled ? 'filled' : ''}" data-index="${i}"></span>`);
+    }
+    return circles.join('');
 }
 
 // Helper to check if character has money
