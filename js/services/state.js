@@ -14,7 +14,8 @@ const state = {
     editingMonster: null,
     importingMonster: null,
     editingCharacter: null,
-    characterEditSource: null // 'list' or 'view' - tracks where character-edit was entered from
+    characterEditSource: null, // 'list' or 'view' - tracks where character-edit was entered from
+    importingCharacter: null
 };
 
 export function getState() {
@@ -120,6 +121,10 @@ export function setCharacterEditSource(source) {
     state.characterEditSource = source;
 }
 
+export function setImportingCharacter(character) {
+    state.importingCharacter = character;
+}
+
 // Default export for backward compatibility
 export default {
     getState,
@@ -135,5 +140,6 @@ export default {
     setEditingMonster,
     setImportingMonster,
     setEditingCharacter,
-    setCharacterEditSource
+    setCharacterEditSource,
+    setImportingCharacter
 };

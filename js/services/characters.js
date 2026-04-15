@@ -358,7 +358,7 @@ export function exportCharacterToURL(character) {
     
     const json = JSON.stringify(exportData);
     const encoded = btoa(encodeURIComponent(json));
-    const url = `${window.location.origin}${window.location.pathname}?importCharacter=${encoded}`;
+    const url = `${window.location.origin}${window.location.pathname}?importCharacter=${encoded}#/characters`;
     return url;
 }
 

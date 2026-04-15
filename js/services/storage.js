@@ -62,7 +62,7 @@ export function exportEncounterToURL(encounter) {
     
     const json = JSON.stringify(exportData);
     const encoded = btoa(encodeURIComponent(json));
-    const url = `${window.location.origin}${window.location.pathname}?import=${encoded}`;
+    const url = `${window.location.origin}${window.location.pathname}?import=${encoded}#/encounters`;
     return url;
 }
 

@@ -155,7 +155,7 @@ export function exportMonsterToURL(monster) {
     
     const json = JSON.stringify(exportData);
     const encoded = btoa(encodeURIComponent(json));
-    const url = `${window.location.origin}${window.location.pathname}?importMonster=${encoded}`;
+    const url = `${window.location.origin}${window.location.pathname}?importMonster=${encoded}#/monsters`;
     return url;
 }
 

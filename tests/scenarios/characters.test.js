@@ -1,6 +1,6 @@
 // Tests for Character Sheet feature
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { initApp, click, tick, exists, getText } from '../helpers.js'
+import { initApp, click, tick, exists, getText, isVisible, type } from '../helpers.js'
 import * as Characters from '../../js/services/characters.js'
 
 describe('Characters Service', () => {
@@ -1490,6 +1490,361 @@ describe('Character HP', () => {
             // Beacon of Hope should be found (it's both on Cleric list AND Life Domain list)
             const results = document.querySelectorAll('.spell-result-item')
             expect(results.length).toBe(1)
+        })
+    })
+
+    describe('Character Import/Export UI', () => {
+        it('shows choice modal when clicking new character button', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Click new character button
+            await click('#new-character-btn')
+            await tick()
+            
+            // Should show the choice modal
+            expect(isVisible('#add-character-choice-modal')).toBe(true)
+            expect(exists('#character-choice-create-new')).toBe(true)
+            expect(exists('#character-choice-import-json')).toBe(true)
+        })
+
+        it('creates new character when choosing Create New', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Click new character button
+            await click('#new-character-btn')
+            await tick()
+            
+            // Click Create New
+            await click('#character-choice-create-new')
+            await tick()
+            
+            // Should switch to edit view
+            expect(isVisible('#character-edit-view')).toBe(true)
+            expect(isVisible('#add-character-choice-modal')).toBe(false)
+        })
+
+        it('opens import JSON modal when choosing Import JSON', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Click new character button
+            await click('#new-character-btn')
+            await tick()
+            
+            // Click Import JSON
+            await click('#character-choice-import-json')
+            await tick()
+            
+            // Should show the import JSON modal
+            expect(isVisible('#import-character-json-modal')).toBe(true)
+            expect(exists('#import-character-json-input')).toBe(true)
+        })
+
+        it('imports character from valid JSON', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            const jsonData = JSON.stringify({
+                name: 'Imported Wizard',
+                class: 'Wizard',
+                level: 5,
+                abilities: { str: 8, dex: 14, con: 12, int: 18, wis: 12, cha: 10 }
+            })
+            
+            await type('#import-character-json-input', jsonData)
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should close modal
+            expect(isVisible('#import-character-json-modal')).toBe(false)
+            
+            // Check the character was saved
+            const characters = Characters.getCharacters()
+            expect(characters).toHaveLength(1)
+            expect(characters[0].name).toBe('Imported Wizard')
+            expect(characters[0].class).toBe('Wizard')
+            expect(characters[0].level).toBe(5)
+        })
+
+        it('imports character from share link', async () => {
+            // Create a character and generate share URL
+            const originalChar = Characters.createEmptyCharacter()
+            originalChar.name = 'Link Shared Character'
+            originalChar.class = 'Rogue'
+            originalChar.level = 3
+            
+            const shareUrl = Characters.exportCharacterToURL(originalChar)
+            
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            // Paste the share URL
+            await type('#import-character-json-input', shareUrl)
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should close modal
+            expect(isVisible('#import-character-json-modal')).toBe(false)
+            
+            // Check the character was imported
+            const characters = Characters.getCharacters()
+            expect(characters).toHaveLength(1)
+            expect(characters[0].name).toBe('Link Shared Character')
+            expect(characters[0].class).toBe('Rogue')
+        })
+
+        it('shows error for invalid JSON', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            await type('#import-character-json-input', 'not valid json')
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should show error
+            expect(isVisible('#import-character-json-error')).toBe(true)
+        })
+
+        it('shows error for JSON without name', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            await type('#import-character-json-input', '{"class": "Fighter"}')
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should show error
+            expect(isVisible('#import-character-json-error')).toBe(true)
+            expect(getText('#import-character-json-error')).toContain('name')
+        })
+
+        it('shows error for empty input', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            // Don't type anything, just click confirm
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should show error
+            expect(isVisible('#import-character-json-error')).toBe(true)
+            expect(getText('#import-character-json-error')).toContain('Please enter')
+        })
+
+        it('shows error for invalid share link', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            // Paste an invalid share URL (missing importCharacter param)
+            await type('#import-character-json-input', 'https://example.com/?foo=bar')
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should show error
+            expect(isVisible('#import-character-json-error')).toBe(true)
+            expect(getText('#import-character-json-error')).toContain('Invalid share link')
+        })
+
+        it('cancels import when clicking cancel', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            await type('#import-character-json-input', '{"name": "Test"}')
+            await click('#import-character-json-cancel-btn')
+            await tick()
+            
+            // Should close modal without importing
+            expect(isVisible('#import-character-json-modal')).toBe(false)
+            expect(Characters.getCharacters()).toHaveLength(0)
+        })
+
+        it('copies character JSON to clipboard via context menu', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Export Test Character'
+            character.class = 'Paladin'
+            character.level = 7
+            Characters.saveCharacter(character)
+            
+            // Mock clipboard
+            let clipboardContent = ''
+            vi.stubGlobal('navigator', {
+                clipboard: {
+                    writeText: vi.fn().mockImplementation((text) => {
+                        clipboardContent = text
+                        return Promise.resolve()
+                    })
+                }
+            })
+            
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open context menu
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            
+            // Click copy-json action
+            await click('#character-context-menu [data-action="copy-json"]')
+            await tick()
+            
+            // Verify JSON was copied
+            expect(navigator.clipboard.writeText).toHaveBeenCalled()
+            const parsed = JSON.parse(clipboardContent)
+            expect(parsed.name).toBe('Export Test Character')
+            expect(parsed.class).toBe('Paladin')
+            expect(parsed.id).toBeUndefined() // ID should be stripped
+        })
+
+        it('copies share link to clipboard via context menu', async () => {
+            // Create a character
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Share Test Character'
+            character.class = 'Cleric'
+            character.level = 4
+            Characters.saveCharacter(character)
+            
+            // Mock clipboard
+            let clipboardContent = ''
+            vi.stubGlobal('navigator', {
+                clipboard: {
+                    writeText: vi.fn().mockImplementation((text) => {
+                        clipboardContent = text
+                        return Promise.resolve()
+                    })
+                }
+            })
+            
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open context menu
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            
+            // Click share action
+            await click('#character-context-menu [data-action="share"]')
+            await tick()
+            
+            // Verify share link was copied
+            expect(navigator.clipboard.writeText).toHaveBeenCalled()
+            expect(clipboardContent).toContain('importCharacter=')
+            
+            // Verify the link can be decoded back to character data
+            const url = new URL(clipboardContent)
+            const encoded = url.searchParams.get('importCharacter')
+            const decoded = JSON.parse(decodeURIComponent(atob(encoded)))
+            expect(decoded.name).toBe('Share Test Character')
+        })
+
+        it('shows imported character in list after successful import', async () => {
+            // Navigate to characters view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            // Open import modal
+            await click('#new-character-btn')
+            await tick()
+            await click('#character-choice-import-json')
+            await tick()
+            
+            const jsonData = JSON.stringify({
+                name: 'Newly Imported Character',
+                class: 'Monk',
+                level: 8
+            })
+            
+            await type('#import-character-json-input', jsonData)
+            await click('#import-character-json-confirm-btn')
+            await tick()
+            
+            // Should stay on character list and show the imported character
+            expect(isVisible('#characters-view')).toBe(true)
+            expect(getText('#characters-list')).toContain('Newly Imported Character')
         })
     })
 })

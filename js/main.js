@@ -4,7 +4,7 @@ import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
 import * as Characters from './services/characters.js';
-import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setCharacterEditSource } from './services/state.js';
+import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setImportingCharacter, setCharacterEditSource } from './services/state.js';
 import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
 import * as Router from './utils/router.js';
 
@@ -551,10 +551,89 @@ function initEventHandlers() {
 
     // === Character Events ===
     
-    // New character button
+    // New character button - show choice modal
     document.getElementById('new-character-btn')?.addEventListener('click', () => {
+        document.getElementById('add-character-choice-modal').classList.add('active');
+    });
+
+    // Character choice modal - Create New
+    document.getElementById('character-choice-create-new')?.addEventListener('click', () => {
+        closeModals();
         setCharacterEditSource('list');
         Router.navigateToNew('characters');
+    });
+
+    // Character choice modal - Import JSON
+    document.getElementById('character-choice-import-json')?.addEventListener('click', () => {
+        closeModals();
+        document.getElementById('import-character-json-input').value = '';
+        document.getElementById('import-character-json-error').classList.add('hidden');
+        document.getElementById('import-character-json-modal').classList.add('active');
+    });
+
+    // Import Character JSON Modal - Cancel
+    document.getElementById('import-character-json-cancel-btn')?.addEventListener('click', () => {
+        closeModals();
+    });
+
+    // Import Character JSON Modal - Confirm
+    document.getElementById('import-character-json-confirm-btn')?.addEventListener('click', () => {
+        const jsonInput = document.getElementById('import-character-json-input').value.trim();
+        const errorEl = document.getElementById('import-character-json-error');
+        
+        if (!jsonInput) {
+            errorEl.textContent = 'Please enter JSON data or a share link';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            let character;
+            
+            // Check if input is a URL (share link)
+            if (jsonInput.startsWith('http://') || jsonInput.startsWith('https://')) {
+                // Extract the base64 data from the URL
+                const url = new URL(jsonInput);
+                const encoded = url.searchParams.get('importCharacter');
+                if (!encoded) {
+                    throw new Error('Invalid share link - no character data found');
+                }
+                // URL uses btoa(encodeURIComponent(json)), so decode with decodeURIComponent(atob())
+                const jsonStr = decodeURIComponent(atob(encoded));
+                character = Characters.importCharacterFromJSON(jsonStr);
+            } else {
+                // Treat as raw JSON
+                character = Characters.importCharacterFromJSON(jsonInput);
+            }
+            
+            Characters.saveCharacter(character);
+            closeModals();
+            CharacterList.render();
+            showToast(`Imported "${character.name}"`);
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.classList.remove('hidden');
+        }
+    });
+
+    // Character URL Import Modal - Cancel
+    document.getElementById('character-import-cancel-btn')?.addEventListener('click', () => {
+        Characters.clearCharacterImportParam();
+        closeModals();
+    });
+
+    // Character URL Import Modal - Confirm
+    document.getElementById('character-import-confirm-btn')?.addEventListener('click', () => {
+        const state = getState();
+        if (state.importingCharacter) {
+            const character = state.importingCharacter;
+            Characters.saveCharacter(character);
+            Characters.clearCharacterImportParam();
+            setImportingCharacter(null);
+            closeModals();
+            CharacterList.render();
+            showToast(`Imported "${character.name}"`);
+        }
     });
 
     // Character view edit button
@@ -1162,14 +1241,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Preload monster index
     MonsterAPI.loadIndex();
     
-    // Check for imports in URL (query params take precedence over hash routes)
-    const hasImport = checkForImport();
-    const hasMonsterImport = checkForMonsterImport();
+    // Handle initial route first (so the correct view is shown behind any import modal)
+    handleRoute();
     
-    // Handle initial route (if no import modals shown)
-    if (!hasImport && !hasMonsterImport) {
-        handleRoute();
-    }
+    // Then check for imports in URL (query params) and show modals on top
+    checkForImport();
+    checkForMonsterImport();
+    checkForCharacterImport();
     
     // Listen for hash changes
     window.addEventListener('hashchange', handleRoute);
@@ -1214,6 +1292,27 @@ function checkForMonsterImport() {
         `;
         
         document.getElementById('import-monster-modal').classList.add('active');
+        return true;
+    }
+    return false;
+}
+
+// Check for character import in URL
+function checkForCharacterImport() {
+    const character = Characters.importCharacterFromURL();
+    if (character) {
+        setImportingCharacter(character);
+        
+        // Show import modal with character info
+        const level = character.level || 1;
+        const charClass = character.class || 'Unknown';
+        
+        document.getElementById('character-import-preview').innerHTML = `
+            <strong>${character.name}</strong><br>
+            Level ${level} ${charClass}
+        `;
+        
+        document.getElementById('character-import-modal').classList.add('active');
         return true;
     }
     return false;

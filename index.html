@@ -1221,6 +1221,67 @@
                 </div>
             </div>
 
+            <!-- Add Character Choice Modal -->
+            <div id="add-character-choice-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Add Character</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="choice-buttons">
+                            <button type="button" id="character-choice-create-new" class="btn btn-large">
+                                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                                Create New
+                            </button>
+                            <button type="button" id="character-choice-import-json" class="btn btn-large">
+                                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                                Import JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Character JSON Modal -->
+            <div id="import-character-json-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Import Character from JSON</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-hint">Paste character JSON data or a share link</p>
+                        <div class="form-group">
+                            <textarea id="import-character-json-input" rows="10" placeholder='{"name": "Thorin", "class": "Fighter", "level": 5, ...}'></textarea>
+                        </div>
+                        <p id="import-character-json-error" class="error-text hidden"></p>
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button type="button" id="import-character-json-cancel-btn" class="btn">Cancel</button>
+                            <button type="button" id="import-character-json-confirm-btn" class="btn btn-primary">Import</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Character Import Confirm Modal (for URL imports) -->
+            <div id="character-import-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Import Character</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Would you like to import this character?</p>
+                        <div id="character-import-preview" class="import-preview"></div>
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button type="button" id="character-import-cancel-btn" class="btn">Cancel</button>
+                            <button type="button" id="character-import-confirm-btn" class="btn btn-primary">Import</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Toast Container -->
             <div id="toast-container"></div>
         </main>
