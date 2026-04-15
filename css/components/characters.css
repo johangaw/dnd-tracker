@@ -601,39 +601,50 @@
     text-transform: uppercase;
 }
 
-.spell-slot-row {
-    display: flex;
-    align-items: center;
+.spell-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    padding: 4px 0;
+}
+
+.spell-slot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
 }
 
 .spell-slot-level {
-    min-width: 30px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     color: var(--text-secondary);
+    text-transform: uppercase;
 }
 
-.spell-slot-boxes {
+.spell-slot-circles {
     display: flex;
     gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.spell-slot-box {
-    width: 16px;
-    height: 16px;
+.spell-slot-circle {
+    width: 14px;
+    height: 14px;
     border: 2px solid var(--color-primary);
-    border-radius: 3px;
+    border-radius: 50%;
     display: inline-block;
 }
 
-.spell-slot-box.used {
+.spell-slot-circle.available {
     background: var(--color-primary);
 }
 
-.spell-slot-count {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+.spell-slot-circle.used {
+    background: transparent;
 }
 
 .spell-level-group {

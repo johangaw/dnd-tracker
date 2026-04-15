@@ -366,27 +366,28 @@ function hasSpellSlots(slots) {
 function renderSpellSlots(slots) {
     if (!slots || !hasSpellSlots(slots)) return '';
     
-    const slotRows = [];
+    const slotItems = [];
     for (let level = 1; level <= 9; level++) {
         const slot = slots[level];
         if (slot?.total > 0) {
-            const remaining = slot.total - (slot.used || 0);
-            slotRows.push(`
-                <div class="spell-slot-row">
+            const used = slot.used || 0;
+            slotItems.push(`
+                <div class="spell-slot-item">
                     <span class="spell-slot-level">${level}${getOrdinalSuffix(level)}</span>
-                    <span class="spell-slot-boxes">${renderSlotBoxes(slot.total, slot.used || 0)}</span>
-                    <span class="spell-slot-count">${remaining}/${slot.total}</span>
+                    <span class="spell-slot-circles">${renderSlotCircles(slot.total, used)}</span>
                 </div>
             `);
         }
     }
     
-    if (slotRows.length === 0) return '';
+    if (slotItems.length === 0) return '';
     
     return `
         <div class="spell-slots-container">
             <h3>Spell Slots</h3>
-            ${slotRows.join('')}
+            <div class="spell-slots-grid">
+                ${slotItems.join('')}
+            </div>
         </div>
     `;
 }
@@ -399,14 +400,20 @@ function getOrdinalSuffix(n) {
     return 'th';
 }
 
-// Helper to render slot boxes
-function renderSlotBoxes(total, used) {
-    const boxes = [];
-    for (let i = 0; i < total; i++) {
-        const isUsed = i < used;
-        boxes.push(`<span class="spell-slot-box ${isUsed ? 'used' : ''}"></span>`);
+// Helper to render slot circles (filled = available, empty = used)
+function renderSlotCircles(total, used) {
+    const circles = [];
+    const available = total - used;
+    
+    // Render available slots first (filled circles)
+    for (let i = 0; i < available; i++) {
+        circles.push(`<span class="spell-slot-circle available"></span>`);
     }
-    return boxes.join('');
+    // Render used slots (empty circles)
+    for (let i = 0; i < used; i++) {
+        circles.push(`<span class="spell-slot-circle used"></span>`);
+    }
+    return circles.join('');
 }
 
 export default {
