@@ -314,6 +314,32 @@ export function render(characterId) {
             window.openCharacterHpModal(characterId);
         }
     });
+
+    // Add click handlers for spell slot items (entire row is clickable)
+    container.querySelectorAll('.spell-slot-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const level = parseInt(item.dataset.level);
+            handleSpellSlotClick(characterId, level);
+        });
+    });
+}
+
+// Handle spell slot click - expend a slot
+function handleSpellSlotClick(characterId, level) {
+    const character = Characters.getCharacter(characterId);
+    if (!character || !character.spellSlots?.[level]) return;
+
+    const slot = character.spellSlots[level];
+    const available = slot.total - (slot.used || 0);
+
+    // Only allow expending if slots are available
+    if (available <= 0) return;
+
+    if (confirm(`Expend a Level ${level} spell slot?`)) {
+        slot.used = (slot.used || 0) + 1;
+        Characters.saveCharacter(character);
+        render(characterId);
+    }
 }
 
 // Helper function to render death save boxes
@@ -372,8 +398,8 @@ function renderSpellSlots(slots) {
         if (slot?.total > 0) {
             const used = slot.used || 0;
             slotItems.push(`
-                <div class="spell-slot-item">
-                    <span class="spell-slot-level">${level}${getOrdinalSuffix(level)}</span>
+                <div class="spell-slot-item" data-level="${level}">
+                    <span class="spell-slot-level">Level ${level}</span>
                     <span class="spell-slot-circles">${renderSlotCircles(slot.total, used)}</span>
                 </div>
             `);

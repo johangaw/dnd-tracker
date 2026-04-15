@@ -714,4 +714,277 @@ describe('Character HP', () => {
             expect(document.querySelector('.hp-current').textContent).toBe('30')
         })
     })
+
+    describe('Spell Slot Click Functionality', () => {
+        it('displays spell slot circles correctly', async () => {
+            // Create a character with spell slots
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Spell Slot Test Wizard'
+            character.class = 'Wizard'
+            character.level = 5
+            character.spellSlots = {
+                1: { total: 4, used: 1 },
+                2: { total: 3, used: 0 },
+                3: { total: 2, used: 2 }
+            }
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify spell slots container exists
+            expect(exists('.spell-slots-container')).toBe(true)
+            
+            // Verify level 1 slots: 3 available (filled), 1 used (empty)
+            const level1Item = document.querySelector('.spell-slot-item[data-level="1"]')
+            expect(level1Item).toBeTruthy()
+            const level1Available = level1Item.querySelectorAll('.spell-slot-circle.available')
+            const level1Used = level1Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level1Available.length).toBe(3)
+            expect(level1Used.length).toBe(1)
+            
+            // Verify level 2 slots: 3 available, 0 used
+            const level2Item = document.querySelector('.spell-slot-item[data-level="2"]')
+            expect(level2Item).toBeTruthy()
+            const level2Available = level2Item.querySelectorAll('.spell-slot-circle.available')
+            const level2Used = level2Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level2Available.length).toBe(3)
+            expect(level2Used.length).toBe(0)
+            
+            // Verify level 3 slots: 0 available, 2 used
+            const level3Item = document.querySelector('.spell-slot-item[data-level="3"]')
+            expect(level3Item).toBeTruthy()
+            const level3Available = level3Item.querySelectorAll('.spell-slot-circle.available')
+            const level3Used = level3Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level3Available.length).toBe(0)
+            expect(level3Used.length).toBe(2)
+        })
+
+        it('expends a spell slot when clicking slot item and confirming', async () => {
+            // Create a character with spell slots (all available, none used)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Expend Slot Test'
+            character.class = 'Wizard'
+            character.level = 3
+            character.spellSlots = {
+                1: { total: 4, used: 0 },
+                2: { total: 2, used: 0 }
+            }
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Mock confirm to return true
+            const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(true)
+            
+            // Click the spell slot item (entire row) to expend it
+            const slotItem = document.querySelector('.spell-slot-item[data-level="1"]')
+            expect(slotItem).toBeTruthy()
+            await click(slotItem)
+            await tick()
+            
+            // Verify confirm was called
+            expect(confirmMock).toHaveBeenCalledWith('Expend a Level 1 spell slot?')
+            
+            // Verify the slot was expended (now 3 available, 1 used)
+            const level1Item = document.querySelector('.spell-slot-item[data-level="1"]')
+            const level1Available = level1Item.querySelectorAll('.spell-slot-circle.available')
+            const level1Used = level1Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level1Available.length).toBe(3)
+            expect(level1Used.length).toBe(1)
+            
+            // Verify character was saved
+            const updated = Characters.getCharacter(character.id)
+            expect(updated.spellSlots[1].used).toBe(1)
+            
+            confirmMock.mockRestore()
+        })
+
+        it('does not expend spell slot when clicking slot item and canceling', async () => {
+            // Create a character with spell slots (all available)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Cancel Expend Test'
+            character.class = 'Wizard'
+            character.level = 3
+            character.spellSlots = {
+                1: { total: 4, used: 0 }
+            }
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Mock confirm to return false (cancel)
+            const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(false)
+            
+            // Click the spell slot item
+            const slotItem = document.querySelector('.spell-slot-item[data-level="1"]')
+            await click(slotItem)
+            await tick()
+            
+            // Verify confirm was called
+            expect(confirmMock).toHaveBeenCalled()
+            
+            // Verify the slot was NOT expended (still 4 available, 0 used)
+            const level1Item = document.querySelector('.spell-slot-item[data-level="1"]')
+            const level1Available = level1Item.querySelectorAll('.spell-slot-circle.available')
+            const level1Used = level1Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level1Available.length).toBe(4)
+            expect(level1Used.length).toBe(0)
+            
+            // Verify character was NOT modified
+            const updated = Characters.getCharacter(character.id)
+            expect(updated.spellSlots[1].used).toBe(0)
+            
+            confirmMock.mockRestore()
+        })
+
+        it('does nothing when clicking slot item with all slots used', async () => {
+            // Create a character with all slots used
+            const character = Characters.createEmptyCharacter()
+            character.name = 'All Used Test'
+            character.class = 'Wizard'
+            character.level = 3
+            character.spellSlots = {
+                1: { total: 4, used: 4 }
+            }
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Mock confirm
+            const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(true)
+            
+            // Click the spell slot item (all used - should do nothing)
+            const slotItem = document.querySelector('.spell-slot-item[data-level="1"]')
+            await click(slotItem)
+            await tick()
+            
+            // Verify confirm was NOT called (no slots available to expend)
+            expect(confirmMock).not.toHaveBeenCalled()
+            
+            // Verify slots unchanged
+            const level1Item = document.querySelector('.spell-slot-item[data-level="1"]')
+            const level1Available = level1Item.querySelectorAll('.spell-slot-circle.available')
+            const level1Used = level1Item.querySelectorAll('.spell-slot-circle.used')
+            expect(level1Available.length).toBe(0)
+            expect(level1Used.length).toBe(4)
+            
+            confirmMock.mockRestore()
+        })
+
+        it('uses correct Level labels in confirmation messages', async () => {
+            // Create a character with slots at various levels (all available)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'Level Label Test'
+            character.class = 'Wizard'
+            character.level = 20
+            character.spellSlots = {
+                1: { total: 4, used: 0 },
+                2: { total: 3, used: 0 },
+                3: { total: 3, used: 0 },
+                4: { total: 1, used: 0 }
+            }
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(false)
+            
+            // Test Level 1
+            await click(document.querySelector('.spell-slot-item[data-level="1"]'))
+            await tick()
+            expect(confirmMock).toHaveBeenCalledWith('Expend a Level 1 spell slot?')
+            
+            // Test Level 2
+            await click(document.querySelector('.spell-slot-item[data-level="2"]'))
+            await tick()
+            expect(confirmMock).toHaveBeenCalledWith('Expend a Level 2 spell slot?')
+            
+            // Test Level 3
+            await click(document.querySelector('.spell-slot-item[data-level="3"]'))
+            await tick()
+            expect(confirmMock).toHaveBeenCalledWith('Expend a Level 3 spell slot?')
+            
+            // Test Level 4
+            await click(document.querySelector('.spell-slot-item[data-level="4"]'))
+            await tick()
+            expect(confirmMock).toHaveBeenCalledWith('Expend a Level 4 spell slot?')
+            
+            confirmMock.mockRestore()
+        })
+
+        it('does not show spell slots container when character has no spell slots', async () => {
+            // Create a character without spell slots (e.g., a Fighter)
+            const character = Characters.createEmptyCharacter()
+            character.name = 'No Spells Fighter'
+            character.class = 'Fighter'
+            character.level = 5
+            // No spellSlots property
+            Characters.saveCharacter(character)
+            
+            // Navigate to character view
+            await click('#menu-btn')
+            await tick()
+            await click('#menu-characters')
+            await tick()
+            
+            const card = document.querySelector('.character-card')
+            await click(card)
+            await tick()
+            await click('#character-context-menu [data-action="view"]')
+            await tick()
+            
+            // Verify spell slots container does NOT exist
+            expect(exists('.spell-slots-container')).toBe(false)
+        })
+    })
 })

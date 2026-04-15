@@ -615,6 +615,17 @@
     padding: 8px;
     background: var(--bg-secondary);
     border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+.spell-slot-item:hover {
+    background: var(--bg-tertiary, rgba(255,255,255,0.1));
+    transform: scale(1.02);
+}
+
+.spell-slot-item:active {
+    transform: scale(0.98);
 }
 
 .spell-slot-level {
@@ -634,7 +645,6 @@
 .spell-slot-circle {
     width: 14px;
     height: 14px;
-    border: 2px solid var(--accent);
     border-radius: 50%;
     display: inline-block;
 }
@@ -644,7 +654,8 @@
 }
 
 .spell-slot-circle.used {
-    background: transparent;
+    background: var(--text-tertiary, #666);
+    opacity: 0.4;
 }
 
 .spell-level-group {
