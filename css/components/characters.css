@@ -634,13 +634,13 @@
 .spell-slot-circle {
     width: 14px;
     height: 14px;
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--accent);
     border-radius: 50%;
     display: inline-block;
 }
 
 .spell-slot-circle.available {
-    background: var(--color-primary);
+    background: var(--accent);
 }
 
 .spell-slot-circle.used {
