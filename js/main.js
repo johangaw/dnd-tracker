@@ -4,8 +4,9 @@ import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
 import * as Characters from './services/characters.js';
-import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster } from './services/state.js';
+import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setCharacterEditSource } from './services/state.js';
 import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
+import * as Router from './utils/router.js';
 
 // Hide app menu
 function hideAppMenu() {
@@ -33,28 +34,29 @@ function initEventHandlers() {
     document.getElementById('back-btn').addEventListener('click', () => {
         const state = getState();
         if (state.currentView === 'encounter-edit') {
-            setView('encounter-list');
-            EncounterList.render();
+            Router.navigateToList('encounters');
         } else if (state.currentView === 'encounter-run') {
             if (confirm('End combat and return to encounter list?')) {
-                setView('encounter-list');
-                EncounterList.render();
+                Router.navigateToList('encounters');
             }
         } else if (state.currentView === 'custom-monsters') {
-            setView('encounter-list');
-            EncounterList.render();
+            Router.navigateToList('encounters');
         } else if (state.currentView === 'custom-monster-edit') {
-            setView('custom-monsters');
-            CustomMonsterList.render();
+            Router.navigateToList('monsters');
         } else if (state.currentView === 'characters') {
-            setView('encounter-list');
-            EncounterList.render();
+            Router.navigateToList('encounters');
         } else if (state.currentView === 'character-view') {
-            setView('characters');
-            CharacterList.render();
+            Router.navigateToList('characters');
         } else if (state.currentView === 'character-edit') {
-            setView('characters');
-            CharacterList.render();
+            // Go back based on where we entered from
+            const routeInfo = Router.parseHash();
+            if (state.characterEditSource === 'view' && routeInfo.id) {
+                // Came from character view, go back to view
+                Router.navigateToItem('characters', routeInfo.id);
+            } else {
+                // Came from list or direct URL, go back to list
+                Router.navigateToList('characters');
+            }
         }
     });
 
@@ -153,8 +155,7 @@ function initEventHandlers() {
         state.editingEncounter.pcs = state.editingEncounter.pcs.filter(pc => pc.name.trim());
         
         Storage.saveEncounter(state.editingEncounter);
-        setView('encounter-list');
-        EncounterList.render();
+        Router.navigateToList('encounters');
     });
 
     // Delete encounter button
@@ -162,8 +163,7 @@ function initEventHandlers() {
         const state = getState();
         if (confirm('Delete this encounter?')) {
             Storage.deleteEncounter(state.editingEncounter.id);
-            setView('encounter-list');
-            EncounterList.render();
+            Router.navigateToList('encounters');
         }
     });
 
@@ -177,7 +177,7 @@ function initEventHandlers() {
 
             switch (action) {
                 case 'edit':
-                    EncounterEdit.init(encounter);
+                    Router.navigateToItem('encounters', encounterId);
                     break;
                 case 'copy':
                     const copy = JSON.parse(JSON.stringify(encounter));
@@ -396,16 +396,19 @@ function initEventHandlers() {
         }
     });
 
+    document.getElementById('menu-encounters')?.addEventListener('click', () => {
+        hideAppMenu();
+        Router.navigateToList('encounters');
+    });
+
     document.getElementById('menu-custom-monsters')?.addEventListener('click', () => {
         hideAppMenu();
-        setView('custom-monsters');
-        CustomMonsterList.render();
+        Router.navigateToList('monsters');
     });
 
     document.getElementById('menu-characters')?.addEventListener('click', () => {
         hideAppMenu();
-        setView('characters');
-        CharacterList.render();
+        Router.navigateToList('characters');
     });
 
     // === Custom Monster Events ===
@@ -506,7 +509,7 @@ function initEventHandlers() {
                     showStatBlock(monster);
                     break;
                 case 'edit':
-                    CustomMonsterEdit.init(monster);
+                    Router.navigateToItem('monsters', monsterId);
                     break;
                 case 'copy':
                     const copy = JSON.parse(JSON.stringify(monster));
@@ -553,36 +556,48 @@ function initEventHandlers() {
         CharacterEdit.init();
     });
 
-    // Character view back button
-    document.getElementById('character-view-back')?.addEventListener('click', () => {
-        setView('characters');
-        CharacterList.render();
-    });
-
     // Character view edit button
     document.getElementById('character-view-edit')?.addEventListener('click', () => {
         const characterId = CharacterView.getCurrentCharacterId();
-        const character = Characters.getCharacter(characterId);
-        if (character) {
-            CharacterEdit.init(character);
+        if (characterId) {
+            // Track that we're coming from character view
+            setCharacterEditSource('view');
+            Router.navigateToItem('characters', characterId, 'edit');
         }
     });
 
     // Character form submit
     document.getElementById('character-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        CharacterEdit.saveCharacter();
+        const savedCharacter = CharacterEdit.saveCharacter();
+        if (savedCharacter) {
+            // Navigate based on where we came from
+            const state = getState();
+            if (state.characterEditSource === 'view') {
+                Router.navigateToItem('characters', savedCharacter.id);
+            } else {
+                Router.navigateToList('characters');
+            }
+        }
     });
 
     // Cancel character edit
     document.getElementById('cancel-character-btn')?.addEventListener('click', () => {
-        setView('characters');
-        CharacterList.render();
+        const state = getState();
+        const routeInfo = Router.parseHash();
+        if (state.characterEditSource === 'view' && routeInfo.id) {
+            Router.navigateToItem('characters', routeInfo.id);
+        } else {
+            Router.navigateToList('characters');
+        }
     });
 
     // Delete character button
     document.getElementById('delete-character-btn')?.addEventListener('click', () => {
-        CharacterEdit.deleteCharacter();
+        if (CharacterEdit.deleteCharacter()) {
+            // Always go to list after delete
+            Router.navigateToList('characters');
+        }
     });
 
     // Character level change - update proficiency
@@ -893,11 +908,10 @@ function initEventHandlers() {
 
             switch (action) {
                 case 'view':
-                    setView('character-view');
-                    CharacterView.render(characterId);
+                    Router.navigateToItem('characters', characterId);
                     break;
                 case 'edit':
-                    CharacterEdit.init(character);
+                    Router.navigateToItem('characters', characterId, 'edit');
                     break;
                 case 'copy':
                     const copy = Characters.duplicateCharacter(character);
@@ -1034,17 +1048,95 @@ function initEventHandlers() {
     });
 }
 
+// Handle route changes
+function handleRoute() {
+    const routeInfo = Router.parseHash();
+    const view = Router.getViewForRoute(routeInfo);
+    
+    // Handle item/edit routes (need to load specific item)
+    if (Router.isItemRoute(routeInfo)) {
+        switch (routeInfo.type) {
+            case 'encounters':
+                const encounter = Storage.getEncounter(routeInfo.id);
+                if (encounter) {
+                    EncounterEdit.init(encounter);
+                } else {
+                    // Encounter not found, go to list
+                    Router.navigateToList('encounters', true);
+                }
+                break;
+            case 'monsters':
+                const monster = CustomMonsters.getCustomMonster(routeInfo.id);
+                if (monster) {
+                    CustomMonsterEdit.init(monster);
+                } else {
+                    // Monster not found, go to list
+                    Router.navigateToList('monsters', true);
+                }
+                break;
+            case 'characters':
+                const character = Characters.getCharacter(routeInfo.id);
+                if (character) {
+                    // Check if this is an edit route or view route
+                    if (routeInfo.view === 'edit') {
+                        // Only set source to 'list' if not already set to 'view'
+                        // (edit button sets it to 'view' before navigation)
+                        const state = getState();
+                        if (state.characterEditSource !== 'view') {
+                            setCharacterEditSource('list');
+                        }
+                        CharacterEdit.init(character);
+                    } else {
+                        // Reset edit source when viewing character
+                        setCharacterEditSource(null);
+                        setView('character-view');
+                        CharacterView.render(routeInfo.id);
+                    }
+                } else {
+                    // Character not found, go to list
+                    Router.navigateToList('characters', true);
+                }
+                break;
+        }
+    } else {
+        // Handle list routes
+        switch (routeInfo.type) {
+            case 'encounters':
+                setView('encounter-list');
+                EncounterList.render();
+                break;
+            case 'monsters':
+                setView('custom-monsters');
+                CustomMonsterList.render();
+                break;
+            case 'characters':
+                // Reset edit source when viewing character list
+                setCharacterEditSource(null);
+                setView('characters');
+                CharacterList.render();
+                break;
+        }
+    }
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     initEventHandlers();
-    EncounterList.render();
     
     // Preload monster index
     MonsterAPI.loadIndex();
     
-    // Check for imports in URL
-    checkForImport();
-    checkForMonsterImport();
+    // Check for imports in URL (query params take precedence over hash routes)
+    const hasImport = checkForImport();
+    const hasMonsterImport = checkForMonsterImport();
+    
+    // Handle initial route (if no import modals shown)
+    if (!hasImport && !hasMonsterImport) {
+        handleRoute();
+    }
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleRoute);
 });
 
 // Check for encounter import in URL
@@ -1064,7 +1156,9 @@ function checkForImport() {
         `;
         
         document.getElementById('import-modal').classList.add('active');
+        return true;
     }
+    return false;
 }
 
 // Check for monster import in URL
@@ -1084,7 +1178,9 @@ function checkForMonsterImport() {
         `;
         
         document.getElementById('import-monster-modal').classList.add('active');
+        return true;
     }
+    return false;
 }
 
 // Search for monsters to use as baseline

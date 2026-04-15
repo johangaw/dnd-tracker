@@ -556,23 +556,20 @@ function collectFormData() {
     return character;
 }
 
-// Save character
+// Save character - returns saved character or null if validation fails
 export function saveCharacter() {
     const character = collectFormData();
     
     if (!character.name) {
         alert('Character name is required');
-        return;
+        return null;
     }
     
     Characters.saveCharacter(character);
-    
-    // Return to list
-    setView('characters');
-    CharacterList.render();
+    return character;
 }
 
-// Delete current character
+// Delete current character - returns true if deleted
 export function deleteCharacter() {
     const state = getState();
     const character = state.editingCharacter;
@@ -580,10 +577,10 @@ export function deleteCharacter() {
     if (character && character.id) {
         if (confirm(`Delete "${character.name}"?`)) {
             Characters.deleteCharacter(character.id);
-            setView('characters');
-            CharacterList.render();
+            return true;
         }
     }
+    return false;
 }
 
 // Cancel editing and return to list
