@@ -553,7 +553,8 @@ function initEventHandlers() {
     
     // New character button
     document.getElementById('new-character-btn')?.addEventListener('click', () => {
-        CharacterEdit.init();
+        setCharacterEditSource('list');
+        Router.navigateToNew('characters');
     });
 
     // Character view edit button
@@ -1070,6 +1071,23 @@ function initEventHandlers() {
 function handleRoute() {
     const routeInfo = Router.parseHash();
     const view = Router.getViewForRoute(routeInfo);
+    
+    // Handle "new" routes first
+    if (routeInfo.view === 'new') {
+        switch (routeInfo.type) {
+            case 'characters':
+                const state = getState();
+                if (state.characterEditSource !== 'list') {
+                    setCharacterEditSource('list');
+                }
+                CharacterEdit.init();
+                break;
+            default:
+                // Unsupported "new" route, go to list
+                Router.navigateToList(routeInfo.type, true);
+        }
+        return;
+    }
     
     // Handle item/edit routes (need to load specific item)
     if (Router.isItemRoute(routeInfo)) {

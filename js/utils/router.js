@@ -5,6 +5,7 @@
 //   #/monsters - Custom monster list
 //   #/monsters/:id - Edit custom monster
 //   #/characters - Character list
+//   #/characters/new - Create new character
 //   #/characters/:id - View character
 //   #/characters/:id/edit - Edit character
 
@@ -46,14 +47,16 @@ export function parseHash(hash = window.location.hash) {
     
     // Determine view based on id and action
     let view = 'list';
-    if (id) {
+    if (id === 'new') {
+        view = 'new';
+    } else if (id) {
         view = action === 'edit' ? 'edit' : 'item';
     }
     
     return {
         type,
         view,
-        id,
+        id: id === 'new' ? null : id,
         action
     };
 }
@@ -102,6 +105,11 @@ export function navigateToItem(type, id, action = null) {
     navigate(type, id, { action });
 }
 
+// Navigate to create new item
+export function navigateToNew(type) {
+    navigate(type, 'new');
+}
+
 // Navigate back (to parent list)
 export function navigateBack(currentType) {
     navigateToList(currentType);
@@ -129,6 +137,7 @@ export default {
     getViewForRoute,
     navigateToList,
     navigateToItem,
+    navigateToNew,
     navigateBack,
     getRouteTypeFromView,
     isItemRoute
