@@ -83,6 +83,16 @@ export function renderSpellBlock(spell) {
         html += `<div class="spell-classes"><span class="property-label">Classes:</span> ${escapeHtml(classes)}</div>`;
     }
 
+    // Image (if available)
+    if (spell.imageUrl) {
+        html += `
+            <div class="spell-image">
+                <img src="${escapeHtml(spell.imageUrl)}" alt="${escapeHtml(spell.name)}" loading="lazy">
+                ${spell.imageCredit ? `<div class="spell-image-credit">Art by ${escapeHtml(spell.imageCredit)}</div>` : ''}
+            </div>
+        `;
+    }
+
     return html;
 }
 

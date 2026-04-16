@@ -28,9 +28,19 @@ const SPELL_SOURCES = [
     'spells-frhof.json'
 ];
 
+// Fluff source files (for images)
+const FLUFF_SOURCES = [
+    'fluff-spells-xphb.json',
+    'fluff-spells-frhof.json'
+];
+
+// Base URL for 5e.tools images
+const IMAGE_BASE_URL = 'https://5e.tools/img/';
+
 // Cache for loaded spells
 let spellsCache = null;
 let spellsByName = null;
+let fluffByKey = null;
 let loadPromise = null;
 
 /**
@@ -44,6 +54,7 @@ async function loadSpells() {
     loadPromise = (async () => {
         const allSpells = [];
         
+        // Load spell data
         for (const file of SPELL_SOURCES) {
             try {
                 const response = await fetch(`/data/spells/${file}`);
@@ -55,6 +66,26 @@ async function loadSpells() {
                 }
             } catch (e) {
                 console.warn(`Failed to load spell file ${file}:`, e);
+            }
+        }
+
+        // Load fluff data (for images)
+        fluffByKey = new Map();
+        for (const file of FLUFF_SOURCES) {
+            try {
+                const response = await fetch(`/data/spells/${file}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.spellFluff && Array.isArray(data.spellFluff)) {
+                        for (const fluff of data.spellFluff) {
+                            // Key by name+source for exact matching
+                            const key = `${fluff.name.toLowerCase()}|${fluff.source.toLowerCase()}`;
+                            fluffByKey.set(key, fluff);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn(`Failed to load fluff file ${file}:`, e);
             }
         }
 
@@ -87,6 +118,18 @@ async function loadSpells() {
  * @returns {Object} Normalized spell object
  */
 function normalizeSpell(rawSpell) {
+    // Look up fluff data for this spell
+    const fluffKey = `${rawSpell.name.toLowerCase()}|${rawSpell.source.toLowerCase()}`;
+    const fluff = fluffByKey?.get(fluffKey);
+    
+    // Extract image URL from fluff if available
+    let imageUrl = null;
+    let imageCredit = null;
+    if (fluff?.images?.[0]?.href?.path) {
+        imageUrl = IMAGE_BASE_URL + fluff.images[0].href.path;
+        imageCredit = fluff.images[0].credit || null;
+    }
+    
     return {
         // Original data (for display in modal)
         _raw: rawSpell,
@@ -105,7 +148,11 @@ function normalizeSpell(rawSpell) {
         duration: formatDuration(rawSpell.duration),
         components: formatComponents(rawSpell.components),
         concentration: hasConcentration(rawSpell.duration),
-        ritual: rawSpell.meta?.ritual || false
+        ritual: rawSpell.meta?.ritual || false,
+        
+        // Image data
+        imageUrl,
+        imageCredit
     };
 }
 
@@ -322,6 +369,7 @@ export function preloadSpells() {
 export function clearCache() {
     spellsCache = null;
     spellsByName = null;
+    fluffByKey = null;
     loadPromise = null;
 }
 

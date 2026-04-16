@@ -140,3 +140,25 @@
 .spell-block .spell-link {
     cursor: pointer;
 }
+
+/* Spell image */
+.spell-block .spell-image {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(123, 75, 158, 0.3);
+    text-align: center;
+}
+
+.spell-block .spell-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.spell-block .spell-image-credit {
+    font-size: 0.75rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 6px;
+}
