@@ -277,6 +277,24 @@ export function render(characterId) {
                 </section>
             ` : ''}
 
+            <!-- Trackers Section (Ki Points, Rage, etc.) -->
+            ${character.trackers?.length > 0 ? `
+                <section class="character-trackers-section">
+                    <h2>Trackers</h2>
+                    <div class="trackers-grid">
+                        ${character.trackers.map((tracker, index) => `
+                            <div class="tracker-box clickable" data-tracker-index="${index}" title="Click to use">
+                                <div class="tracker-label">${escapeHtml(tracker.name) || 'Unnamed Tracker'}</div>
+                                <div class="tracker-circles">
+                                    ${renderTrackerCircles(tracker.max || 0, tracker.used || 0)}
+                                </div>
+                                <div class="tracker-count">${(tracker.max || 0) - (tracker.used || 0)} / ${tracker.max || 0}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            ` : ''}
+
             <!-- Spellcasting Section -->
             ${hasSpellcasting(character) ? `
                 <section class="character-spellcasting-section">
@@ -359,6 +377,14 @@ export function render(characterId) {
         if (window.openMoneyModal) {
             window.openMoneyModal(characterId);
         }
+    });
+
+    // Add click handlers for trackers
+    container.querySelectorAll('.tracker-box.clickable').forEach(box => {
+        box.addEventListener('click', () => {
+            const trackerIndex = parseInt(box.dataset.trackerIndex);
+            handleTrackerClick(trackerIndex);
+        });
     });
 }
 
@@ -471,6 +497,47 @@ function handleHitDiceClick() {
     
     // Use one hit die
     character.hitDiceUsed = used + 1;
+    
+    // Save and re-render
+    Characters.saveCharacter(character);
+    render(currentCharacterId);
+}
+
+// Render tracker circles (similar to hit dice)
+function renderTrackerCircles(max, used) {
+    const circles = [];
+    const available = max - used;
+    
+    // Render available first (filled circles)
+    for (let i = 0; i < available; i++) {
+        circles.push(`<span class="tracker-circle available"></span>`);
+    }
+    // Render used (empty circles)
+    for (let i = 0; i < used; i++) {
+        circles.push(`<span class="tracker-circle used"></span>`);
+    }
+    return circles.join('');
+}
+
+// Handle tracker click - use one charge, wrap around when empty
+function handleTrackerClick(trackerIndex) {
+    if (!currentCharacterId) return;
+    
+    const character = Characters.getCharacter(currentCharacterId);
+    if (!character || !character.trackers || !character.trackers[trackerIndex]) return;
+    
+    const tracker = character.trackers[trackerIndex];
+    const max = tracker.max || 0;
+    const used = tracker.used || 0;
+    const available = max - used;
+    
+    // If no charges available, wrap around to full
+    if (available <= 0) {
+        tracker.used = 0;
+    } else {
+        // Use one charge
+        tracker.used = used + 1;
+    }
     
     // Save and re-render
     Characters.saveCharacter(character);

@@ -284,6 +284,9 @@ export function createEmptyCharacter() {
         // Attacks & Actions
         attacks: [],
         
+        // Custom Trackers (e.g., Ki Points, Rage, Channel Divinity)
+        trackers: [],
+        
         // Additional
         notes: '',
         

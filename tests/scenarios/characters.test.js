@@ -2070,6 +2070,51 @@ describe('Long Rest', () => {
         expect(document.querySelector('.slot-used[data-level="3"]').value).toBe('0')
         expect(document.querySelector('.slot-used[data-level="4"]').value).toBe('0')
     })
+
+    it('resets trackers with resetOnLongRest enabled when clicking long rest', async () => {
+        // Create a character with trackers - some with resetOnLongRest true, one with false
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Tracker Monk'
+        character.trackers = [
+            { name: 'Ki Points', max: 5, used: 3 }, // resetOnLongRest defaults to true
+            { name: 'Rage', max: 3, used: 2, resetOnLongRest: true },
+            { name: 'Special Ability', max: 2, used: 1, resetOnLongRest: false }
+        ]
+        Characters.saveCharacter(character)
+        
+        // Navigate to character edit
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Verify initial tracker used values are displayed
+        const usedInputs = document.querySelectorAll('.tracker-used')
+        expect(usedInputs[0].value).toBe('3') // Ki Points
+        expect(usedInputs[1].value).toBe('2') // Rage
+        expect(usedInputs[2].value).toBe('1') // Special Ability
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check tracker inputs after long rest
+        const updatedUsedInputs = document.querySelectorAll('.tracker-used')
+        
+        // Ki Points should be reset (resetOnLongRest defaults to true)
+        expect(updatedUsedInputs[0].value).toBe('0')
+        // Rage should be reset (resetOnLongRest is true)
+        expect(updatedUsedInputs[1].value).toBe('0')
+        // Special Ability should NOT be reset (resetOnLongRest is false)
+        expect(updatedUsedInputs[2].value).toBe('1')
+    })
 })
 
 describe('Money Management', () => {
@@ -2295,5 +2340,219 @@ describe('Money Management', () => {
         
         // Modal should open
         expect(exists('#money-modal.active')).toBe(true)
+    })
+})
+
+describe('Trackers', () => {
+    beforeEach(async () => {
+        await initApp()
+    })
+
+    afterEach(() => {
+        localStorage.clear()
+        vi.restoreAllMocks()
+    })
+
+    it('creates character with empty trackers array', () => {
+        const character = Characters.createEmptyCharacter()
+        expect(character.trackers).toEqual([])
+    })
+
+    it('saves and retrieves trackers on character', () => {
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Monk'
+        character.trackers = [
+            { name: 'Ki Points', max: 5, used: 2, resetOnLongRest: true }
+        ]
+        Characters.saveCharacter(character)
+        
+        const retrieved = Characters.getCharacter(character.id)
+        expect(retrieved.trackers).toHaveLength(1)
+        expect(retrieved.trackers[0].name).toBe('Ki Points')
+        expect(retrieved.trackers[0].max).toBe(5)
+        expect(retrieved.trackers[0].used).toBe(2)
+        expect(retrieved.trackers[0].resetOnLongRest).toBe(true)
+    })
+
+    it('displays trackers on character view page', async () => {
+        // Create a character with trackers
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Test Monk'
+        character.trackers = [
+            { name: 'Ki Points', max: 4, used: 1 }
+        ]
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click view action
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Check that tracker section is displayed
+        expect(exists('.character-trackers-section')).toBe(true)
+        expect(exists('.tracker-box')).toBe(true)
+        
+        // Check tracker label
+        const trackerLabel = document.querySelector('.tracker-label')
+        expect(trackerLabel.textContent).toBe('Ki Points')
+        
+        // Check tracker count (4-1=3 available out of 4)
+        const trackerCount = document.querySelector('.tracker-count')
+        expect(trackerCount.textContent).toBe('3 / 4')
+        
+        // Check circles: 3 available + 1 used
+        const availableCircles = document.querySelectorAll('.tracker-circle.available')
+        const usedCircles = document.querySelectorAll('.tracker-circle.used')
+        expect(availableCircles).toHaveLength(3)
+        expect(usedCircles).toHaveLength(1)
+    })
+
+    it('clicking tracker uses one charge', async () => {
+        // Create a character with trackers
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Clicker Monk'
+        character.trackers = [
+            { name: 'Ki Points', max: 5, used: 0 }
+        ]
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Verify initial state: 5 available, 0 used
+        expect(document.querySelectorAll('.tracker-circle.available')).toHaveLength(5)
+        expect(document.querySelectorAll('.tracker-circle.used')).toHaveLength(0)
+        
+        // Click on the tracker box
+        const trackerBox = document.querySelector('.tracker-box.clickable')
+        await click(trackerBox)
+        await tick()
+        
+        // Verify after click: 4 available, 1 used
+        expect(document.querySelectorAll('.tracker-circle.available')).toHaveLength(4)
+        expect(document.querySelectorAll('.tracker-circle.used')).toHaveLength(1)
+        
+        // Verify character was saved
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.trackers[0].used).toBe(1)
+    })
+
+    it('clicking tracker when all used wraps around to full', async () => {
+        // Create a character with fully used tracker
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Exhausted Monk'
+        character.trackers = [
+            { name: 'Ki Points', max: 3, used: 3 }
+        ]
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Verify all used
+        expect(document.querySelectorAll('.tracker-circle.available')).toHaveLength(0)
+        expect(document.querySelectorAll('.tracker-circle.used')).toHaveLength(3)
+        
+        // Click on the tracker box
+        const trackerBox = document.querySelector('.tracker-box.clickable')
+        await click(trackerBox)
+        await tick()
+        
+        // Should wrap around to full (all available)
+        expect(document.querySelectorAll('.tracker-circle.available')).toHaveLength(3)
+        expect(document.querySelectorAll('.tracker-circle.used')).toHaveLength(0)
+        
+        // Verify character was reset
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.trackers[0].used).toBe(0)
+    })
+
+    it('displays multiple trackers', async () => {
+        // Create a character with multiple trackers
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Multi-Class'
+        character.trackers = [
+            { name: 'Ki Points', max: 4, used: 0 },
+            { name: 'Rage', max: 3, used: 1 },
+            { name: 'Channel Divinity', max: 1, used: 0 }
+        ]
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Check all three trackers are displayed
+        const trackerBoxes = document.querySelectorAll('.tracker-box')
+        expect(trackerBoxes).toHaveLength(3)
+        
+        // Check names
+        const labels = document.querySelectorAll('.tracker-label')
+        expect(labels[0].textContent).toBe('Ki Points')
+        expect(labels[1].textContent).toBe('Rage')
+        expect(labels[2].textContent).toBe('Channel Divinity')
+    })
+
+    it('hides tracker section when no trackers', async () => {
+        // Create a character without trackers
+        const character = Characters.createEmptyCharacter()
+        character.name = 'No Trackers'
+        character.trackers = []
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Tracker section should not exist
+        expect(exists('.character-trackers-section')).toBe(false)
     })
 })

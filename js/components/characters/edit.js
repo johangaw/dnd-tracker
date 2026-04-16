@@ -99,6 +99,9 @@ export function renderForm() {
     // Attacks
     renderAttacks();
     
+    // Trackers (Ki Points, Rage, etc.)
+    renderTrackers();
+    
     // Spellcasting
     setInputValue('char-spell-ability', character.spellcastingAbility);
     setInputValue('char-spell-dc', character.spellSaveDC);
@@ -310,22 +313,32 @@ export function renderAttacks() {
     
     container.innerHTML = attacks.map((attack, index) => `
         <div class="attack-item item-row" data-index="${index}">
-            <input type="text" class="attack-name" value="${escapeHtml(attack.name || '')}" placeholder="Attack name">
-            <input type="text" class="attack-bonus" value="${attack.bonus || ''}" placeholder="+X">
-            <input type="text" class="attack-damage" value="${escapeHtml(attack.damage || '')}" placeholder="1d8+3 slashing">
+            <div class="attack-inputs">
+                <input type="text" class="attack-name" value="${escapeHtml(attack.name || '')}" placeholder="Weapon/Attack name">
+                <div class="attack-stats">
+                    <input type="number" class="attack-bonus" value="${attack.bonus || 0}" placeholder="+0">
+                    <input type="text" class="attack-damage" value="${escapeHtml(attack.damage || '')}" placeholder="1d8 + 3 slashing">
+                </div>
+            </div>
             <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
         </div>
     `).join('');
     
     // Add event handlers
     container.querySelectorAll('.attack-name').forEach((input, i) => {
-        input.addEventListener('change', () => { character.attacks[i].name = input.value; });
+        input.addEventListener('change', () => {
+            character.attacks[i].name = input.value;
+        });
     });
     container.querySelectorAll('.attack-bonus').forEach((input, i) => {
-        input.addEventListener('change', () => { character.attacks[i].bonus = parseInt(input.value) || 0; });
+        input.addEventListener('change', () => {
+            character.attacks[i].bonus = parseInt(input.value) || 0;
+        });
     });
     container.querySelectorAll('.attack-damage').forEach((input, i) => {
-        input.addEventListener('change', () => { character.attacks[i].damage = input.value; });
+        input.addEventListener('change', () => {
+            character.attacks[i].damage = input.value;
+        });
     });
     container.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -342,6 +355,85 @@ export function addAttack() {
     if (!character.attacks) character.attacks = [];
     character.attacks.push({ name: '', bonus: 0, damage: '' });
     renderAttacks();
+}
+
+// Render trackers list (Ki Points, Rage, etc.)
+export function renderTrackers() {
+    const state = getState();
+    const character = state.editingCharacter;
+    const container = document.getElementById('trackers-list');
+    
+    if (!container) return;
+    
+    const trackers = character.trackers || [];
+    
+    if (trackers.length === 0) {
+        container.innerHTML = '<p class="empty-hint">No trackers added</p>';
+        return;
+    }
+    
+    container.innerHTML = trackers.map((tracker, index) => `
+        <div class="tracker-item" data-index="${index}">
+            <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
+            <div class="tracker-fields">
+                <div class="form-group tracker-name-group">
+                    <label>Name</label>
+                    <input type="text" class="tracker-name" value="${escapeHtml(tracker.name || '')}" placeholder="e.g. Ki Points">
+                </div>
+                <div class="form-group tracker-max-group">
+                    <label>Max</label>
+                    <input type="number" class="tracker-max" value="${tracker.max || 0}" min="0">
+                </div>
+                <div class="form-group tracker-used-group">
+                    <label>Used</label>
+                    <input type="number" class="tracker-used" value="${tracker.used || 0}" min="0">
+                </div>
+            </div>
+            <div class="tracker-options">
+                <label class="tracker-reset-label">
+                    <input type="checkbox" class="tracker-reset" ${tracker.resetOnLongRest !== false ? 'checked' : ''}>
+                    Reset on Long Rest
+                </label>
+            </div>
+        </div>
+    `).join('');
+    
+    // Add event handlers
+    container.querySelectorAll('.tracker-name').forEach((input, i) => {
+        input.addEventListener('change', () => {
+            character.trackers[i].name = input.value;
+        });
+    });
+    container.querySelectorAll('.tracker-max').forEach((input, i) => {
+        input.addEventListener('change', () => {
+            character.trackers[i].max = parseInt(input.value) || 0;
+        });
+    });
+    container.querySelectorAll('.tracker-used').forEach((input, i) => {
+        input.addEventListener('change', () => {
+            character.trackers[i].used = parseInt(input.value) || 0;
+        });
+    });
+    container.querySelectorAll('.tracker-reset').forEach((input, i) => {
+        input.addEventListener('change', () => {
+            character.trackers[i].resetOnLongRest = input.checked;
+        });
+    });
+    container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            character.trackers.splice(parseInt(btn.dataset.index), 1);
+            renderTrackers();
+        });
+    });
+}
+
+// Add new tracker
+export function addTracker() {
+    const state = getState();
+    const character = state.editingCharacter;
+    if (!character.trackers) character.trackers = [];
+    character.trackers.push({ name: '', max: 0, used: 0, resetOnLongRest: true });
+    renderTrackers();
 }
 
 // Render spell slots
@@ -820,6 +912,16 @@ export function performLongRest() {
     // Reset current HP to max HP
     character.hitPointsCurrent = character.hitPointsMax || 0;
     
+    // Reset trackers that have resetOnLongRest enabled (default true)
+    if (character.trackers) {
+        character.trackers.forEach(tracker => {
+            // resetOnLongRest defaults to true (checked !== false)
+            if (tracker.resetOnLongRest !== false) {
+                tracker.used = 0;
+            }
+        });
+    }
+    
     // Re-render the form to reflect changes
     renderForm();
     
@@ -854,6 +956,8 @@ export default {
     addEquipment,
     renderAttacks,
     addAttack,
+    renderTrackers,
+    addTracker,
     renderSpellSlots,
     renderSpells,
     openSpellPicker,

@@ -715,6 +715,10 @@ function initEventHandlers() {
         CharacterEdit.addAttack();
     });
 
+    document.getElementById('add-tracker-btn')?.addEventListener('click', () => {
+        CharacterEdit.addTracker();
+    });
+
     // Spell Picker Modal
     document.getElementById('spell-search-input')?.addEventListener('input', () => {
         CharacterEdit.renderSpellPickerResults();
