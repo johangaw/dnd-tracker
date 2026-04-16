@@ -194,31 +194,6 @@ export function render(characterId) {
                 </section>
             ` : ''}
 
-            <!-- Equipment Section -->
-            <section class="character-equipment-section">
-                <h2>Equipment</h2>
-                ${hasMoney(character) ? `
-                    <div class="currency-row currency-clickable" data-character-id="${character.id}" title="Click to manage money">
-                        ${character.platinumPieces ? `<span class="currency pp">${character.platinumPieces} PP</span>` : ''}
-                        ${character.goldPieces ? `<span class="currency gp">${character.goldPieces} GP</span>` : ''}
-                        ${character.electrumPieces ? `<span class="currency ep">${character.electrumPieces} EP</span>` : ''}
-                        ${character.silverPieces ? `<span class="currency sp">${character.silverPieces} SP</span>` : ''}
-                        ${character.copperPieces ? `<span class="currency cp">${character.copperPieces} CP</span>` : ''}
-                    </div>
-                ` : `
-                    <div class="currency-row currency-clickable currency-empty" data-character-id="${character.id}" title="Click to add money">
-                        <span class="currency-empty-text">No money (tap to add)</span>
-                    </div>
-                `}
-                ${character.equipment?.length > 0 ? `
-                    <ul class="equipment-list">
-                        ${character.equipment.map(item => `
-                            <li>${escapeHtml(typeof item === 'string' ? item : item.name)}${item.quantity > 1 ? ` (×${item.quantity})` : ''}</li>
-                        `).join('')}
-                    </ul>
-                ` : ''}
-            </section>
-
             <!-- Proficiencies & Languages Section -->
             ${(hasProficiencies(character) || character.languages?.length > 0) ? `
                 <section class="character-proficiencies-section">
@@ -332,6 +307,31 @@ export function render(characterId) {
                     ` : ''}
                 </section>
             ` : ''}
+
+            <!-- Equipment Section -->
+            <section class="character-equipment-section">
+                <h2>Equipment</h2>
+                ${hasMoney(character) ? `
+                    <div class="currency-row currency-clickable" data-character-id="${character.id}" title="Click to manage money">
+                        ${character.platinumPieces ? `<span class="currency pp">${character.platinumPieces} PP</span>` : ''}
+                        ${character.goldPieces ? `<span class="currency gp">${character.goldPieces} GP</span>` : ''}
+                        ${character.electrumPieces ? `<span class="currency ep">${character.electrumPieces} EP</span>` : ''}
+                        ${character.silverPieces ? `<span class="currency sp">${character.silverPieces} SP</span>` : ''}
+                        ${character.copperPieces ? `<span class="currency cp">${character.copperPieces} CP</span>` : ''}
+                    </div>
+                ` : `
+                    <div class="currency-row currency-clickable currency-empty" data-character-id="${character.id}" title="Click to add money">
+                        <span class="currency-empty-text">No money (tap to add)</span>
+                    </div>
+                `}
+                ${character.equipment?.length > 0 ? `
+                    <ul class="equipment-list">
+                        ${character.equipment.map(item => `
+                            <li>${escapeHtml(typeof item === 'string' ? item : item.name)}${item.quantity > 1 ? ` (×${item.quantity})` : ''}</li>
+                        `).join('')}
+                    </ul>
+                ` : ''}
+            </section>
 
             <!-- Notes Section -->
             ${character.notes ? `
