@@ -1,5 +1,7 @@
 // Storage Service - Handles localStorage operations for encounters and monster cache
 
+import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
+
 const ENCOUNTERS_KEY = 'dnd-encounters';
 const MONSTER_CACHE_KEY = 'dnd-monster-cache';
 
@@ -43,8 +45,8 @@ export function cacheMonster(key, monster) {
     localStorage.setItem(MONSTER_CACHE_KEY, JSON.stringify(cache));
 }
 
-// Export encounter to shareable URL
-export function exportEncounterToURL(encounter) {
+// Export encounter to shareable URL (async due to compression)
+export async function exportEncounterToURL(encounter) {
     // Create a minimal copy without the id (will be regenerated on import)
     const exportData = {
         t: encounter.title,
@@ -61,20 +63,27 @@ export function exportEncounterToURL(encounter) {
     };
     
     const json = JSON.stringify(exportData);
-    const encoded = btoa(encodeURIComponent(json));
+    const encoded = await compress(json);
     const url = `${window.location.origin}${window.location.pathname}?import=${encoded}#/encounters`;
     return url;
 }
 
-// Import encounter from URL parameter
-export function importEncounterFromURL() {
+// Import encounter from URL parameter (async due to decompression)
+export async function importEncounterFromURL() {
     const params = new URLSearchParams(window.location.search);
     const importData = params.get('import');
     
     if (!importData) return null;
     
     try {
-        const json = decodeURIComponent(atob(importData));
+        let json;
+        if (isCompressed(importData)) {
+            // New compressed format
+            json = await decompress(importData);
+        } else {
+            // Legacy uncompressed format: btoa(encodeURIComponent(json))
+            json = legacyDecode(importData);
+        }
         const data = JSON.parse(json);
         
         // Reconstruct the encounter object

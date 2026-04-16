@@ -125,11 +125,11 @@ describe('Custom Monsters', () => {
             }).toThrow('Monster must have a name')
         })
 
-        it('exports monster to URL', () => {
+        it('exports monster to URL', async () => {
             const monster = CustomMonsters.createEmptyMonster()
             monster.name = 'Share Me'
             
-            const url = CustomMonsters.exportMonsterToURL(monster)
+            const url = await CustomMonsters.exportMonsterToURL(monster)
             
             expect(url).toContain('?importMonster=')
         })

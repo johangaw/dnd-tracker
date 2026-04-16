@@ -2,6 +2,7 @@
 // Tests for exporting encounters to URLs and importing from URLs
 
 import { describe, it, expect, beforeEach } from 'vitest'
+import { decompress } from '../../js/utils/compression.js'
 import { 
   initApp, 
   click, 
@@ -97,6 +98,10 @@ describe('Encounter Sharing', () => {
       await longPress(card)
       await click('#context-menu [data-action="share"]')
       
+      // Wait for async compression to complete
+      await tick()
+      await tick()
+      
       window.alert = originalAlert
       
       // Decode the URL to verify data
@@ -104,8 +109,8 @@ describe('Encounter Sharing', () => {
       const importParam = url.searchParams.get('import')
       expect(importParam).toBeTruthy()
       
-      // Decode the data
-      const decoded = JSON.parse(decodeURIComponent(atob(importParam)))
+      // Decode the compressed data
+      const decoded = JSON.parse(await decompress(importParam))
       
       // Verify encounter data is present
       expect(decoded.t).toBe('Shareable Encounter') // title

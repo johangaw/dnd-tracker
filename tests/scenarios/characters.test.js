@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { initApp, click, tick, exists, getText, isVisible, type } from '../helpers.js'
 import * as Characters from '../../js/services/characters.js'
+import { decompress } from '../../js/utils/compression.js'
 
 describe('Characters Service', () => {
     beforeEach(async () => {
@@ -1593,7 +1594,7 @@ describe('Character HP', () => {
             originalChar.class = 'Rogue'
             originalChar.level = 3
             
-            const shareUrl = Characters.exportCharacterToURL(originalChar)
+            const shareUrl = await Characters.exportCharacterToURL(originalChar)
             
             // Navigate to characters view
             await click('#menu-btn')
@@ -1807,6 +1808,7 @@ describe('Character HP', () => {
             // Click share action
             await click('#character-context-menu [data-action="share"]')
             await tick()
+            await tick() // Wait for async compression
             
             // Verify share link was copied
             expect(navigator.clipboard.writeText).toHaveBeenCalled()
@@ -1815,7 +1817,7 @@ describe('Character HP', () => {
             // Verify the link can be decoded back to character data
             const url = new URL(clipboardContent)
             const encoded = url.searchParams.get('importCharacter')
-            const decoded = JSON.parse(decodeURIComponent(atob(encoded)))
+            const decoded = JSON.parse(await decompress(encoded))
             expect(decoded.name).toBe('Share Test Character')
         })
 

@@ -1,5 +1,7 @@
 // Characters Service - Handles storage of D&D 2024 character sheets
 
+import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
+
 const CHARACTERS_KEY = 'dnd-characters';
 
 // Counter for unique ID generation (prevents collisions when creating multiple characters quickly)
@@ -347,8 +349,8 @@ export function importCharacterFromJSON(jsonString) {
     }
 }
 
-// Export character to shareable URL
-export function exportCharacterToURL(character) {
+// Export character to shareable URL (async due to compression)
+export async function exportCharacterToURL(character) {
     const exportData = {
         ...character,
         id: undefined,
@@ -360,20 +362,27 @@ export function exportCharacterToURL(character) {
     delete exportData.updatedAt;
     
     const json = JSON.stringify(exportData);
-    const encoded = btoa(encodeURIComponent(json));
+    const encoded = await compress(json);
     const url = `${window.location.origin}${window.location.pathname}?importCharacter=${encoded}#/characters`;
     return url;
 }
 
-// Import character from URL parameter
-export function importCharacterFromURL() {
+// Import character from URL parameter (async due to decompression)
+export async function importCharacterFromURL() {
     const params = new URLSearchParams(window.location.search);
     const importData = params.get('importCharacter');
     
     if (!importData) return null;
     
     try {
-        const json = decodeURIComponent(atob(importData));
+        let json;
+        if (isCompressed(importData)) {
+            // New compressed format
+            json = await decompress(importData);
+        } else {
+            // Legacy uncompressed format: btoa(encodeURIComponent(json))
+            json = legacyDecode(importData);
+        }
         const data = JSON.parse(json);
         
         return {

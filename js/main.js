@@ -6,6 +6,7 @@ import * as CustomMonsters from './services/customMonsters.js';
 import * as Characters from './services/characters.js';
 import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setImportingCharacter, setCharacterEditSource } from './services/state.js';
 import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
+import { decompress, isCompressed, legacyDecode } from './utils/compression.js';
 import * as Router from './utils/router.js';
 
 // Hide app menu
@@ -195,12 +196,13 @@ function initEventHandlers() {
                     });
                     break;
                 case 'share':
-                    const url = Storage.exportEncounterToURL(encounter);
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Share link copied to clipboard!');
-                    }).catch(() => {
-                        // Fallback for older browsers
-                        prompt('Copy this link to share:', url);
+                    Storage.exportEncounterToURL(encounter).then(url => {
+                        navigator.clipboard.writeText(url).then(() => {
+                            showToast('Share link copied to clipboard!');
+                        }).catch(() => {
+                            // Fallback for older browsers
+                            prompt('Copy this link to share:', url);
+                        });
                     });
                     break;
                 case 'run':
@@ -530,11 +532,12 @@ function initEventHandlers() {
                     });
                     break;
                 case 'share':
-                    const url = CustomMonsters.exportMonsterToURL(monster);
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Share link copied to clipboard!');
-                    }).catch(() => {
-                        prompt('Copy this link to share:', url);
+                    CustomMonsters.exportMonsterToURL(monster).then(url => {
+                        navigator.clipboard.writeText(url).then(() => {
+                            showToast('Share link copied to clipboard!');
+                        }).catch(() => {
+                            prompt('Copy this link to share:', url);
+                        });
                     });
                     break;
                 case 'delete':
@@ -577,7 +580,7 @@ function initEventHandlers() {
     });
 
     // Import Character JSON Modal - Confirm
-    document.getElementById('import-character-json-confirm-btn')?.addEventListener('click', () => {
+    document.getElementById('import-character-json-confirm-btn')?.addEventListener('click', async () => {
         const jsonInput = document.getElementById('import-character-json-input').value.trim();
         const errorEl = document.getElementById('import-character-json-error');
         
@@ -598,8 +601,13 @@ function initEventHandlers() {
                 if (!encoded) {
                     throw new Error('Invalid share link - no character data found');
                 }
-                // URL uses btoa(encodeURIComponent(json)), so decode with decodeURIComponent(atob())
-                const jsonStr = decodeURIComponent(atob(encoded));
+                // Handle both compressed and legacy formats
+                let jsonStr;
+                if (isCompressed(encoded)) {
+                    jsonStr = await decompress(encoded);
+                } else {
+                    jsonStr = legacyDecode(encoded);
+                }
                 character = Characters.importCharacterFromJSON(jsonStr);
             } else {
                 // Treat as raw JSON
@@ -1182,11 +1190,12 @@ function initEventHandlers() {
                     });
                     break;
                 case 'share':
-                    const url = Characters.exportCharacterToURL(character);
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Share link copied to clipboard!');
-                    }).catch(() => {
-                        prompt('Copy this link to share:', url);
+                    Characters.exportCharacterToURL(character).then(url => {
+                        navigator.clipboard.writeText(url).then(() => {
+                            showToast('Share link copied to clipboard!');
+                        }).catch(() => {
+                            prompt('Copy this link to share:', url);
+                        });
                     });
                     break;
                 case 'delete':
@@ -1410,8 +1419,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Check for encounter import in URL
-function checkForImport() {
-    const encounter = Storage.importEncounterFromURL();
+async function checkForImport() {
+    const encounter = await Storage.importEncounterFromURL();
     if (encounter) {
         setImportingEncounter(encounter);
         
@@ -1432,8 +1441,8 @@ function checkForImport() {
 }
 
 // Check for monster import in URL
-function checkForMonsterImport() {
-    const monster = CustomMonsters.importMonsterFromURL();
+async function checkForMonsterImport() {
+    const monster = await CustomMonsters.importMonsterFromURL();
     if (monster) {
         setImportingMonster(monster);
         
@@ -1454,8 +1463,8 @@ function checkForMonsterImport() {
 }
 
 // Check for character import in URL
-function checkForCharacterImport() {
-    const character = Characters.importCharacterFromURL();
+async function checkForCharacterImport() {
+    const character = await Characters.importCharacterFromURL();
     if (character) {
         setImportingCharacter(character);
         

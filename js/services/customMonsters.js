@@ -1,5 +1,7 @@
 // Custom Monsters Service - Handles storage and sharing of user-created monsters
 
+import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
+
 const CUSTOM_MONSTERS_KEY = 'dnd-custom-monsters';
 
 // Get all custom monsters
@@ -144,8 +146,8 @@ export function importMonsterFromJSON(jsonString) {
     }
 }
 
-// Export monster to shareable URL
-export function exportMonsterToURL(monster) {
+// Export monster to shareable URL (async due to compression)
+export async function exportMonsterToURL(monster) {
     // Create a copy without the id (will be regenerated on import)
     const exportData = {
         ...monster,
@@ -154,20 +156,27 @@ export function exportMonsterToURL(monster) {
     delete exportData.id;
     
     const json = JSON.stringify(exportData);
-    const encoded = btoa(encodeURIComponent(json));
+    const encoded = await compress(json);
     const url = `${window.location.origin}${window.location.pathname}?importMonster=${encoded}#/monsters`;
     return url;
 }
 
-// Import monster from URL parameter
-export function importMonsterFromURL() {
+// Import monster from URL parameter (async due to decompression)
+export async function importMonsterFromURL() {
     const params = new URLSearchParams(window.location.search);
     const importData = params.get('importMonster');
     
     if (!importData) return null;
     
     try {
-        const json = decodeURIComponent(atob(importData));
+        let json;
+        if (isCompressed(importData)) {
+            // New compressed format
+            json = await decompress(importData);
+        } else {
+            // Legacy uncompressed format: btoa(encodeURIComponent(json))
+            json = legacyDecode(importData);
+        }
         const data = JSON.parse(json);
         
         // Add new ID and ensure it's marked as custom
