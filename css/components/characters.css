@@ -993,14 +993,24 @@
 .save-checkbox {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-size: 0.75rem;
     color: var(--text-secondary);
     cursor: pointer;
 }
 
 .save-checkbox input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
     margin: 0;
+}
+
+.save-checkbox input[type="checkbox"]:checked::after {
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 7px;
 }
 
 /* Skills Edit Grid */
@@ -1036,11 +1046,39 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: pointer;
+}
+
+.skill-edit-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+}
+
+.skill-edit-row input[type="checkbox"]:checked::after {
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
 }
 
 .expertise-label {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.expertise-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+}
+
+.expertise-label input[type="checkbox"]:checked::after {
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 7px;
 }
 
 /* Death Save Circles (View Page) */
@@ -1193,6 +1231,14 @@
 .tracker-item .tracker-reset-label input[type="checkbox"] {
     width: 16px;
     height: 16px;
+    min-width: 16px;
+}
+
+.tracker-item .tracker-reset-label input[type="checkbox"]:checked::after {
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
 }
 
 /* Spell Slots Edit */
@@ -1399,7 +1445,15 @@
 .spell-class-filter .checkbox-label input[type="checkbox"] {
     width: 16px;
     height: 16px;
+    min-width: 16px;
     cursor: pointer;
+}
+
+.spell-class-filter .checkbox-label input[type="checkbox"]:checked::after {
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
 }
 
 .spell-result-item {

@@ -162,6 +162,48 @@
     cursor: pointer;
 }
 
+/* Custom Checkbox Styling */
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+}
+
+input[type="checkbox"]:hover {
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.3);
+}
+
 /* Item List/Row */
 .item-list {
     display: flex;
