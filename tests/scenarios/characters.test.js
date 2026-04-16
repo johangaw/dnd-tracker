@@ -2071,3 +2071,229 @@ describe('Long Rest', () => {
         expect(document.querySelector('.slot-used[data-level="4"]').value).toBe('0')
     })
 })
+
+describe('Money Management', () => {
+    beforeEach(async () => {
+        await initApp()
+    })
+
+    afterEach(() => {
+        localStorage.clear()
+        vi.restoreAllMocks()
+    })
+
+    it('shows money modal when clicking currency row', async () => {
+        // Create a character with money
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Rich Adventurer'
+        character.goldPieces = 100
+        character.silverPieces = 50
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click view action
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Click on currency row
+        const currencyRow = document.querySelector('.currency-clickable')
+        expect(currencyRow).toBeTruthy()
+        await click(currencyRow)
+        await tick()
+        
+        // Verify modal is open
+        expect(exists('#money-modal.active')).toBe(true)
+        
+        // Verify current money is displayed
+        expect(document.getElementById('money-current-gp').textContent).toBe('100')
+        expect(document.getElementById('money-current-sp').textContent).toBe('50')
+    })
+
+    it('withdraws money successfully', async () => {
+        // Create a character with money
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Spender'
+        character.goldPieces = 50
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Open money modal
+        await click('.currency-clickable')
+        await tick()
+        
+        // Enter amount and withdraw
+        await type('#money-input-gp', '20')
+        await click('#money-withdraw-btn')
+        await tick()
+        
+        // Verify modal closed
+        expect(exists('#money-modal.active')).toBe(false)
+        
+        // Verify character's gold was reduced
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.goldPieces).toBe(30)
+    })
+
+    it('deposits money successfully', async () => {
+        // Create a character with some money
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Saver'
+        character.goldPieces = 10
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Open money modal
+        await click('.currency-clickable')
+        await tick()
+        
+        // Enter amount and deposit
+        await type('#money-input-gp', '25')
+        await click('#money-deposit-btn')
+        await tick()
+        
+        // Verify modal closed
+        expect(exists('#money-modal.active')).toBe(false)
+        
+        // Verify character's gold was increased
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.goldPieces).toBe(35)
+    })
+
+    it('prevents withdrawing more than available', async () => {
+        // Create a character with limited money
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Poor Adventurer'
+        character.goldPieces = 5
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Open money modal
+        await click('.currency-clickable')
+        await tick()
+        
+        // Try to withdraw more than available
+        await type('#money-input-gp', '100')
+        await click('#money-withdraw-btn')
+        await tick()
+        
+        // Modal should still be open (error occurred)
+        // Character's gold should be unchanged
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.goldPieces).toBe(5)
+    })
+
+    it('works with different currency types', async () => {
+        // Create a character
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Currency Collector'
+        character.copperPieces = 100
+        character.silverPieces = 50
+        character.platinumPieces = 5
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Open money modal and deposit silver
+        await click('.currency-clickable')
+        await tick()
+        
+        await type('#money-input-sp', '10')
+        await click('#money-deposit-btn')
+        await tick()
+        
+        // Verify silver was increased
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.silverPieces).toBe(60)
+        expect(updated.copperPieces).toBe(100) // Unchanged
+        expect(updated.platinumPieces).toBe(5) // Unchanged
+    })
+
+    it('shows empty state when character has no money', async () => {
+        // Create a character with no money
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Broke Adventurer'
+        Characters.saveCharacter(character)
+        
+        // Navigate to character view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="view"]')
+        await tick()
+        
+        // Should show empty money state that's still clickable
+        const currencyRow = document.querySelector('.currency-clickable')
+        expect(currencyRow).toBeTruthy()
+        expect(currencyRow.classList.contains('currency-empty')).toBe(true)
+        
+        // Click to open modal
+        await click(currencyRow)
+        await tick()
+        
+        // Modal should open
+        expect(exists('#money-modal.active')).toBe(true)
+    })
+})

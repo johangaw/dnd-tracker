@@ -985,6 +985,153 @@ function initEventHandlers() {
     window.saveCharacterHP = saveCharacterHP;
     window.resetCharacterHpModal = resetCharacterHpModal;
 
+    // Money Management Modal
+    let moneyModalCharacterId = null;
+
+    function openMoneyModal(characterId) {
+        const character = Characters.getCharacter(characterId);
+        if (!character) return;
+
+        moneyModalCharacterId = characterId;
+        const modal = document.getElementById('money-modal');
+
+        // Display current money
+        document.getElementById('money-current-pp').textContent = character.platinumPieces || 0;
+        document.getElementById('money-current-gp').textContent = character.goldPieces || 0;
+        document.getElementById('money-current-ep').textContent = character.electrumPieces || 0;
+        document.getElementById('money-current-sp').textContent = character.silverPieces || 0;
+        document.getElementById('money-current-cp').textContent = character.copperPieces || 0;
+
+        // Clear all currency inputs
+        document.getElementById('money-input-pp').value = '';
+        document.getElementById('money-input-gp').value = '';
+        document.getElementById('money-input-ep').value = '';
+        document.getElementById('money-input-sp').value = '';
+        document.getElementById('money-input-cp').value = '';
+
+        modal.classList.add('active');
+    }
+
+    // Expose openMoneyModal for use by CharacterView
+    window.openMoneyModal = openMoneyModal;
+
+    // Helper to get amounts from all currency inputs
+    function getMoneyInputAmounts() {
+        return {
+            pp: parseInt(document.getElementById('money-input-pp').value) || 0,
+            gp: parseInt(document.getElementById('money-input-gp').value) || 0,
+            ep: parseInt(document.getElementById('money-input-ep').value) || 0,
+            sp: parseInt(document.getElementById('money-input-sp').value) || 0,
+            cp: parseInt(document.getElementById('money-input-cp').value) || 0
+        };
+    }
+
+    // Helper to check if any amount is entered
+    function hasAnyAmount(amounts) {
+        return amounts.pp > 0 || amounts.gp > 0 || amounts.ep > 0 || amounts.sp > 0 || amounts.cp > 0;
+    }
+
+    // Helper to build transaction message
+    function buildMoneyMessage(amounts, verb) {
+        const parts = [];
+        if (amounts.pp > 0) parts.push(`${amounts.pp} PP`);
+        if (amounts.gp > 0) parts.push(`${amounts.gp} GP`);
+        if (amounts.ep > 0) parts.push(`${amounts.ep} EP`);
+        if (amounts.sp > 0) parts.push(`${amounts.sp} SP`);
+        if (amounts.cp > 0) parts.push(`${amounts.cp} CP`);
+        return `${verb} ${parts.join(', ')}`;
+    }
+
+    const fieldMap = {
+        pp: 'platinumPieces',
+        gp: 'goldPieces',
+        ep: 'electrumPieces',
+        sp: 'silverPieces',
+        cp: 'copperPieces'
+    };
+
+    // Money withdraw button
+    document.getElementById('money-withdraw-btn')?.addEventListener('click', () => {
+        if (!moneyModalCharacterId) return;
+        
+        const character = Characters.getCharacter(moneyModalCharacterId);
+        if (!character) return;
+
+        const amounts = getMoneyInputAmounts();
+
+        if (!hasAnyAmount(amounts)) {
+            showToast('Enter an amount', 'error');
+            return;
+        }
+
+        // Check if character has enough of each currency
+        for (const [currency, amount] of Object.entries(amounts)) {
+            if (amount > 0) {
+                const field = fieldMap[currency];
+                const current = character[field] || 0;
+                if (amount > current) {
+                    showToast(`Not enough ${currency.toUpperCase()}`, 'error');
+                    return;
+                }
+            }
+        }
+
+        // Apply withdrawals
+        for (const [currency, amount] of Object.entries(amounts)) {
+            if (amount > 0) {
+                const field = fieldMap[currency];
+                character[field] = (character[field] || 0) - amount;
+            }
+        }
+        
+        Characters.saveCharacter(character);
+        closeModals();
+        
+        // Refresh the character view
+        const currentState = getState();
+        if (currentState.currentView === 'character-view') {
+            CharacterView.render(moneyModalCharacterId);
+        }
+
+        showToast(buildMoneyMessage(amounts, 'Withdrew'));
+        moneyModalCharacterId = null;
+    });
+
+    // Money deposit button
+    document.getElementById('money-deposit-btn')?.addEventListener('click', () => {
+        if (!moneyModalCharacterId) return;
+        
+        const character = Characters.getCharacter(moneyModalCharacterId);
+        if (!character) return;
+
+        const amounts = getMoneyInputAmounts();
+
+        if (!hasAnyAmount(amounts)) {
+            showToast('Enter an amount', 'error');
+            return;
+        }
+
+        // Apply deposits
+        for (const [currency, amount] of Object.entries(amounts)) {
+            if (amount > 0) {
+                const field = fieldMap[currency];
+                character[field] = (character[field] || 0) + amount;
+            }
+        }
+        
+        Characters.saveCharacter(character);
+        closeModals();
+        
+        // Refresh the character view
+        const currentState = getState();
+        if (currentState.currentView === 'character-view') {
+            CharacterView.render(moneyModalCharacterId);
+        }
+
+        showToast(buildMoneyMessage(amounts, 'Deposited'));
+        moneyModalCharacterId = null;
+    });
+
     // Collapsible section toggles
     document.querySelectorAll('.form-section.collapsible .section-header').forEach(header => {
         header.addEventListener('click', (e) => {

@@ -903,6 +903,51 @@
                 </div>
             </div>
 
+            <!-- Money Management Modal -->
+            <div id="money-modal" class="modal">
+                <div class="modal-content modal-small">
+                    <div class="modal-header">
+                        <h2>Manage Money</h2>
+                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="money-current">
+                            <span class="money-item pp"><span id="money-current-pp">0</span> PP</span>
+                            <span class="money-item gp"><span id="money-current-gp">0</span> GP</span>
+                            <span class="money-item ep"><span id="money-current-ep">0</span> EP</span>
+                            <span class="money-item sp"><span id="money-current-sp">0</span> SP</span>
+                            <span class="money-item cp"><span id="money-current-cp">0</span> CP</span>
+                        </div>
+                        <div class="money-inputs">
+                            <div class="money-input-item pp">
+                                <input type="number" id="money-input-pp" min="0" placeholder="0">
+                                <label for="money-input-pp">PP</label>
+                            </div>
+                            <div class="money-input-item gp">
+                                <input type="number" id="money-input-gp" min="0" placeholder="0">
+                                <label for="money-input-gp">GP</label>
+                            </div>
+                            <div class="money-input-item ep">
+                                <input type="number" id="money-input-ep" min="0" placeholder="0">
+                                <label for="money-input-ep">EP</label>
+                            </div>
+                            <div class="money-input-item sp">
+                                <input type="number" id="money-input-sp" min="0" placeholder="0">
+                                <label for="money-input-sp">SP</label>
+                            </div>
+                            <div class="money-input-item cp">
+                                <input type="number" id="money-input-cp" min="0" placeholder="0">
+                                <label for="money-input-cp">CP</label>
+                            </div>
+                        </div>
+                        <div class="money-actions">
+                            <button type="button" id="money-withdraw-btn" class="btn btn-danger">Withdraw</button>
+                            <button type="button" id="money-deposit-btn" class="btn btn-success">Deposit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Encounter Monsters Quick Add Modal -->
             <div id="encounter-monsters-modal" class="modal">
                 <div class="modal-content">
