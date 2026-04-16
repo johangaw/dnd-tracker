@@ -680,6 +680,11 @@ function initEventHandlers() {
         }
     });
 
+    // Long rest button - resets spell slots, hit dice, death saves, and HP
+    document.getElementById('long-rest-btn')?.addEventListener('click', () => {
+        CharacterEdit.performLongRest();
+    });
+
     // Character level change - update proficiency
     document.getElementById('char-level')?.addEventListener('change', () => {
         CharacterEdit.updateProficiencyDisplay();

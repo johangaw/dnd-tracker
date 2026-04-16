@@ -1848,3 +1848,226 @@ describe('Character HP', () => {
         })
     })
 })
+
+describe('Long Rest', () => {
+    beforeEach(async () => {
+        await initApp()
+    })
+
+    afterEach(() => {
+        localStorage.clear()
+        vi.restoreAllMocks()
+    })
+
+    it('shows long rest button on character edit page', async () => {
+        // Navigate to characters view
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click new character button
+        await click('#new-character-btn')
+        await tick()
+        
+        // Click Create New
+        await click('#character-choice-create-new')
+        await tick()
+        
+        // Should be on edit view
+        expect(isVisible('#character-edit-view')).toBe(true)
+        
+        // Should have long rest button
+        expect(exists('#long-rest-btn')).toBe(true)
+    })
+
+    it('resets spell slots to full when clicking long rest', async () => {
+        // Create a character with used spell slots
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Spell Caster'
+        character.level = 5
+        character.spellSlots = {
+            1: { total: 4, used: 3 },
+            2: { total: 3, used: 2 },
+            3: { total: 2, used: 1 }
+        }
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters and edit the character
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card to open context menu
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click edit action
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Should be on edit view
+        expect(isVisible('#character-edit-view')).toBe(true)
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check that form fields show spell slots reset
+        const slot1Used = document.querySelector('.slot-used[data-level="1"]')
+        const slot2Used = document.querySelector('.slot-used[data-level="2"]')
+        const slot3Used = document.querySelector('.slot-used[data-level="3"]')
+        
+        expect(slot1Used.value).toBe('0')
+        expect(slot2Used.value).toBe('0')
+        expect(slot3Used.value).toBe('0')
+    })
+
+    it('resets hit dice to full when clicking long rest', async () => {
+        // Create a character with used hit dice
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Fighter'
+        character.level = 6
+        character.hitDiceTotal = '1d10'
+        character.hitDiceUsed = 4
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters and edit the character
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click edit action
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check that hit dice used is reset to 0
+        const hitDiceUsed = document.getElementById('char-hit-dice-used')
+        expect(hitDiceUsed.value).toBe('0')
+    })
+
+    it('resets death saves when clicking long rest', async () => {
+        // Create a character with death saves
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Near Death'
+        character.level = 3
+        character.deathSaves = { successes: 2, failures: 2 }
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters and edit the character
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click edit action
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check that death saves are reset
+        const deathSuccess = document.getElementById('char-death-success')
+        const deathFailure = document.getElementById('char-death-failure')
+        expect(deathSuccess.value).toBe('0')
+        expect(deathFailure.value).toBe('0')
+    })
+
+    it('resets current HP to max HP when clicking long rest', async () => {
+        // Create a character with reduced HP
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Wounded Hero'
+        character.level = 5
+        character.hitPointsMax = 45
+        character.hitPointsCurrent = 12
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters and edit the character
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        // Click edit action
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check that current HP is reset to max
+        const currentHP = document.getElementById('char-hp-current')
+        expect(currentHP.value).toBe('45')
+    })
+
+    it('resets all resources at once when clicking long rest', async () => {
+        // Create a character with multiple depleted resources
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Exhausted Wizard'
+        character.level = 8
+        character.hitPointsMax = 50
+        character.hitPointsCurrent = 5
+        character.hitDiceTotal = '1d6'
+        character.hitDiceUsed = 6
+        character.deathSaves = { successes: 1, failures: 2 }
+        character.spellSlots = {
+            1: { total: 4, used: 4 },
+            2: { total: 3, used: 3 },
+            3: { total: 3, used: 2 },
+            4: { total: 2, used: 1 }
+        }
+        Characters.saveCharacter(character)
+        
+        // Navigate to characters and edit
+        await click('#menu-btn')
+        await tick()
+        await click('#menu-characters')
+        await tick()
+        
+        const card = document.querySelector('.character-card')
+        await click(card)
+        await tick()
+        
+        await click('#character-context-menu [data-action="edit"]')
+        await tick()
+        
+        // Click long rest button
+        await click('#long-rest-btn')
+        await tick()
+        
+        // Check all resources are reset
+        expect(document.getElementById('char-hp-current').value).toBe('50')
+        expect(document.getElementById('char-hit-dice-used').value).toBe('0')
+        expect(document.getElementById('char-death-success').value).toBe('0')
+        expect(document.getElementById('char-death-failure').value).toBe('0')
+        expect(document.querySelector('.slot-used[data-level="1"]').value).toBe('0')
+        expect(document.querySelector('.slot-used[data-level="2"]').value).toBe('0')
+        expect(document.querySelector('.slot-used[data-level="3"]').value).toBe('0')
+        expect(document.querySelector('.slot-used[data-level="4"]').value).toBe('0')
+    })
+})

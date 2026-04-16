@@ -4,7 +4,7 @@ import * as Characters from '../../services/characters.js';
 import * as Spells from '../../services/spells.js';
 import * as ClassSpellLists from '../../data/classSpellLists.js';
 import { getState, setView } from '../../services/state.js';
-import { escapeHtml } from '../../utils/helpers.js';
+import { escapeHtml, showToast } from '../../utils/helpers.js';
 import CharacterList from './list.js';
 
 // Initialize the edit form with a character (or empty for new)
@@ -797,6 +797,36 @@ export function cancelEdit() {
     setView('characters');
 }
 
+// Perform a long rest - resets spell slots, hit dice, death saves, and HP
+export function performLongRest() {
+    const state = getState();
+    const character = state.editingCharacter;
+    
+    if (!character) return;
+    
+    // Reset all spell slot used counts to 0
+    if (character.spellSlots) {
+        for (const level in character.spellSlots) {
+            character.spellSlots[level].used = 0;
+        }
+    }
+    
+    // Reset hit dice used to 0
+    character.hitDiceUsed = 0;
+    
+    // Reset death saves
+    character.deathSaves = { successes: 0, failures: 0 };
+    
+    // Reset current HP to max HP
+    character.hitPointsCurrent = character.hitPointsMax || 0;
+    
+    // Re-render the form to reflect changes
+    renderForm();
+    
+    // Show confirmation toast
+    showToast('Long rest complete');
+}
+
 // Update subclass suggestions based on current class
 export function updateSubclassSuggestions() {
     const classInput = document.getElementById('char-class');
@@ -832,5 +862,6 @@ export default {
     updateSubclassSuggestions,
     saveCharacter,
     deleteCharacter,
-    cancelEdit
+    cancelEdit,
+    performLongRest
 };
