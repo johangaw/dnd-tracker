@@ -1,0 +1,142 @@
+/* Spell Block Component Styles */
+/* Styling for the spell modal display */
+
+.spell-block {
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    background: #fdf1dc;
+    color: #1a1a1a;
+    padding: 16px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Header with level/school and source */
+.spell-block .spell-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.spell-block .spell-level-school {
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+.spell-block .spell-source {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+/* Divider */
+.spell-block .divider {
+    height: 2px;
+    background: linear-gradient(to right, #7b4b9e, transparent);
+    margin: 8px 0;
+}
+
+/* Properties (casting time, range, etc.) */
+.spell-block .spell-properties {
+    margin: 8px 0;
+}
+
+.spell-block .spell-property {
+    margin: 4px 0;
+}
+
+.spell-block .property-label {
+    font-weight: 700;
+    color: #7b4b9e;
+}
+
+/* Main description */
+.spell-block .spell-description {
+    margin: 12px 0;
+}
+
+.spell-block .spell-description p {
+    margin: 8px 0;
+}
+
+.spell-block .spell-description p:first-child {
+    margin-top: 0;
+}
+
+/* Lists within description */
+.spell-block .spell-list-entries {
+    margin: 8px 0 8px 20px;
+    padding: 0;
+}
+
+.spell-block .spell-list-entries li {
+    margin: 6px 0;
+}
+
+/* Higher level casting */
+.spell-block .spell-higher-level {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(123, 75, 158, 0.3);
+}
+
+.spell-block .spell-higher-level p {
+    margin: 4px 0;
+}
+
+/* Classes list */
+.spell-block .spell-classes {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(123, 75, 158, 0.3);
+    font-size: 0.85rem;
+}
+
+/* Tables (for spells with tables) */
+.spell-block .spell-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 0.85rem;
+}
+
+.spell-block .spell-table caption {
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+.spell-block .spell-table th,
+.spell-block .spell-table td {
+    padding: 4px 8px;
+    border: 1px solid rgba(123, 75, 158, 0.3);
+    text-align: left;
+}
+
+.spell-block .spell-table th {
+    background: rgba(123, 75, 158, 0.1);
+    font-weight: 600;
+}
+
+.spell-block .spell-table tr:nth-child(even) {
+    background: rgba(123, 75, 158, 0.05);
+}
+
+/* Links */
+.spell-block a {
+    color: #7b4b9e;
+    text-decoration: none;
+    border-bottom: 1px dotted #7b4b9e;
+    cursor: pointer;
+}
+
+.spell-block a:hover {
+    color: #5c3875;
+    border-bottom-style: solid;
+}
+
+/* Spell links within description (nested spell references) */
+.spell-block .spell-link {
+    cursor: pointer;
+}

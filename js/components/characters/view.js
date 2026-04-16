@@ -2,7 +2,6 @@
 
 import * as Characters from '../../services/characters.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
-import { getSpellUrl } from '../../services/spells.js';
 
 let currentCharacterId = null;
 
@@ -288,7 +287,7 @@ export function render(characterId) {
                             <ul class="spells-list">
                                 ${character.cantripsKnown.map(spell => {
                                     const spellName = typeof spell === 'string' ? spell : spell.name;
-                                    return `<li><a href="${getSpellUrl(spellName)}" target="_blank" rel="noopener noreferrer">${escapeHtml(spellName)}</a></li>`;
+                                    return `<li><a href="#" class="spell-link" data-spell="${escapeHtml(spellName)}">${escapeHtml(spellName)}</a></li>`;
                                 }).join('')}
                             </ul>
                         </div>
@@ -300,7 +299,7 @@ export function render(characterId) {
                             <ul class="spells-list">
                                 ${character.spellsKnown.map(spell => {
                                     const spellName = typeof spell === 'string' ? spell : spell.name;
-                                    return `<li><a href="${getSpellUrl(spellName)}" target="_blank" rel="noopener noreferrer">${escapeHtml(spellName)}</a></li>`;
+                                    return `<li><a href="#" class="spell-link" data-spell="${escapeHtml(spellName)}">${escapeHtml(spellName)}</a></li>`;
                                 }).join('')}
                             </ul>
                         </div>

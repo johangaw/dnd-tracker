@@ -23,6 +23,7 @@ import * as CharacterList from './components/characters/list.js';
 import * as CharacterView from './components/characters/view.js';
 import * as CharacterEdit from './components/characters/edit.js';
 import { showStatBlock } from './components/modals/statBlock.js';
+import { showSpellModal } from './components/modals/spellModal.js';
 
 // Track initialization to prevent duplicate event handlers
 let initialized = false;
@@ -1416,7 +1417,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Listen for hash changes
     window.addEventListener('hashchange', handleRoute);
+    
+    // Delegated click handler for spell links (in spell descriptions and character view)
+    document.addEventListener('click', (e) => {
+        const spellLink = e.target.closest('.spell-link, a[data-spell]');
+        if (spellLink) {
+            e.preventDefault();
+            const spellName = spellLink.dataset.spell;
+            if (spellName) {
+                showSpellModal(spellName);
+            }
+        }
+    });
 });
+
+// Expose showSpellModal globally for use by other components
+window.showSpellModal = showSpellModal;
 
 // Check for encounter import in URL
 async function checkForImport() {

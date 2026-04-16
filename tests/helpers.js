@@ -2,6 +2,84 @@
 import { fireEvent, waitFor, getByText, queryByText, getByPlaceholderText, getByRole } from '@testing-library/dom'
 import { mockIndex, mockBestiary, getMockMonster } from './mocks/monsters.js'
 
+// Mock spell data for testing
+const mockSpellData = {
+  spell: [
+    {
+      name: 'Magic Missile',
+      source: 'XPHB',
+      level: 1,
+      school: 'V',
+      time: [{ number: 1, unit: 'action' }],
+      range: { type: 'point', distance: { type: 'feet', amount: 120 } },
+      components: { v: true, s: true },
+      duration: [{ type: 'instant' }],
+      entries: ['You create three glowing darts of magical force.'],
+      classes: { fromClassList: [{ name: 'Wizard', source: 'XPHB' }, { name: 'Sorcerer', source: 'XPHB' }] }
+    },
+    {
+      name: 'Fireball',
+      source: 'XPHB',
+      level: 3,
+      school: 'V',
+      time: [{ number: 1, unit: 'action' }],
+      range: { type: 'point', distance: { type: 'feet', amount: 150 } },
+      components: { v: true, s: true, m: 'a tiny ball of bat guano and sulfur' },
+      duration: [{ type: 'instant' }],
+      entries: ['A bright streak flashes from your pointing finger.'],
+      classes: { fromClassList: [{ name: 'Wizard', source: 'XPHB' }, { name: 'Sorcerer', source: 'XPHB' }] }
+    },
+    {
+      name: 'Fire Bolt',
+      source: 'XPHB',
+      level: 0,
+      school: 'V',
+      time: [{ number: 1, unit: 'action' }],
+      range: { type: 'point', distance: { type: 'feet', amount: 120 } },
+      components: { v: true, s: true },
+      duration: [{ type: 'instant' }],
+      entries: ['You hurl a mote of fire at a creature or object within range.'],
+      classes: { fromClassList: [{ name: 'Wizard', source: 'XPHB' }, { name: 'Sorcerer', source: 'XPHB' }] }
+    },
+    {
+      name: 'Healing Word',
+      source: 'XPHB',
+      level: 1,
+      school: 'V',
+      time: [{ number: 1, unit: 'bonus' }],
+      range: { type: 'point', distance: { type: 'feet', amount: 60 } },
+      components: { v: true },
+      duration: [{ type: 'instant' }],
+      entries: ['A creature of your choice that you can see within range regains hit points.'],
+      classes: { fromClassList: [{ name: 'Cleric', source: 'XPHB' }, { name: 'Bard', source: 'XPHB' }, { name: 'Druid', source: 'XPHB' }] }
+    },
+    {
+      name: 'Beacon of Hope',
+      source: 'XPHB',
+      level: 3,
+      school: 'A',
+      time: [{ number: 1, unit: 'action' }],
+      range: { type: 'point', distance: { type: 'feet', amount: 30 } },
+      components: { v: true, s: true },
+      duration: [{ type: 'timed', duration: { type: 'minute', amount: 1 }, concentration: true }],
+      entries: ['This spell bestows hope and vitality.'],
+      classes: { fromClassList: [{ name: 'Cleric', source: 'XPHB' }] }
+    },
+    {
+      name: 'Wish',
+      source: 'XPHB',
+      level: 9,
+      school: 'C',
+      time: [{ number: 1, unit: 'action' }],
+      range: { type: 'point', distance: { type: 'self' } },
+      components: { v: true },
+      duration: [{ type: 'instant' }],
+      entries: ['Wish is the mightiest spell a mortal creature can cast.'],
+      classes: { fromClassList: [{ name: 'Wizard', source: 'XPHB' }, { name: 'Sorcerer', source: 'XPHB' }] }
+    }
+  ]
+}
+
 // Mock legendary groups data
 const mockLegendaryGroups = {
   legendaryGroup: [
@@ -54,6 +132,14 @@ export function setupFetchMock() {
       return {
         ok: true,
         json: async () => mockLegendaryGroups
+      }
+    }
+    
+    // Handle spell files
+    if (url.includes('/data/spells/')) {
+      return {
+        ok: true,
+        json: async () => mockSpellData
       }
     }
     

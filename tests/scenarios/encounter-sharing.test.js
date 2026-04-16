@@ -64,6 +64,10 @@ describe('Encounter Sharing', () => {
       await longPress(card)
       await click('#context-menu [data-action="share"]')
       
+      // Wait for async compression and clipboard write
+      await tick()
+      await tick()
+      
       // Restore mocks
       window.alert = originalAlert
       Object.defineProperty(navigator, 'clipboard', {

@@ -498,11 +498,10 @@ export function renderSpells() {
             ? '<p class="empty-hint">No cantrips added</p>'
             : cantrips.map((spell, index) => {
                 const name = typeof spell === 'string' ? spell : spell.name;
-                const url = Spells.getSpellUrl(name);
                 return `
                     <div class="spell-item" data-index="${index}">
                         <div class="spell-display">
-                            <a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
+                            <a href="#" class="spell-link" data-spell="${escapeHtml(name)}">${escapeHtml(name)}</a>
                         </div>
                         <button type="button" class="remove-btn" data-index="${index}">&times;</button>
                     </div>
@@ -538,11 +537,10 @@ export function renderSpells() {
             ? '<p class="empty-hint">No spells added</p>'
             : spells.map((spell, index) => {
                 const name = typeof spell === 'string' ? spell : spell.name;
-                const url = Spells.getSpellUrl(name);
                 return `
                     <div class="spell-item" data-index="${index}">
                         <div class="spell-display">
-                            <a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
+                            <a href="#" class="spell-link" data-spell="${escapeHtml(name)}">${escapeHtml(name)}</a>
                         </div>
                         <button type="button" class="remove-btn" data-index="${index}">&times;</button>
                     </div>
@@ -585,7 +583,7 @@ function getCurrentClassFromForm() {
 }
 
 // Open spell picker modal
-export function openSpellPicker(mode) {
+export async function openSpellPicker(mode) {
     spellPickerMode = mode;
     
     const modal = document.getElementById('spell-picker-modal');
@@ -639,12 +637,12 @@ export function openSpellPicker(mode) {
         classFilterToggle.checked = false;
     }
     
-    // Render initial results
-    renderSpellPickerResults();
-    
-    // Show modal
+    // Show modal first so user sees it immediately
     modal.classList.add('active');
     searchInput.focus();
+    
+    // Render initial results (async - will populate after data loads)
+    await renderSpellPickerResults();
 }
 
 // Close spell picker modal
@@ -655,7 +653,7 @@ export function closeSpellPicker() {
 }
 
 // Render spell picker search results
-export function renderSpellPickerResults() {
+export async function renderSpellPickerResults() {
     const resultsContainer = document.getElementById('spell-picker-results');
     const searchQuery = document.getElementById('spell-search-input').value;
     const levelFilter = document.getElementById('spell-level-filter').value;
@@ -665,8 +663,8 @@ export function renderSpellPickerResults() {
     // Get class/subclass from form fields
     const { class: charClass, subclass: charSubclass } = getCurrentClassFromForm();
     
-    // Get filtered spells
-    let spells = Spells.getAllSpells();
+    // Get filtered spells (async)
+    let spells = await Spells.getAllSpells();
     
     // Filter by class/subclass if toggle is checked
     if (classFilterToggle?.checked) {

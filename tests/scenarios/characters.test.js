@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { initApp, click, tick, exists, getText, isVisible, type } from '../helpers.js'
 import * as Characters from '../../js/services/characters.js'
+import * as Spells from '../../js/services/spells.js'
 import { decompress } from '../../js/utils/compression.js'
 
 describe('Characters Service', () => {
@@ -11,6 +12,7 @@ describe('Characters Service', () => {
 
     afterEach(() => {
         localStorage.clear()
+        Spells.clearCache()
         vi.restoreAllMocks()
     })
 
@@ -1073,13 +1075,13 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Type exact search query to get single result
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'magic missile'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Verify Magic Missile is shown in results
             const results = document.querySelectorAll('.spell-result-item')
@@ -1107,13 +1109,13 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Select 9th level filter
             const levelFilter = document.getElementById('spell-level-filter')
             levelFilter.value = '9'
             levelFilter.dispatchEvent(new Event('change', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Verify only 9th level spells are shown
             const results = document.querySelectorAll('.spell-result-item')
@@ -1143,13 +1145,13 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Search for Fireball
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'fireball'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Click on Fireball to select it
             await click('.spell-result-item')
@@ -1183,13 +1185,13 @@ describe('Character HP', () => {
             
             // Open cantrip picker
             await click('#add-cantrip-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Search for Fire Bolt
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'fire bolt'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Click on Fire Bolt to select it
             await click('.spell-result-item')
@@ -1200,7 +1202,7 @@ describe('Character HP', () => {
             expect(cantripsList.textContent).toContain('Fire Bolt')
         })
 
-        it('displays spell links to aidedd.org', async () => {
+        it('displays spell links that open spell modal', async () => {
             // Create a character with spells
             const character = Characters.createEmptyCharacter()
             character.name = 'Spell Links Test'
@@ -1220,14 +1222,14 @@ describe('Character HP', () => {
             await click('#character-context-menu [data-action="edit"]')
             await tick()
             
-            // Verify spell links have correct href
-            const fireballLink = document.querySelector('#spells-known-list a[href*="fireball"]')
+            // Verify spell links have correct data-spell attribute for internal modal
+            const fireballLink = document.querySelector('#spells-known-list a[data-spell="Fireball"]')
             expect(fireballLink).toBeDefined()
-            expect(fireballLink.href).toContain('aidedd.org/spell/fireball')
+            expect(fireballLink.classList.contains('spell-link')).toBe(true)
             
-            const fireboltLink = document.querySelector('#cantrips-list a[href*="fire-bolt"]')
+            const fireboltLink = document.querySelector('#cantrips-list a[data-spell="Fire Bolt"]')
             expect(fireboltLink).toBeDefined()
-            expect(fireboltLink.href).toContain('aidedd.org/spell/fire-bolt')
+            expect(fireboltLink.classList.contains('spell-link')).toBe(true)
         })
 
         it('prevents duplicate spells', async () => {
@@ -1251,17 +1253,17 @@ describe('Character HP', () => {
             
             // Verify Magic Missile is already shown
             let spellsList = document.getElementById('spells-known-list')
-            let spellMatches = spellsList.querySelectorAll('a[href*="magic-missile"]')
+            let spellMatches = spellsList.querySelectorAll('a[data-spell="Magic Missile"]')
             expect(spellMatches.length).toBe(1)
             
             // Open spell picker and try to add Magic Missile again
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'magic missile'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Should find exactly one result
             const results = document.querySelectorAll('.spell-result-item')
@@ -1272,7 +1274,7 @@ describe('Character HP', () => {
             
             // Verify there's still only one Magic Missile (duplicate was prevented)
             spellsList = document.getElementById('spells-known-list')
-            spellMatches = spellsList.querySelectorAll('a[href*="magic-missile"]')
+            spellMatches = spellsList.querySelectorAll('a[data-spell="Magic Missile"]')
             expect(spellMatches.length).toBe(1)
         })
 
@@ -1391,14 +1393,14 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Toggle should be checked by default, showing only Wizard spells
             // Search for Fireball (a Wizard spell)
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'fireball'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Fireball should be found
             let results = document.querySelectorAll('.spell-result-item')
@@ -1407,7 +1409,7 @@ describe('Character HP', () => {
             // Search for Healing Word (NOT a Wizard spell)
             searchInput.value = 'healing word'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Healing Word should NOT be found when filtered to Wizard spells
             results = document.querySelectorAll('.spell-result-item')
@@ -1435,19 +1437,19 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Uncheck the class filter toggle
             const toggle = document.getElementById('spell-class-filter-toggle')
             toggle.checked = false
             toggle.dispatchEvent(new Event('change', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Search for Healing Word (NOT a Wizard spell)
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'healing word'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Healing Word SHOULD be found when class filter is off
             const results = document.querySelectorAll('.spell-result-item')
@@ -1476,7 +1478,7 @@ describe('Character HP', () => {
             
             // Open spell picker
             await click('#add-spell-btn')
-            await tick()
+            await tick(100) // Wait for async spell loading
             
             // Verify label shows subclass
             const label = document.getElementById('spell-class-filter-label')
@@ -1486,7 +1488,7 @@ describe('Character HP', () => {
             const searchInput = document.getElementById('spell-search-input')
             searchInput.value = 'beacon of hope'
             searchInput.dispatchEvent(new Event('input', { bubbles: true }))
-            await tick()
+            await tick(100) // Wait for async search
             
             // Beacon of Hope should be found (it's both on Cleric list AND Life Domain list)
             const results = document.querySelectorAll('.spell-result-item')
