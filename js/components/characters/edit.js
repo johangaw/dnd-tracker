@@ -713,17 +713,22 @@ export async function renderSpellPickerResults() {
         const levelText = Spells.formatSpellLevel(spell.level);
         return `
             <div class="spell-result-item" data-spell-name="${escapeHtml(spell.name)}">
-                <div class="spell-result-header">
-                    <span class="spell-result-name">${escapeHtml(spell.name)}</span>
-                    <span class="spell-result-level">${levelText}</span>
+                <div class="spell-result-info">
+                    <div class="spell-result-header">
+                        <span class="spell-result-name">${escapeHtml(spell.name)}</span>
+                        <span class="spell-result-level">${levelText}</span>
+                    </div>
+                    <div class="spell-result-details">
+                        <span>${spell.school}</span>
+                        <span>${spell.castingTime}</span>
+                        <span>${spell.range}</span>
+                        ${spell.concentration ? '<span class="spell-concentration">Concentration</span>' : ''}
+                        ${spell.ritual ? '<span class="spell-ritual">Ritual</span>' : ''}
+                    </div>
                 </div>
-                <div class="spell-result-details">
-                    <span>${spell.school}</span>
-                    <span>${spell.castingTime}</span>
-                    <span>${spell.range}</span>
-                    ${spell.concentration ? '<span class="spell-concentration">Concentration</span>' : ''}
-                    ${spell.ritual ? '<span class="spell-ritual">Ritual</span>' : ''}
-                </div>
+                <button type="button" class="spell-info-btn" data-spell="${escapeHtml(spell.name)}" aria-label="View spell details">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                </button>
             </div>
         `;
     }).join('');
@@ -732,10 +737,19 @@ export async function renderSpellPickerResults() {
         resultsContainer.innerHTML += `<p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">Showing 50 of ${spells.length} results. Type to narrow down.</p>`;
     }
     
-    // Add click handlers
-    resultsContainer.querySelectorAll('.spell-result-item').forEach(item => {
-        item.addEventListener('click', () => {
+    // Add click handlers for selecting spells
+    resultsContainer.querySelectorAll('.spell-result-info').forEach(info => {
+        info.addEventListener('click', () => {
+            const item = info.closest('.spell-result-item');
             selectSpell(item.dataset.spellName);
+        });
+    });
+    
+    // Add click handlers for viewing spell details
+    resultsContainer.querySelectorAll('.spell-info-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.showSpellModal(btn.dataset.spell);
         });
     });
 }

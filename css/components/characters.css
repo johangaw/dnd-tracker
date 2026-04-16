@@ -1523,10 +1523,9 @@
 .spell-result-item {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 8px;
     transition: background-color 0.15s;
 }
 
@@ -1536,6 +1535,35 @@
 
 .spell-result-item:hover {
     background: var(--bg-tertiary);
+}
+
+.spell-result-info {
+    flex: 1;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spell-info-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.spell-info-btn:hover {
+    background: var(--accent);
+    color: white;
 }
 
 .spell-result-header {

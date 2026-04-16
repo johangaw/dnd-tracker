@@ -1154,7 +1154,7 @@ describe('Character HP', () => {
             await tick(100) // Wait for async search
             
             // Click on Fireball to select it
-            await click('.spell-result-item')
+            await click('.spell-result-info')
             await tick()
             
             // Verify modal is closed
@@ -1194,7 +1194,7 @@ describe('Character HP', () => {
             await tick(100) // Wait for async search
             
             // Click on Fire Bolt to select it
-            await click('.spell-result-item')
+            await click('.spell-result-info')
             await tick()
             
             // Verify cantrip is added to the list

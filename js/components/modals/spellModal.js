@@ -325,7 +325,45 @@ function cleanSpellText(text) {
         .replace(/{@[^}]+}/g, '');
 }
 
+/**
+ * Close the spell modal
+ */
+export function closeSpellModal() {
+    const modal = document.getElementById('spell-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+/**
+ * Initialize spell modal event handlers
+ * Should be called once on app initialization
+ */
+export function initSpellModal() {
+    const modal = document.getElementById('spell-modal');
+    if (!modal) return;
+
+    // Close button - only close spell modal, not all modals
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeSpellModal();
+        });
+    }
+
+    // Backdrop click - only close spell modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            e.stopPropagation();
+            closeSpellModal();
+        }
+    });
+}
+
 export default {
     showSpellModal,
+    closeSpellModal,
+    initSpellModal,
     renderSpellBlock
 };

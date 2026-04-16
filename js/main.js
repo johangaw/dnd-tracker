@@ -23,7 +23,7 @@ import * as CharacterList from './components/characters/list.js';
 import * as CharacterView from './components/characters/view.js';
 import * as CharacterEdit from './components/characters/edit.js';
 import { showStatBlock } from './components/modals/statBlock.js';
-import { showSpellModal } from './components/modals/spellModal.js';
+import { showSpellModal, closeSpellModal, initSpellModal } from './components/modals/spellModal.js';
 
 // Track initialization to prevent duplicate event handlers
 let initialized = false;
@@ -1287,15 +1287,17 @@ function initEventHandlers() {
         }
     });
 
-    // Close modals
+    // Close modals (exclude spell modal - it has its own handler)
     document.querySelectorAll('.close-modal').forEach(btn => {
+        if (btn.closest('#spell-modal')) return; // Skip spell modal
         btn.addEventListener('click', () => {
             closeModals();
         });
     });
 
-    // Close modal on backdrop click
+    // Close modal on backdrop click (exclude spell modal)
     document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.id === 'spell-modal') return; // Skip spell modal
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModals();
@@ -1306,7 +1308,13 @@ function initEventHandlers() {
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeModals();
+            // Close spell modal first if it's open, otherwise close other modals
+            const spellModal = document.getElementById('spell-modal');
+            if (spellModal?.classList.contains('active')) {
+                closeSpellModal();
+            } else {
+                closeModals();
+            }
             hideContextMenu();
         }
     });
@@ -1403,6 +1411,9 @@ function handleRoute() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     initEventHandlers();
+    
+    // Initialize spell modal (separate close handling)
+    initSpellModal();
     
     // Preload monster index
     MonsterAPI.loadIndex();

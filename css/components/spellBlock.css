@@ -162,3 +162,8 @@
     font-style: italic;
     margin-top: 6px;
 }
+
+/* Spell modal should appear above other modals (like spell picker) */
+#spell-modal {
+    z-index: 250;
+}
