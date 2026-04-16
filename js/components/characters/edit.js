@@ -2,6 +2,7 @@
 
 import * as Characters from '../../services/characters.js';
 import * as Spells from '../../services/spells.js';
+import * as ClassFeatures from '../../services/classFeatures.js';
 import * as ClassSpellLists from '../../data/classSpellLists.js';
 import { getState, setView } from '../../services/state.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
@@ -917,6 +918,159 @@ export function updateSubclassSuggestions() {
         .join('');
 }
 
+// Open the feature picker modal
+export async function openFeaturePicker() {
+    const modal = document.getElementById('feature-picker-modal');
+    if (!modal) return;
+    
+    // Populate class filter dropdown
+    const classFilter = document.getElementById('feature-class-filter');
+    if (classFilter && classFilter.options.length <= 1) {
+        const classNames = await ClassFeatures.getClassNames();
+        for (const className of classNames) {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            classFilter.appendChild(option);
+        }
+        
+        // Pre-select character's class if available
+        const state = getState();
+        const character = state.editingCharacter;
+        if (character && character.class) {
+            const charClass = character.class.split('/')[0].trim(); // Handle multiclass
+            for (const opt of classFilter.options) {
+                if (opt.value.toLowerCase() === charClass.toLowerCase()) {
+                    classFilter.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Reset search input
+    const searchInput = document.getElementById('feature-search-input');
+    if (searchInput) searchInput.value = '';
+    
+    // Reset level filter
+    const levelFilter = document.getElementById('feature-level-filter');
+    if (levelFilter) levelFilter.value = '';
+    
+    modal.classList.add('active');
+    
+    // Render initial results
+    await renderFeaturePickerResults();
+    
+    // Focus on search input
+    searchInput?.focus();
+}
+
+// Close the feature picker modal
+export function closeFeaturePicker() {
+    const modal = document.getElementById('feature-picker-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Render feature picker results
+export async function renderFeaturePickerResults() {
+    const resultsContainer = document.getElementById('feature-picker-results');
+    if (!resultsContainer) return;
+    
+    const query = document.getElementById('feature-search-input')?.value || '';
+    const classFilter = document.getElementById('feature-class-filter')?.value || '';
+    const levelFilter = document.getElementById('feature-level-filter')?.value || '';
+    
+    // Show loading state
+    resultsContainer.innerHTML = '<p class="loading-hint" style="padding: 16px; text-align: center;">Loading features...</p>';
+    
+    try {
+        const features = await ClassFeatures.searchFeatures(query, {
+            className: classFilter,
+            level: levelFilter
+        });
+        
+        if (features.length === 0) {
+            resultsContainer.innerHTML = '<p class="empty-hint" style="padding: 16px; text-align: center;">No features found</p>';
+            return;
+        }
+        
+        // Limit results for performance
+        const displayFeatures = features.slice(0, 50);
+        
+        resultsContainer.innerHTML = displayFeatures.map(feature => {
+            const preview = (feature.description || '').substring(0, 150);
+            return `
+                <div class="feature-result-item" data-feature-name="${escapeHtml(feature.name)}" data-feature-class="${escapeHtml(feature.className)}" data-feature-subclass="${escapeHtml(feature.subclassShortName || '')}">
+                    <div class="feature-result-header">
+                        <span class="feature-result-name">${escapeHtml(feature.name)}</span>
+                        <div class="feature-result-meta">
+                            ${feature.subclassShortName ? `<span class="feature-result-subclass">${escapeHtml(feature.subclassShortName)}</span>` : ''}
+                            <span class="feature-result-class">${escapeHtml(feature.className)}</span>
+                            <span class="feature-result-level">Lv ${feature.level}</span>
+                            ${feature.source ? `<span class="feature-result-source">${escapeHtml(feature.source)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="feature-result-preview">${escapeHtml(preview)}${preview.length < (feature.description || '').length ? '...' : ''}</div>
+                </div>
+            `;
+        }).join('');
+        
+        if (features.length > 50) {
+            resultsContainer.innerHTML += `<p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">Showing 50 of ${features.length} results. Type to narrow down.</p>`;
+        }
+        
+        // Add click handlers
+        resultsContainer.querySelectorAll('.feature-result-item').forEach(item => {
+            item.addEventListener('click', async () => {
+                const featureName = item.dataset.featureName;
+                const featureClass = item.dataset.featureClass;
+                const featureSubclass = item.dataset.featureSubclass;
+                
+                // Find the full feature data
+                const allFeatures = await ClassFeatures.searchFeatures(featureName, { className: featureClass });
+                const feature = allFeatures.find(f => 
+                    f.name === featureName && 
+                    f.className === featureClass &&
+                    (f.subclassShortName || '') === featureSubclass
+                );
+                
+                if (feature) {
+                    selectFeatureFromPicker(feature);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error loading features:', error);
+        resultsContainer.innerHTML = '<p class="error-hint" style="padding: 16px; text-align: center; color: var(--color-danger);">Error loading features</p>';
+    }
+}
+
+// Select a feature from the picker and add it to the character
+function selectFeatureFromPicker(feature) {
+    const state = getState();
+    const character = state.editingCharacter;
+    
+    if (!character.features) character.features = [];
+    
+    // Format the feature name with class/subclass info
+    let featureName = feature.name;
+    if (feature.subclassShortName) {
+        featureName = `${feature.name} (${feature.subclassShortName})`;
+    }
+    
+    character.features.push({
+        name: featureName,
+        description: feature.description || ''
+    });
+    
+    closeFeaturePicker();
+    renderFeatures();
+    
+    showToast(`Added ${feature.name}`);
+}
+
 export default {
     init,
     renderForm,
@@ -935,6 +1089,9 @@ export default {
     openSpellPicker,
     closeSpellPicker,
     renderSpellPickerResults,
+    openFeaturePicker,
+    closeFeaturePicker,
+    renderFeaturePickerResults,
     updateSubclassSuggestions,
     saveCharacter,
     deleteCharacter,

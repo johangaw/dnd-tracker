@@ -711,9 +711,37 @@ function initEventHandlers() {
         });
     });
 
-    // Add buttons for character edit
+    // Add buttons for character edit - show choice modal for features
     document.getElementById('add-feature-btn')?.addEventListener('click', () => {
+        document.getElementById('add-feature-choice-modal')?.classList.add('active');
+    });
+    
+    // Feature choice modal buttons
+    document.getElementById('feature-choice-search')?.addEventListener('click', () => {
+        document.getElementById('add-feature-choice-modal')?.classList.remove('active');
+        CharacterEdit.openFeaturePicker();
+    });
+    
+    document.getElementById('feature-choice-blank')?.addEventListener('click', () => {
+        document.getElementById('add-feature-choice-modal')?.classList.remove('active');
         CharacterEdit.addFeature();
+    });
+    
+    // Feature Picker Modal
+    document.getElementById('feature-search-input')?.addEventListener('input', () => {
+        CharacterEdit.renderFeaturePickerResults();
+    });
+    
+    document.getElementById('feature-class-filter')?.addEventListener('change', () => {
+        CharacterEdit.renderFeaturePickerResults();
+    });
+    
+    document.getElementById('feature-level-filter')?.addEventListener('change', () => {
+        CharacterEdit.renderFeaturePickerResults();
+    });
+    
+    document.getElementById('feature-picker-modal')?.querySelector('.close-modal')?.addEventListener('click', () => {
+        CharacterEdit.closeFeaturePicker();
     });
 
     document.getElementById('add-equipment-btn')?.addEventListener('click', () => {

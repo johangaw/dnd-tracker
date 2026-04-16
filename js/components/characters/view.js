@@ -175,24 +175,6 @@ export function render(characterId) {
                 </section>
             ` : ''}
 
-            <!-- Features & Traits Section -->
-            ${(character.features?.length > 0 || character.traits) ? `
-                <section class="character-features-section">
-                    <h2>Features & Traits</h2>
-                    ${character.features?.length > 0 ? `
-                        <div class="features-list">
-                            ${character.features.map(feature => `
-                                <div class="feature-item">
-                                    <strong>${escapeHtml(feature.name)}</strong>
-                                    ${feature.description ? `<p>${escapeHtml(feature.description)}</p>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-                    ${character.traits ? `<div class="traits-text">${escapeHtml(character.traits)}</div>` : ''}
-                </section>
-            ` : ''}
-
             <!-- Proficiencies & Languages Section -->
             ${(hasProficiencies(character) || character.languages?.length > 0) ? `
                 <section class="character-proficiencies-section">
@@ -304,6 +286,24 @@ export function render(characterId) {
                             </ul>
                         </div>
                     ` : ''}
+                </section>
+            ` : ''}
+
+            <!-- Features & Traits Section -->
+            ${(character.features?.length > 0 || character.traits) ? `
+                <section class="character-features-section">
+                    <h2>Features & Traits</h2>
+                    ${character.features?.length > 0 ? `
+                        <div class="features-list">
+                            ${character.features.map(feature => `
+                                <div class="feature-item">
+                                    <strong>${escapeHtml(feature.name)}</strong>
+                                    ${feature.description ? `<p>${escapeHtml(feature.description)}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${character.traits ? `<div class="traits-text">${escapeHtml(character.traits)}</div>` : ''}
                 </section>
             ` : ''}
 
