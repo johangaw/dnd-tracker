@@ -981,7 +981,17 @@
     text-align: center;
     font-weight: bold;
     font-size: 1.1rem;
-    padding: 6px;
+    padding: 8px 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    transition: border-color var(--transition);
+}
+
+.ability-edit-box input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .ability-edit-box .ability-mod-display {
@@ -1136,7 +1146,32 @@
 .currency-input input {
     width: 60px;
     text-align: center;
+    padding: 8px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color var(--transition);
 }
+
+.currency-input input:focus {
+    outline: none;
+}
+
+/* Currency-specific focus colors (matching money modal) */
+.currency-input.pp input:focus { border-color: #6a4c93; }
+.currency-input.gp input:focus { border-color: #856404; }
+.currency-input.ep input:focus { border-color: #555; }
+.currency-input.sp input:focus { border-color: #666; }
+.currency-input.cp input:focus { border-color: #8b4513; }
+
+/* Currency-specific label colors */
+.currency-input.pp label { color: #6a4c93; }
+.currency-input.gp label { color: #856404; }
+.currency-input.ep label { color: #555; }
+.currency-input.sp label { color: #666; }
+.currency-input.cp label { color: #8b4513; }
 
 .equipment-item {
     display: grid;
@@ -1269,6 +1304,19 @@
 .slot-used {
     width: 50px;
     text-align: center;
+    padding: 8px;
+    font-size: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    transition: border-color var(--transition);
+}
+
+.slot-total:focus,
+.slot-used:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .slot-separator {
@@ -1404,6 +1452,22 @@
 }
 
 /* Spell Picker Modal */
+.search-container input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    transition: border-color var(--transition);
+}
+
+.search-container input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
 .spell-filters {
     display: flex;
     gap: 8px;
