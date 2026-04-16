@@ -1859,23 +1859,29 @@ describe('Long Rest', () => {
         vi.restoreAllMocks()
     })
 
-    it('shows long rest button on character edit page', async () => {
+    it('shows long rest button on character view page', async () => {
+        // Create a character
+        const character = Characters.createEmptyCharacter()
+        character.name = 'Test Character'
+        Characters.saveCharacter(character)
+        
         // Navigate to characters view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
         await tick()
         
-        // Click new character button
-        await click('#new-character-btn')
+        // Click on character card
+        const card = document.querySelector('.character-card')
+        await click(card)
         await tick()
         
-        // Click Create New
-        await click('#character-choice-create-new')
+        // Click view action
+        await click('#character-context-menu [data-action="view"]')
         await tick()
         
-        // Should be on edit view
-        expect(isVisible('#character-edit-view')).toBe(true)
+        // Should be on view page
+        expect(exists('#character-view-section.active')).toBe(true)
         
         // Should have long rest button
         expect(exists('#long-rest-btn')).toBe(true)
@@ -1893,36 +1899,28 @@ describe('Long Rest', () => {
         }
         Characters.saveCharacter(character)
         
-        // Navigate to characters and edit the character
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
         await tick()
         
-        // Click on character card to open context menu
         const card = document.querySelector('.character-card')
         await click(card)
         await tick()
         
-        // Click edit action
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
-        
-        // Should be on edit view
-        expect(isVisible('#character-edit-view')).toBe(true)
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check that form fields show spell slots reset
-        const slot1Used = document.querySelector('.slot-used[data-level="1"]')
-        const slot2Used = document.querySelector('.slot-used[data-level="2"]')
-        const slot3Used = document.querySelector('.slot-used[data-level="3"]')
-        
-        expect(slot1Used.value).toBe('0')
-        expect(slot2Used.value).toBe('0')
-        expect(slot3Used.value).toBe('0')
+        // Check that spell slots are reset in saved character
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.spellSlots[1].used).toBe(0)
+        expect(updated.spellSlots[2].used).toBe(0)
+        expect(updated.spellSlots[3].used).toBe(0)
     })
 
     it('resets hit dice to full when clicking long rest', async () => {
@@ -1934,28 +1932,26 @@ describe('Long Rest', () => {
         character.hitDiceUsed = 4
         Characters.saveCharacter(character)
         
-        // Navigate to characters and edit the character
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
         await tick()
         
-        // Click on character card
         const card = document.querySelector('.character-card')
         await click(card)
         await tick()
         
-        // Click edit action
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check that hit dice used is reset to 0
-        const hitDiceUsed = document.getElementById('char-hit-dice-used')
-        expect(hitDiceUsed.value).toBe('0')
+        // Check that hit dice used is reset in saved character
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.hitDiceUsed).toBe(0)
     })
 
     it('resets death saves when clicking long rest', async () => {
@@ -1966,30 +1962,27 @@ describe('Long Rest', () => {
         character.deathSaves = { successes: 2, failures: 2 }
         Characters.saveCharacter(character)
         
-        // Navigate to characters and edit the character
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
         await tick()
         
-        // Click on character card
         const card = document.querySelector('.character-card')
         await click(card)
         await tick()
         
-        // Click edit action
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check that death saves are reset
-        const deathSuccess = document.getElementById('char-death-success')
-        const deathFailure = document.getElementById('char-death-failure')
-        expect(deathSuccess.value).toBe('0')
-        expect(deathFailure.value).toBe('0')
+        // Check that death saves are reset in saved character
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.deathSaves.successes).toBe(0)
+        expect(updated.deathSaves.failures).toBe(0)
     })
 
     it('resets current HP to max HP when clicking long rest', async () => {
@@ -2001,28 +1994,26 @@ describe('Long Rest', () => {
         character.hitPointsCurrent = 12
         Characters.saveCharacter(character)
         
-        // Navigate to characters and edit the character
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
         await tick()
         
-        // Click on character card
         const card = document.querySelector('.character-card')
         await click(card)
         await tick()
         
-        // Click edit action
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check that current HP is reset to max
-        const currentHP = document.getElementById('char-hp-current')
-        expect(currentHP.value).toBe('45')
+        // Check that current HP is reset in saved character
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.hitPointsCurrent).toBe(45)
     })
 
     it('resets all resources at once when clicking long rest', async () => {
@@ -2043,7 +2034,7 @@ describe('Long Rest', () => {
         }
         Characters.saveCharacter(character)
         
-        // Navigate to characters and edit
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
@@ -2053,22 +2044,23 @@ describe('Long Rest', () => {
         await click(card)
         await tick()
         
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check all resources are reset
-        expect(document.getElementById('char-hp-current').value).toBe('50')
-        expect(document.getElementById('char-hit-dice-used').value).toBe('0')
-        expect(document.getElementById('char-death-success').value).toBe('0')
-        expect(document.getElementById('char-death-failure').value).toBe('0')
-        expect(document.querySelector('.slot-used[data-level="1"]').value).toBe('0')
-        expect(document.querySelector('.slot-used[data-level="2"]').value).toBe('0')
-        expect(document.querySelector('.slot-used[data-level="3"]').value).toBe('0')
-        expect(document.querySelector('.slot-used[data-level="4"]').value).toBe('0')
+        // Check all resources are reset in saved character
+        const updated = Characters.getCharacter(character.id)
+        expect(updated.hitPointsCurrent).toBe(50)
+        expect(updated.hitDiceUsed).toBe(0)
+        expect(updated.deathSaves.successes).toBe(0)
+        expect(updated.deathSaves.failures).toBe(0)
+        expect(updated.spellSlots[1].used).toBe(0)
+        expect(updated.spellSlots[2].used).toBe(0)
+        expect(updated.spellSlots[3].used).toBe(0)
+        expect(updated.spellSlots[4].used).toBe(0)
     })
 
     it('resets trackers with resetOnLongRest enabled when clicking long rest', async () => {
@@ -2082,7 +2074,7 @@ describe('Long Rest', () => {
         ]
         Characters.saveCharacter(character)
         
-        // Navigate to character edit
+        // Navigate to character view
         await click('#menu-btn')
         await tick()
         await click('#menu-characters')
@@ -2092,28 +2084,22 @@ describe('Long Rest', () => {
         await click(card)
         await tick()
         
-        await click('#character-context-menu [data-action="edit"]')
+        await click('#character-context-menu [data-action="view"]')
         await tick()
-        
-        // Verify initial tracker used values are displayed
-        const usedInputs = document.querySelectorAll('.tracker-used')
-        expect(usedInputs[0].value).toBe('3') // Ki Points
-        expect(usedInputs[1].value).toBe('2') // Rage
-        expect(usedInputs[2].value).toBe('1') // Special Ability
         
         // Click long rest button
         await click('#long-rest-btn')
         await tick()
         
-        // Check tracker inputs after long rest
-        const updatedUsedInputs = document.querySelectorAll('.tracker-used')
+        // Check trackers in saved character
+        const updated = Characters.getCharacter(character.id)
         
         // Ki Points should be reset (resetOnLongRest defaults to true)
-        expect(updatedUsedInputs[0].value).toBe('0')
+        expect(updated.trackers[0].used).toBe(0)
         // Rage should be reset (resetOnLongRest is true)
-        expect(updatedUsedInputs[1].value).toBe('0')
+        expect(updated.trackers[1].used).toBe(0)
         // Special Ability should NOT be reset (resetOnLongRest is false)
-        expect(updatedUsedInputs[2].value).toBe('1')
+        expect(updated.trackers[2].used).toBe(1)
     })
 })
 

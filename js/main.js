@@ -646,6 +646,11 @@ function initEventHandlers() {
         }
     });
 
+    // Character view long rest button
+    document.getElementById('long-rest-btn')?.addEventListener('click', () => {
+        CharacterView.performLongRest();
+    });
+
     // Character form submit
     document.getElementById('character-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -678,11 +683,6 @@ function initEventHandlers() {
             // Always go to list after delete
             Router.navigateToList('characters');
         }
-    });
-
-    // Long rest button - resets spell slots, hit dice, death saves, and HP
-    document.getElementById('long-rest-btn')?.addEventListener('click', () => {
-        CharacterEdit.performLongRest();
     });
 
     // Character level change - update proficiency

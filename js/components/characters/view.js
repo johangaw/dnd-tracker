@@ -1,7 +1,7 @@
 // Character View Component - Read-only character sheet display
 
 import * as Characters from '../../services/characters.js';
-import { escapeHtml } from '../../utils/helpers.js';
+import { escapeHtml, showToast } from '../../utils/helpers.js';
 import { getSpellUrl } from '../../services/spells.js';
 
 let currentCharacterId = null;
@@ -542,6 +542,47 @@ function handleTrackerClick(trackerIndex) {
     // Save and re-render
     Characters.saveCharacter(character);
     render(currentCharacterId);
+}
+
+// Perform a long rest - resets spell slots, hit dice, death saves, HP, and trackers
+export function performLongRest() {
+    if (!currentCharacterId) return;
+    
+    const character = Characters.getCharacter(currentCharacterId);
+    if (!character) return;
+    
+    // Reset all spell slot used counts to 0
+    if (character.spellSlots) {
+        for (const level in character.spellSlots) {
+            character.spellSlots[level].used = 0;
+        }
+    }
+    
+    // Reset hit dice used to 0
+    character.hitDiceUsed = 0;
+    
+    // Reset death saves
+    character.deathSaves = { successes: 0, failures: 0 };
+    
+    // Reset current HP to max HP
+    character.hitPointsCurrent = character.hitPointsMax || 0;
+    
+    // Reset trackers that have resetOnLongRest enabled (default true)
+    if (character.trackers) {
+        character.trackers.forEach(tracker => {
+            // resetOnLongRest defaults to true (checked !== false)
+            if (tracker.resetOnLongRest !== false) {
+                tracker.used = 0;
+            }
+        });
+    }
+    
+    // Save and re-render
+    Characters.saveCharacter(character);
+    render(currentCharacterId);
+    
+    // Show confirmation toast
+    showToast('Long rest complete');
 }
 
 // Helper to check if character has money
