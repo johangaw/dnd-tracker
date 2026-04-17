@@ -135,8 +135,8 @@ export function setupFetchMock() {
       }
     }
     
-    // Handle spell files
-    if (url.includes('/data/spells/')) {
+    // Handle spell files (both absolute and relative paths)
+    if (url.includes('data/spells/')) {
       return {
         ok: true,
         json: async () => mockSpellData

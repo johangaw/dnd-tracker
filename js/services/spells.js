@@ -57,7 +57,7 @@ async function loadSpells() {
         // Load spell data
         for (const file of SPELL_SOURCES) {
             try {
-                const response = await fetch(`/data/spells/${file}`);
+                const response = await fetch(`data/spells/${file}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.spell && Array.isArray(data.spell)) {
@@ -73,7 +73,7 @@ async function loadSpells() {
         fluffByKey = new Map();
         for (const file of FLUFF_SOURCES) {
             try {
-                const response = await fetch(`/data/spells/${file}`);
+                const response = await fetch(`data/spells/${file}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.spellFluff && Array.isArray(data.spellFluff)) {
