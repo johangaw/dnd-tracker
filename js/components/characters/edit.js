@@ -214,6 +214,8 @@ export function renderFeatures() {
                 <textarea class="feature-desc" placeholder="Description">${escapeHtml(feature.description || '')}</textarea>
             </div>
             <div class="item-buttons">
+                <button type="button" class="move-up-btn" data-index="${index}" ${index === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
+                <button type="button" class="move-down-btn" data-index="${index}" ${index === features.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
                 <button type="button" class="remove-btn" data-index="${index}" aria-label="Remove">&times;</button>
             </div>
         </div>
@@ -234,6 +236,28 @@ export function renderFeatures() {
         btn.addEventListener('click', () => {
             character.features.splice(parseInt(btn.dataset.index), 1);
             renderFeatures();
+        });
+    });
+    container.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            if (index > 0) {
+                const temp = character.features[index];
+                character.features[index] = character.features[index - 1];
+                character.features[index - 1] = temp;
+                renderFeatures();
+            }
+        });
+    });
+    container.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            if (index < character.features.length - 1) {
+                const temp = character.features[index];
+                character.features[index] = character.features[index + 1];
+                character.features[index + 1] = temp;
+                renderFeatures();
+            }
         });
     });
 }
