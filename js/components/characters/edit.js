@@ -15,6 +15,13 @@ let featurePickerState = {
     batchSize: 50
 };
 
+// Spell picker state
+let spellPickerState = {
+    allSpells: [],
+    displayedCount: 0,
+    batchSize: 50
+};
+
 // Initialize the edit form with a character (or empty for new)
 export function init(character = null) {
     const state = getState();
@@ -661,63 +668,78 @@ export function closeSpellPicker() {
 }
 
 // Render spell picker search results
-export async function renderSpellPickerResults() {
+export async function renderSpellPickerResults(loadMore = false) {
     const resultsContainer = document.getElementById('spell-picker-results');
     const searchQuery = document.getElementById('spell-search-input').value;
     const levelFilter = document.getElementById('spell-level-filter').value;
     const schoolFilter = document.getElementById('spell-school-filter').value;
     const classFilterToggle = document.getElementById('spell-class-filter-toggle');
     
-    // Get class/subclass from form fields
-    const { class: charClass, subclass: charSubclass } = getCurrentClassFromForm();
+    // If not loading more, reset state and show loading
+    if (!loadMore) {
+        spellPickerState.displayedCount = 0;
+        spellPickerState.allSpells = [];
+    }
     
-    // Get filtered spells (async)
-    let spells = await Spells.getAllSpells();
-    
-    // Filter by class/subclass if toggle is checked
-    if (classFilterToggle?.checked) {
-        // Check if we have spellcasting from class or subclass
-        const hasSpellcastingClass = charClass && ClassSpellLists.isSpellcastingClass(charClass);
-        const hasSpellcastingSubclass = charSubclass && ClassSpellLists.isSpellcastingSubclass(charSubclass);
+    // Fetch and filter spells if not loading more
+    if (!loadMore || spellPickerState.allSpells.length === 0) {
+        // Get class/subclass from form fields
+        const { class: charClass, subclass: charSubclass } = getCurrentClassFromForm();
         
-        if (hasSpellcastingClass || hasSpellcastingSubclass) {
-            const availableSpells = ClassSpellLists.getAvailableSpells(charClass, charSubclass);
-            const availableSet = new Set(availableSpells.map(s => s.toLowerCase()));
-            spells = spells.filter(s => availableSet.has(s.name.toLowerCase()));
+        // Get filtered spells (async)
+        let spells = await Spells.getAllSpells();
+        
+        // Filter by class/subclass if toggle is checked
+        if (classFilterToggle?.checked) {
+            // Check if we have spellcasting from class or subclass
+            const hasSpellcastingClass = charClass && ClassSpellLists.isSpellcastingClass(charClass);
+            const hasSpellcastingSubclass = charSubclass && ClassSpellLists.isSpellcastingSubclass(charSubclass);
+            
+            if (hasSpellcastingClass || hasSpellcastingSubclass) {
+                const availableSpells = ClassSpellLists.getAvailableSpells(charClass, charSubclass);
+                const availableSet = new Set(availableSpells.map(s => s.toLowerCase()));
+                spells = spells.filter(s => availableSet.has(s.name.toLowerCase()));
+            }
         }
+        
+        // Filter by level
+        if (levelFilter !== '') {
+            const level = parseInt(levelFilter);
+            spells = spells.filter(s => s.level === level);
+        } else if (spellPickerMode === 'cantrip') {
+            spells = spells.filter(s => s.level === 0);
+        } else if (spellPickerMode === 'spell') {
+            // For spells, exclude cantrips by default unless explicitly selected
+            spells = spells.filter(s => s.level > 0);
+        }
+        
+        // Filter by school
+        if (schoolFilter) {
+            spells = spells.filter(s => s.school === schoolFilter);
+        }
+        
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            spells = spells.filter(s => s.name.toLowerCase().includes(query));
+        }
+        
+        spellPickerState.allSpells = spells;
     }
     
-    // Filter by level
-    if (levelFilter !== '') {
-        const level = parseInt(levelFilter);
-        spells = spells.filter(s => s.level === level);
-    } else if (spellPickerMode === 'cantrip') {
-        spells = spells.filter(s => s.level === 0);
-    } else if (spellPickerMode === 'spell') {
-        // For spells, exclude cantrips by default unless explicitly selected
-        spells = spells.filter(s => s.level > 0);
-    }
+    const spells = spellPickerState.allSpells;
     
-    // Filter by school
-    if (schoolFilter) {
-        spells = spells.filter(s => s.school === schoolFilter);
-    }
-    
-    // Filter by search query
-    if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        spells = spells.filter(s => s.name.toLowerCase().includes(query));
-    }
-    
-    // Limit results
-    const limitedSpells = spells.slice(0, 50);
-    
-    if (limitedSpells.length === 0) {
+    if (spells.length === 0) {
         resultsContainer.innerHTML = '<p class="empty-hint" style="padding: 16px; text-align: center;">No spells found</p>';
         return;
     }
     
-    resultsContainer.innerHTML = limitedSpells.map(spell => {
+    // Calculate which spells to display
+    const startIndex = loadMore ? spellPickerState.displayedCount : 0;
+    const endIndex = startIndex + spellPickerState.batchSize;
+    const displaySpells = spells.slice(startIndex, endIndex);
+    
+    const newItemsHtml = displaySpells.map(spell => {
         const levelText = Spells.formatSpellLevel(spell.level);
         return `
             <div class="spell-result-item" data-spell-name="${escapeHtml(spell.name)}">
@@ -741,24 +763,68 @@ export async function renderSpellPickerResults() {
         `;
     }).join('');
     
-    if (spells.length > 50) {
-        resultsContainer.innerHTML += `<p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">Showing 50 of ${spells.length} results. Type to narrow down.</p>`;
+    // Update displayed count
+    spellPickerState.displayedCount = endIndex;
+    
+    if (loadMore) {
+        // Remove the old "load more" button/hint before appending
+        const oldLoadMore = resultsContainer.querySelector('.spell-load-more-container');
+        if (oldLoadMore) oldLoadMore.remove();
+        resultsContainer.insertAdjacentHTML('beforeend', newItemsHtml);
+    } else {
+        resultsContainer.innerHTML = newItemsHtml;
     }
     
+    // Add "Load More" button if there are more results
+    const remaining = spells.length - spellPickerState.displayedCount;
+    if (remaining > 0) {
+        resultsContainer.insertAdjacentHTML('beforeend', `
+            <div class="spell-load-more-container" style="padding: 12px; text-align: center;">
+                <button type="button" class="btn btn-secondary spell-load-more-btn">
+                    Load More (${remaining} remaining)
+                </button>
+            </div>
+        `);
+        
+        // Add click handler for load more button
+        const loadMoreBtn = resultsContainer.querySelector('.spell-load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                renderSpellPickerResults(true);
+            });
+        }
+    } else if (spells.length > spellPickerState.batchSize) {
+        // Show "all loaded" message only if we had to paginate
+        resultsContainer.insertAdjacentHTML('beforeend', `
+            <p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">All ${spells.length} spells loaded</p>
+        `);
+    }
+    
+    // Add click handlers to new items only
+    const itemsToAttach = loadMore 
+        ? Array.from(resultsContainer.querySelectorAll('.spell-result-item')).slice(startIndex)
+        : resultsContainer.querySelectorAll('.spell-result-item');
+    
     // Add click handlers for selecting spells
-    resultsContainer.querySelectorAll('.spell-result-info').forEach(info => {
-        info.addEventListener('click', () => {
-            const item = info.closest('.spell-result-item');
-            selectSpell(item.dataset.spellName);
-        });
+    itemsToAttach.forEach(item => {
+        const info = item.querySelector('.spell-result-info');
+        if (info) {
+            info.addEventListener('click', () => {
+                selectSpell(item.dataset.spellName);
+            });
+        }
     });
     
     // Add click handlers for viewing spell details
-    resultsContainer.querySelectorAll('.spell-info-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.showSpellModal(btn.dataset.spell);
-        });
+    itemsToAttach.forEach(item => {
+        const btn = item.querySelector('.spell-info-btn');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.showSpellModal(btn.dataset.spell);
+            });
+        }
     });
 }
 
