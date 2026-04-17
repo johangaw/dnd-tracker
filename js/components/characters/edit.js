@@ -8,6 +8,13 @@ import { getState, setView } from '../../services/state.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
 import CharacterList from './list.js';
 
+// Feature picker state
+let featurePickerState = {
+    allFeatures: [],
+    displayedCount: 0,
+    batchSize: 50
+};
+
 // Initialize the edit form with a character (or empty for new)
 export function init(character = null) {
     const state = getState();
@@ -923,15 +930,23 @@ export async function openFeaturePicker() {
     const modal = document.getElementById('feature-picker-modal');
     if (!modal) return;
     
+    // Reset category filter and enable class filter
+    const categoryFilter = document.getElementById('feature-category-filter');
+    if (categoryFilter) categoryFilter.value = '';
+    
     // Populate class filter dropdown
     const classFilter = document.getElementById('feature-class-filter');
-    if (classFilter && classFilter.options.length <= 1) {
-        const classNames = await ClassFeatures.getClassNames();
-        for (const className of classNames) {
-            const option = document.createElement('option');
-            option.value = className;
-            option.textContent = className;
-            classFilter.appendChild(option);
+    if (classFilter) {
+        classFilter.disabled = false; // Ensure it's enabled
+        
+        if (classFilter.options.length <= 1) {
+            const classNames = await ClassFeatures.getClassNames();
+            for (const className of classNames) {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classFilter.appendChild(option);
+            }
         }
         
         // Pre-select character's class if available
@@ -945,6 +960,8 @@ export async function openFeaturePicker() {
                     break;
                 }
             }
+        } else {
+            classFilter.value = '';
         }
     }
     
@@ -974,41 +991,61 @@ export function closeFeaturePicker() {
 }
 
 // Render feature picker results
-export async function renderFeaturePickerResults() {
+export async function renderFeaturePickerResults(loadMore = false) {
     const resultsContainer = document.getElementById('feature-picker-results');
     if (!resultsContainer) return;
     
     const query = document.getElementById('feature-search-input')?.value || '';
+    const categoryFilter = document.getElementById('feature-category-filter')?.value || '';
     const classFilter = document.getElementById('feature-class-filter')?.value || '';
     const levelFilter = document.getElementById('feature-level-filter')?.value || '';
     
-    // Show loading state
-    resultsContainer.innerHTML = '<p class="loading-hint" style="padding: 16px; text-align: center;">Loading features...</p>';
+    // If not loading more, reset state and show loading
+    if (!loadMore) {
+        featurePickerState.displayedCount = 0;
+        featurePickerState.allFeatures = [];
+        resultsContainer.innerHTML = '<p class="loading-hint" style="padding: 16px; text-align: center;">Loading features...</p>';
+    }
     
     try {
-        const features = await ClassFeatures.searchFeatures(query, {
-            className: classFilter,
-            level: levelFilter
-        });
+        // Fetch features if not loading more (or if we don't have them cached)
+        if (!loadMore || featurePickerState.allFeatures.length === 0) {
+            featurePickerState.allFeatures = await ClassFeatures.searchFeatures(query, {
+                category: categoryFilter,
+                className: classFilter,
+                level: levelFilter
+            });
+        }
+        
+        const features = featurePickerState.allFeatures;
         
         if (features.length === 0) {
             resultsContainer.innerHTML = '<p class="empty-hint" style="padding: 16px; text-align: center;">No features found</p>';
             return;
         }
         
-        // Limit results for performance
-        const displayFeatures = features.slice(0, 50);
+        // Calculate which features to display
+        const startIndex = loadMore ? featurePickerState.displayedCount : 0;
+        const endIndex = startIndex + featurePickerState.batchSize;
+        const displayFeatures = features.slice(startIndex, endIndex);
         
-        resultsContainer.innerHTML = displayFeatures.map(feature => {
+        const newItemsHtml = displayFeatures.map(feature => {
             const preview = (feature.description || '').substring(0, 150);
+            const isFeat = feature.type === 'feat';
+            
             return `
-                <div class="feature-result-item" data-feature-name="${escapeHtml(feature.name)}" data-feature-class="${escapeHtml(feature.className)}" data-feature-subclass="${escapeHtml(feature.subclassShortName || '')}">
+                <div class="feature-result-item" data-feature-name="${escapeHtml(feature.name)}" data-feature-type="${feature.type}" data-feature-class="${escapeHtml(feature.className || '')}" data-feature-subclass="${escapeHtml(feature.subclassShortName || '')}">
                     <div class="feature-result-header">
                         <span class="feature-result-name">${escapeHtml(feature.name)}</span>
                         <div class="feature-result-meta">
-                            ${feature.subclassShortName ? `<span class="feature-result-subclass">${escapeHtml(feature.subclassShortName)}</span>` : ''}
-                            <span class="feature-result-class">${escapeHtml(feature.className)}</span>
-                            <span class="feature-result-level">Lv ${feature.level}</span>
+                            ${isFeat ? `
+                                <span class="feature-result-category">${escapeHtml(feature.categoryLabel || 'Feat')}</span>
+                                ${feature.level ? `<span class="feature-result-level">Lv ${feature.level}+</span>` : ''}
+                            ` : `
+                                ${feature.subclassShortName ? `<span class="feature-result-subclass">${escapeHtml(feature.subclassShortName)}</span>` : ''}
+                                <span class="feature-result-class">${escapeHtml(feature.className)}</span>
+                                <span class="feature-result-level">Lv ${feature.level}</span>
+                            `}
                             ${feature.source ? `<span class="feature-result-source">${escapeHtml(feature.source)}</span>` : ''}
                         </div>
                     </div>
@@ -1017,24 +1054,65 @@ export async function renderFeaturePickerResults() {
             `;
         }).join('');
         
-        if (features.length > 50) {
-            resultsContainer.innerHTML += `<p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">Showing 50 of ${features.length} results. Type to narrow down.</p>`;
+        // Update displayed count
+        featurePickerState.displayedCount = endIndex;
+        
+        if (loadMore) {
+            // Remove the old "load more" button/hint before appending
+            const oldLoadMore = resultsContainer.querySelector('.feature-load-more-container');
+            if (oldLoadMore) oldLoadMore.remove();
+            resultsContainer.insertAdjacentHTML('beforeend', newItemsHtml);
+        } else {
+            resultsContainer.innerHTML = newItemsHtml;
         }
         
-        // Add click handlers
-        resultsContainer.querySelectorAll('.feature-result-item').forEach(item => {
+        // Add "Load More" button if there are more results
+        const remaining = features.length - featurePickerState.displayedCount;
+        if (remaining > 0) {
+            resultsContainer.insertAdjacentHTML('beforeend', `
+                <div class="feature-load-more-container" style="padding: 12px; text-align: center;">
+                    <button type="button" class="btn btn-secondary feature-load-more-btn">
+                        Load More (${remaining} remaining)
+                    </button>
+                </div>
+            `);
+            
+            // Add click handler for load more button
+            const loadMoreBtn = resultsContainer.querySelector('.feature-load-more-btn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    renderFeaturePickerResults(true);
+                });
+            }
+        } else if (features.length > featurePickerState.batchSize) {
+            // Show "all loaded" message only if we had to paginate
+            resultsContainer.insertAdjacentHTML('beforeend', `
+                <p class="empty-hint" style="padding: 8px; text-align: center; font-size: 0.85rem;">All ${features.length} results loaded</p>
+            `);
+        }
+        
+        // Add click handlers to new items only
+        const itemsToAttach = loadMore 
+            ? Array.from(resultsContainer.querySelectorAll('.feature-result-item')).slice(startIndex)
+            : resultsContainer.querySelectorAll('.feature-result-item');
+            
+        itemsToAttach.forEach(item => {
             item.addEventListener('click', async () => {
                 const featureName = item.dataset.featureName;
+                const featureType = item.dataset.featureType;
                 const featureClass = item.dataset.featureClass;
                 const featureSubclass = item.dataset.featureSubclass;
                 
-                // Find the full feature data
-                const allFeatures = await ClassFeatures.searchFeatures(featureName, { className: featureClass });
-                const feature = allFeatures.find(f => 
-                    f.name === featureName && 
-                    f.className === featureClass &&
-                    (f.subclassShortName || '') === featureSubclass
-                );
+                // Use cached features instead of re-fetching
+                const feature = featurePickerState.allFeatures.find(f => {
+                    if (f.type === 'feat') {
+                        return f.name === featureName && f.type === featureType;
+                    }
+                    return f.name === featureName && 
+                        f.className === featureClass &&
+                        (f.subclassShortName || '') === featureSubclass;
+                });
                 
                 if (feature) {
                     selectFeatureFromPicker(feature);

@@ -1775,6 +1775,15 @@
     font-style: italic;
 }
 
+.feature-result-category {
+    font-size: 0.75rem;
+    color: var(--color-success);
+    background: rgba(var(--color-success-rgb, 40, 167, 69), 0.15);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
 .feature-result-preview {
     font-size: 0.85rem;
     color: var(--text-secondary);

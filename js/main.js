@@ -732,6 +732,20 @@ function initEventHandlers() {
         CharacterEdit.renderFeaturePickerResults();
     });
     
+    document.getElementById('feature-category-filter')?.addEventListener('change', (e) => {
+        const classFilter = document.getElementById('feature-class-filter');
+        if (classFilter) {
+            if (e.target.value === 'feat' || e.target.value === 'fighting-style') {
+                // Disable and reset class filter when Feats or Fighting Styles is selected
+                classFilter.value = '';
+                classFilter.disabled = true;
+            } else {
+                classFilter.disabled = false;
+            }
+        }
+        CharacterEdit.renderFeaturePickerResults();
+    });
+    
     document.getElementById('feature-class-filter')?.addEventListener('change', () => {
         CharacterEdit.renderFeaturePickerResults();
     });

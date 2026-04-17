@@ -1,5 +1,5 @@
 // Class Features Service
-// Loads and searches class features and subclass features from 5etools data
+// Loads and searches class features, subclass features, and feats from 5etools data
 
 const CLASS_FILES = [
     'class-artificer.json',
@@ -17,9 +17,25 @@ const CLASS_FILES = [
     'class-wizard.json'
 ];
 
+// Feat category labels
+const FEAT_CATEGORIES = {
+    'G': 'General',
+    'O': 'Origin',
+    'FS:F': 'Fighting Style',
+    'FS:R': 'Fighting Style',
+    'FS:P': 'Fighting Style',
+    'EI': 'Eldritch Invocation',
+    'MM': 'Metamagic',
+    'PB': 'Pact Boon',
+    'AI': 'Artificer Infusion',
+    'OR': 'Origin'
+};
+
 // Cache for loaded features
 let featuresCache = null;
+let featsCache = null;
 let loadingPromise = null;
+let featsLoadingPromise = null;
 
 /**
  * Load all class features from JSON files
@@ -73,6 +89,79 @@ export async function loadFeatures() {
     })();
     
     return loadingPromise;
+}
+
+/**
+ * Load all feats from JSON file
+ * @returns {Promise<Array>} Array of normalized feat objects
+ */
+export async function loadFeats() {
+    if (featsCache) {
+        return featsCache;
+    }
+    
+    if (featsLoadingPromise) {
+        return featsLoadingPromise;
+    }
+    
+    featsLoadingPromise = (async () => {
+        const feats = [];
+        
+        try {
+            const response = await fetch('data/feats.json');
+            if (!response.ok) {
+                console.warn('Failed to load feats.json');
+                return feats;
+            }
+            
+            const data = await response.json();
+            
+            if (data.feat && Array.isArray(data.feat)) {
+                for (const feat of data.feat) {
+                    if (!feat.entries || feat.entries.length === 0) continue;
+                    
+                    feats.push(normalizeFeat(feat));
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load feats:', error);
+        }
+        
+        featsCache = feats;
+        return feats;
+    })();
+    
+    return featsLoadingPromise;
+}
+
+/**
+ * Normalize a feat object to a consistent format
+ */
+function normalizeFeat(feat) {
+    const category = feat.category || 'G';
+    const categoryLabel = FEAT_CATEGORIES[category] || 'Feat';
+    
+    // Extract prerequisite level if present
+    let level = null;
+    if (feat.prerequisite) {
+        for (const prereq of feat.prerequisite) {
+            if (prereq.level) {
+                level = prereq.level;
+                break;
+            }
+        }
+    }
+    
+    return {
+        name: feat.name,
+        source: feat.source,
+        category: category,
+        categoryLabel: categoryLabel,
+        level: level,
+        type: 'feat',
+        entries: feat.entries,
+        description: formatEntriesToText(feat.entries)
+    };
 }
 
 /**
@@ -174,60 +263,112 @@ function cleanText(text) {
 }
 
 /**
- * Search features by query
+ * Search features and feats by query
  * @param {string} query - Search query
- * @param {Object} filters - Optional filters { className, level }
- * @returns {Promise<Array>} Matching features
+ * @param {Object} filters - Optional filters { className, level, type, category }
+ *   - category: 'class' for class/subclass features, 'feat' for feats, '' for all
+ * @returns {Promise<Array>} Matching features/feats
  */
 export async function searchFeatures(query, filters = {}) {
-    const features = await loadFeatures();
+    // Load both class features and feats
+    const [classFeatures, feats] = await Promise.all([
+        loadFeatures(),
+        loadFeats()
+    ]);
     
-    let results = features;
+    let results = [];
     
-    // Filter by class name
-    if (filters.className) {
-        results = results.filter(f => 
-            f.className.toLowerCase() === filters.className.toLowerCase()
-        );
+    // Determine which categories to include
+    const category = filters.category || '';
+    
+    if (category === '' || category === 'class') {
+        // Include class/subclass features
+        let classResults = classFeatures;
+        
+        // Filter by class name
+        if (filters.className) {
+            classResults = classResults.filter(f => 
+                f.className.toLowerCase() === filters.className.toLowerCase()
+            );
+        }
+        
+        // Filter by subclass
+        if (filters.subclassName) {
+            classResults = classResults.filter(f => 
+                f.subclassShortName && 
+                f.subclassShortName.toLowerCase() === filters.subclassName.toLowerCase()
+            );
+        }
+        
+        // Filter by level
+        if (filters.level !== undefined && filters.level !== '') {
+            const level = parseInt(filters.level);
+            classResults = classResults.filter(f => f.level === level);
+        }
+        
+        // Filter by feature type (class/subclass)
+        if (filters.type) {
+            classResults = classResults.filter(f => f.type === filters.type);
+        }
+        
+        results = results.concat(classResults);
     }
     
-    // Filter by subclass
-    if (filters.subclassName) {
-        results = results.filter(f => 
-            f.subclassShortName && 
-            f.subclassShortName.toLowerCase() === filters.subclassName.toLowerCase()
-        );
+    if (category === '' || category === 'feat' || category === 'fighting-style') {
+        // Include feats (only if no class-specific filters are set)
+        if (!filters.className && !filters.subclassName && !filters.type) {
+            let featResults = feats;
+            
+            // Filter by fighting style or regular feats
+            if (category === 'fighting-style') {
+                // Only include fighting styles (category contains "FS")
+                featResults = featResults.filter(f => f.category && f.category.includes('FS'));
+            } else if (category === 'feat') {
+                // Exclude fighting styles from regular feats
+                featResults = featResults.filter(f => !f.category || !f.category.includes('FS'));
+            }
+            // When category is '', include all feats (both regular and fighting styles)
+            
+            // Filter feats by level - show feats available at or below the selected level
+            // e.g., level 8 shows "Level 4+" feats but not "Level 19+" feats
+            if (filters.level !== undefined && filters.level !== '') {
+                const level = parseInt(filters.level);
+                featResults = featResults.filter(f => f.level === null || f.level <= level);
+            }
+            
+            results = results.concat(featResults);
+        }
     }
     
-    // Filter by level
-    if (filters.level !== undefined && filters.level !== '') {
-        const level = parseInt(filters.level);
-        results = results.filter(f => f.level === level);
-    }
-    
-    // Filter by feature type (class/subclass)
-    if (filters.type) {
-        results = results.filter(f => f.type === filters.type);
-    }
-    
-    // Search by query (name, class, subclass, or source)
+    // Search by query (name, class, subclass, category, or source)
     if (query && query.trim()) {
         const lowerQuery = query.toLowerCase().trim();
         results = results.filter(f => 
             f.name.toLowerCase().includes(lowerQuery) ||
-            f.className.toLowerCase().includes(lowerQuery) ||
+            (f.className && f.className.toLowerCase().includes(lowerQuery)) ||
             (f.subclassShortName && f.subclassShortName.toLowerCase().includes(lowerQuery)) ||
+            (f.categoryLabel && f.categoryLabel.toLowerCase().includes(lowerQuery)) ||
             (f.source && f.source.toLowerCase().includes(lowerQuery))
         );
     }
     
-    // Sort by class name, then level, then feature name
+    // Sort: feats first (alphabetically), then class features (by class, level, name)
     results.sort((a, b) => {
+        // Feats before class features when no specific category filter
+        if (a.type === 'feat' && b.type !== 'feat') return -1;
+        if (a.type !== 'feat' && b.type === 'feat') return 1;
+        
+        // Both are feats - sort alphabetically
+        if (a.type === 'feat' && b.type === 'feat') {
+            return a.name.localeCompare(b.name);
+        }
+        
+        // Both are class features - sort by class, level, name
         if (a.className !== b.className) {
             return a.className.localeCompare(b.className);
         }
         if (a.level !== b.level) {
-            return a.level - b.level;
+            return (a.level || 0) - (b.level || 0);
         }
         return a.name.localeCompare(b.name);
     });
@@ -267,6 +408,7 @@ export async function getSubclassNames(className) {
 
 export default {
     loadFeatures,
+    loadFeats,
     searchFeatures,
     getClassNames,
     getSubclassNames
