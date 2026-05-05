@@ -231,7 +231,7 @@ export function renderStatBlock(monster, comment = '') {
                 
                 // Daily spells (1/day, 2/day, 3/day each)
                 if (sc.daily) {
-                    const dailyOrder = ['3e', '3', '2e', '2', '1e', '1'];
+                    const dailyOrder = ['4e', '4', '3e', '3', '2e', '2', '1e', '1'];
                     dailyOrder.forEach(key => {
                         if (sc.daily[key] && sc.daily[key].length > 0) {
                             const times = key.charAt(0);
