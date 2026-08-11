@@ -14,11 +14,20 @@ function getTokenUrl(monster) {
     if (!monster || !monster.name) return null;
     
     // Use the monster's source, defaulting to MM (Monster Manual) for custom monsters
+    // If the monster provides an external tokenHref, prefer that (homebrew images)
+    if (monster.tokenHref && monster.tokenHref.url) {
+        return monster.tokenHref.url;
+    }
+    // Some bestiary files include altArt with tokenHref entries
+    if (monster.altArt && monster.altArt.length > 0) {
+        for (const art of monster.altArt) {
+            if (art.tokenHref && art.tokenHref.url) return art.tokenHref.url;
+        }
+    }
+
+    // Fallback: use the monster's source (default MM) and 5e.tools token URL
     const source = monster.source || 'MM';
-    
-    // URL encode the monster name (spaces become %20, etc.)
     const encodedName = encodeURIComponent(monster.name);
-    
     return `https://5e.tools/img/bestiary/tokens/${source}/${encodedName}.webp`;
 }
 

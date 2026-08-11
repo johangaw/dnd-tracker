@@ -11,7 +11,7 @@ const AVAILABLE_SOURCES = [
     'DSotDQ', 'EFA', 'EGW', 'ERLW', 'ESK', 'FRAiF', 'FTD', 'GGR', 'GoS', 'GotSF', 'HAT-TG',
     'HftT', 'HoL', 'HotB', 'HotDQ', 'IDRotF', 'IMR', 'JttRC', 'KftGV', 'KKW', 'LFL', 'LLK',
     'LMoP', 'LoX', 'LR', 'LRDT', 'MaBJoV', 'MCV1SC', 'MCV2DC', 'MCV3MC', 'MCV4EC', 'MisMV1',
-    'MFF', 'MGELFT', 'MM', 'MPMM', 'MPP', 'MOT', 'MTF', 'NF', 'NRH-TCMC', 'NRH-AVitW', 'NRH-ASS',
+    'MFF', 'MGELFT', 'MM', 'MPMM', 'MPP', 'MOT', 'MTF', 'MODK', 'NF', 'NRH-TCMC', 'NRH-AVitW', 'NRH-ASS',
     'NRH-CoI', 'NRH-TLT', 'NRH-AWoL', 'NRH-AT', 'OotA', 'OoW', 'PaBTSO', 'PSA', 'PSD', 'PSI',
     'PSK', 'PSX', 'PSZ', 'PHB', 'PotA', 'QftIS', 'RMBRE', 'RoT', 'RtG', 'SADS', 'SCC', 'SDW',
     'SKT', 'SLW', 'TCE', 'TTP', 'TftYP', 'ToA', 'ToFW', 'VD', 'VEoR', 'VGM', 'VRGR', 'XGE',
@@ -54,7 +54,12 @@ export async function loadSource(sourceCode) {
     try {
         const response = await fetch(`${BASE_URL}/${filename}`);
         const data = await response.json();
-        loadedSources[sourceCode] = data.monster || [];
+        // Normalize each monster's `source` field to the source code key so lookups work
+        const monsters = data.monster || [];
+        for (const m of monsters) {
+            m.source = sourceCode;
+        }
+        loadedSources[sourceCode] = monsters;
         return loadedSources[sourceCode];
     } catch (error) {
         console.error(`Failed to load source ${sourceCode}:`, error);
