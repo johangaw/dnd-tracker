@@ -82,6 +82,12 @@ describe('Stat Block', () => {
             expect(result).toBe('Dodge')
         })
 
+        it('formats variant rule tags with display text', () => {
+            const entries = ['{@variantrule Critical Hit|XPHB}']
+            const result = formatEntries(entries)
+            expect(result).toBe('Critical Hit')
+        })
+
         it('formats hit tags correctly', () => {
             const entries = ['{@hit 5}']
             const result = formatEntries(entries)

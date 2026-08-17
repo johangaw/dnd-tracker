@@ -117,6 +117,7 @@ export function formatEntries(entries) {
                 .replace(/{@sense ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@status ([^|}]+)(\|[^}]*)?}/g, '$1')
                 .replace(/{@action ([^|}]+)(\|[^}]*)?}/g, '$1')
+                .replace(/{@variantrule ([^|}]+)(\|[^}|]+)?(\|([^}]+))?}/g, (_, rule, _src, _pipe, displayText) => displayText || rule)
                 .replace(/{@recharge(\|[^}]*)?}/g, '(Recharge 6)')
                 .replace(/{@recharge (\d)(\|[^}]*)?}/g, '(Recharge $1-6)')
                 .replace(/{@h}/g, 'Hit: ')
