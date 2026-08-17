@@ -5,7 +5,7 @@ import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
 import * as Characters from './services/characters.js';
 import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setImportingCharacter, setCharacterEditSource } from './services/state.js';
-import { closeModals, hideContextMenu, showToast } from './utils/helpers.js';
+import { closeModals, showToast } from './utils/helpers.js';
 import { decompress, isCompressed, legacyDecode } from './utils/compression.js';
 import * as Router from './utils/router.js';
 
@@ -14,7 +14,7 @@ function hideAppMenu() {
     document.getElementById('app-menu')?.classList.add('hidden');
 }
 
-import * as EncounterList from './components/encounterList/index.js';
+import * as EncounterList from './components/encounter-list-view/index.js';
 import * as EncounterEdit from './components/encounterEdit/index.js';
 import * as CombatTracker from './components/combatTracker/index.js';
 import * as CustomMonsterList from './components/customMonsters/list.js';
@@ -170,57 +170,6 @@ function initEventHandlers() {
         }
     });
 
-    // Context menu actions (encounter context menu only)
-    document.querySelectorAll('#context-menu .context-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const menu = document.getElementById('context-menu');
-            const encounterId = menu.dataset.encounterId;
-            const action = item.dataset.action;
-            const encounter = Storage.getEncounter(encounterId);
-
-            switch (action) {
-                case 'edit':
-                    Router.navigateToItem('encounters', encounterId);
-                    break;
-                case 'copy':
-                    const copy = JSON.parse(JSON.stringify(encounter));
-                    copy.id = Date.now().toString();
-                    copy.title = `${copy.title} (Copy)`;
-                    Storage.saveEncounter(copy);
-                    EncounterList.render();
-                    break;
-                case 'copy-json':
-                    const jsonStr = Storage.exportEncounterToJSON(encounter);
-                    navigator.clipboard.writeText(jsonStr).then(() => {
-                        showToast('Encounter JSON copied to clipboard!');
-                    }).catch(() => {
-                        prompt('Copy this JSON:', jsonStr);
-                    });
-                    break;
-                case 'share':
-                    Storage.exportEncounterToURL(encounter).then(url => {
-                        navigator.clipboard.writeText(url).then(() => {
-                            showToast('Share link copied to clipboard!');
-                        }).catch(() => {
-                            // Fallback for older browsers
-                            prompt('Copy this link to share:', url);
-                        });
-                    });
-                    break;
-                case 'run':
-                    CombatTracker.init(encounter);
-                    break;
-                case 'delete':
-                    if (confirm('Delete this encounter?')) {
-                        Storage.deleteEncounter(encounterId);
-                        EncounterList.render();
-                    }
-                    break;
-            }
-
-            hideContextMenu();
-        });
-    });
 
     // Start combat button
     document.getElementById('start-combat-btn').addEventListener('click', () => {
@@ -1371,7 +1320,6 @@ function initEventHandlers() {
             } else {
                 closeModals();
             }
-            hideContextMenu();
         }
     });
 }

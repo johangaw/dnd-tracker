@@ -433,7 +433,7 @@ export function getStoredEncounters() {
 // Use this after seedEncounter() when initApp() was already called
 export async function reloadApp() {
   // Import the module and re-render
-  const encounterList = await import('../js/components/encounterList/index.js')
+  const encounterList = await import('../js/components/encounter-list-view/index.js')
   encounterList.render()
   await tick()
 }

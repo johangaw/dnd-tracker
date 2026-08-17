@@ -42,12 +42,7 @@
         <!-- Main Content Area -->
         <main id="main-content">
             <!-- Encounter List View -->
-            <section id="encounter-list-view" class="view active">
-                <div id="encounter-list" class="list"></div>
-                <button id="new-encounter-btn" class="fab" aria-label="New Encounter">
-                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                </button>
-            </section>
+            <encounter-list-view id="encounter-list-view" class="view active"></encounter-list-view>
 
             <!-- Encounter Edit View -->
             <section id="encounter-edit-view" class="view">
@@ -1060,16 +1055,6 @@
                         <button type="button" id="save-dm-notes-btn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Save Notes</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Context Menu -->
-            <div id="context-menu" class="context-menu hidden">
-                <button class="context-item" data-action="edit">Edit</button>
-                <button class="context-item" data-action="copy">Duplicate</button>
-                <button class="context-item" data-action="copy-json">Copy JSON</button>
-                <button class="context-item" data-action="share">Share Link</button>
-                <button class="context-item" data-action="run">Run Encounter</button>
-                <button class="context-item danger" data-action="delete">Delete</button>
             </div>
 
             <!-- Import Encounter Modal -->

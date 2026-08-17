@@ -154,10 +154,6 @@ export function closeModals() {
     }
 }
 
-// Hide context menu
-export function hideContextMenu() {
-    document.getElementById('context-menu').classList.add('hidden');
-}
 
 // Show toast notification
 export function showToast(message, type = 'success') {
@@ -187,6 +183,5 @@ export default {
     formatEntries,
     formatSpellList,
     closeModals,
-    hideContextMenu,
     showToast
 };
