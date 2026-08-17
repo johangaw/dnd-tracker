@@ -76,11 +76,23 @@ export function generateHash(type, id = null, action = null) {
 export function navigate(type, id = null, options = {}) {
     const { replace = false, action = null } = options;
     const hash = generateHash(type, id, action);
-    
+    const oldHash = window.location.hash;
+
     if (replace) {
         window.history.replaceState(null, '', hash);
+        // If replacing with the same hash, ensure route handler runs
+        if (oldHash === hash) {
+            window.dispatchEvent(new Event('hashchange'));
+        }
     } else {
-        window.location.hash = hash;
+        // Setting the same hash doesn't trigger a hashchange event in browsers.
+        // Detect this case and fire the event manually so route handlers always run.
+        if (oldHash === hash) {
+            window.location.hash = hash;
+            window.dispatchEvent(new Event('hashchange'));
+        } else {
+            window.location.hash = hash;
+        }
     }
 }
 
