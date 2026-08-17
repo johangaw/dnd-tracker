@@ -73,7 +73,7 @@ export function setView(view) {
             title.textContent = state.currentEncounter?.title || 'Combat';
             break;
         case 'custom-monsters':
-            backBtn.classList.add('hidden');
+            backBtn.classList.remove('hidden');
             title.textContent = 'Custom Monsters';
             break;
         case 'custom-monster-edit':

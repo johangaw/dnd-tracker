@@ -1342,20 +1342,21 @@ function initEventHandlers() {
         }
     });
 
-    // Close modals (exclude spell modal - it has its own handler)
+    // Close modals via close button or backdrop click — only affect the target modal
     document.querySelectorAll('.close-modal').forEach(btn => {
         if (btn.closest('#spell-modal')) return; // Skip spell modal
-        btn.addEventListener('click', () => {
-            closeModals();
+        btn.addEventListener('click', (e) => {
+            const modal = btn.closest('.modal');
+            if (modal) modal.classList.remove('active');
         });
     });
 
-    // Close modal on backdrop click (exclude spell modal)
+    // Close modal on backdrop click (only the clicked modal)
     document.querySelectorAll('.modal').forEach(modal => {
         if (modal.id === 'spell-modal') return; // Skip spell modal
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                closeModals();
+                modal.classList.remove('active');
             }
         });
     });
