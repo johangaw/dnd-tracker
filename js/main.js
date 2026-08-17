@@ -22,7 +22,8 @@ import * as CustomMonsterEdit from './components/customMonsters/edit.js';
 import * as CharacterList from './components/characters/list.js';
 import * as CharacterView from './components/characters/view.js';
 import * as CharacterEdit from './components/characters/edit.js';
-import { showStatBlock } from './components/modals/statBlock.js';
+import { showStatBlock, showStatBlockByNameSource } from './components/modals/statBlock.js';
+import { searchMonsters as searchMonsterModal } from './components/modals/monsterSearchModal.js';
 import { showSpellModal, closeSpellModal, initSpellModal } from './components/modals/spellModal.js';
 
 // Track initialization to prevent duplicate event handlers
@@ -1575,54 +1576,35 @@ async function searchBaselineMonsters(query, source) {
 
     resultsContainer.innerHTML = '<p class="search-hint">Searching...</p>';
 
-    // Get results from both custom monsters and API for the default, custom-only,
-    // and All Sources views.
-    const customResults = source === 'Custom' || source === 'ALL' || !source
-        ? CustomMonsters.searchCustomMonsters(query)
-        : [];
-
-    let apiResults = [];
-    if (source !== 'Custom') {
-        apiResults = await MonsterAPI.searchMonsters(query, source);
-    }
-
-    // Combine results, custom monsters first
-    const results = [...customResults, ...apiResults].slice(0, 20);
-
-    if (results.length === 0) {
-        resultsContainer.innerHTML = '<p class="search-hint">No monsters found</p>';
-        return;
-    }
-
-    resultsContainer.innerHTML = results.map(monster => {
-        const isCustom = monster.isCustom || monster.source === 'Custom';
-        return `
-            <div class="search-result-item" data-id="${monster.id || ''}" data-name="${monster.name}" data-source="${monster.source}">
-                <span class="monster-name">${monster.name}</span>
-                <span class="monster-source">${isCustom ? 'Custom' : monster.source}</span>
-            </div>
-        `;
-    }).join('');
-
-    // Add click handlers
-    resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
-        item.addEventListener('click', async () => {
-            const id = item.dataset.id;
-            const name = item.dataset.name;
-            const source = item.dataset.source;
-            
+    await searchMonsterModal({
+        query,
+        source,
+        container: resultsContainer,
+        emptyMessage: 'No monsters found',
+        onSelect: async ({ name, source, id }) => {
             let monster;
             if (source === 'Custom' && id) {
                 monster = CustomMonsters.getCustomMonster(id);
             } else {
                 monster = await MonsterAPI.getMonster(name, source);
             }
-            
+
             if (monster) {
                 closeModals();
                 CustomMonsterEdit.initFromBaseline(monster);
             }
-        });
+        },
+        onViewStats: async ({ name, source, id }) => {
+            if (source === 'Custom' && id) {
+                const monster = CustomMonsters.getCustomMonster(id);
+                if (monster) {
+                    showStatBlock(monster);
+                }
+                return;
+            }
+
+            await showStatBlockByNameSource(name, source);
+        }
     });
 }
 

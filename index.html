@@ -1135,21 +1135,18 @@
             <div id="baseline-search-modal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>Use Existing Monster as Base</h2>
+                        <h2>Search Monsters</h2>
                         <button type="button" class="close-modal" aria-label="Close">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p class="modal-hint">Search for a monster to use as a starting point</p>
                         <div class="search-box">
                             <input type="text" id="baseline-search-input" placeholder="Search by name...">
                             <select id="baseline-source-filter">
-                                <option value="">Core Books</option>
+                                <option value="" selected>Default</option>
                                 <option value="ALL">All Sources</option>
-                                <option value="Custom">My Custom Monsters</option>
-                                <option value="MM">Monster Manual (2014)</option>
+                                <option value="Custom">Custom Monsters</option>
                                 <option value="XMM">Monster Manual (2024)</option>
-                                <option value="MPMM">Mordenkainen Presents</option>
-                                <option value="RHW">Rime of the Frostmaiden</option>
+                                <option value="MM">Monster Manual (2014)</option>
                             </select>
                         </div>
                         <div id="baseline-search-results" class="search-results"></div>

@@ -548,6 +548,35 @@ describe('Custom Monsters', () => {
             
             expect(isVisible('#baseline-search-modal')).toBe(true)
         })
+
+        it('matches the standard monster search modal layout and filter labels', async () => {
+            await click('#new-custom-monster-btn')
+            await click('#choice-from-existing')
+
+            const filter = document.getElementById('baseline-source-filter')
+            expect(document.querySelector('#baseline-search-modal .modal-hint')).toBeNull()
+            expect(filter.innerHTML).toContain('Default')
+            expect(filter.innerHTML).not.toContain('Core Books')
+        })
+
+        it('uses the same monster result UI for baseline searches as encounter searches', async () => {
+            const monster = CustomMonsters.createEmptyMonster()
+            monster.name = 'Goblin'
+            monster.cr = '1/4'
+            monster.hp = { average: 7 }
+            CustomMonsters.saveCustomMonster(monster)
+
+            await click('#new-custom-monster-btn')
+            await click('#choice-from-existing')
+
+            await type('#baseline-search-input', 'goblin')
+            await tick(400)
+
+            const result = document.querySelector('#baseline-search-results .search-result-item')
+            expect(result).not.toBeNull()
+            expect(document.querySelector('#baseline-search-results .search-result-info')).not.toBeNull()
+            expect(document.querySelector('#baseline-search-results .view-stats-btn')).not.toBeNull()
+        })
     })
 
     describe('Integration with Encounter Search', () => {
