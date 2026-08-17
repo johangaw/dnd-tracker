@@ -68,8 +68,21 @@ const MonsterAPI = {
         'WBtW', 'WDH', 'WDMM', 'WttHC', 'XDMG', 'XMM', 'XPHB'
     ],
     
-    // Default sources to search when no filter is selected (most common books)
-    DEFAULT_SOURCES: ['MM', 'XMM', 'MPMM', 'VGM', 'MTF'],
+    // Default sources to search when no filter is selected: all sources except the 2014 MM
+    // so XMM is preferred by default without hiding the rest of the bestiary.
+    DEFAULT_SOURCES: (function() {
+        return ['AATM', 'ABH', 'AI', 'AitFR-ISF', 'AitFR-THP', 'AitFR-DN', 'AitFR-FCD', 'AWM', 'BAM', 'BGDIA',
+            'BGG', 'BMT', 'CM', 'CoA', 'CoS', 'CRCotN', 'DC', 'DIP', 'DitLCoT', 'DMG', 'DoD', 'DoSI',
+            'DSotDQ', 'EFA', 'EGW', 'ERLW', 'ESK', 'FRAiF', 'FTD', 'GGR', 'GoS', 'GotSF', 'HAT-TG',
+            'HftT', 'HoL', 'HotB', 'HotDQ', 'IDRotF', 'IMR', 'JttRC', 'KftGV', 'KKW', 'LFL', 'LLK',
+            'LMoP', 'LoX', 'LR', 'LRDT', 'MaBJoV', 'MCV1SC', 'MCV2DC', 'MCV3MC', 'MCV4EC', 'MisMV1',
+            'MFF', 'MGELFT', 'MPMM', 'MPP', 'MOT', 'MTF', 'NF', 'NRH-TCMC', 'NRH-AVitW', 'NRH-ASS',
+            'NRH-CoI', 'NRH-TLT', 'NRH-AWoL', 'NRH-AT', 'OotA', 'OoW', 'PaBTSO', 'PSA', 'PSD', 'PSI',
+            'PSK', 'PSX', 'PSZ', 'PHB', 'PotA', 'QftIS', 'RMBRE', 'RoT', 'RtG', 'SADS', 'SCC', 'SDW',
+            'SKT', 'SLW', 'TCE', 'TTP', 'TftYP', 'ToA', 'ToFW', 'VD', 'VEoR', 'VGM', 'VRGR', 'XGE',
+            'WBtW', 'WDH', 'WDMM', 'WttHC', 'XDMG', 'XMM', 'XPHB'
+        ].filter(source => source !== 'MM');
+    })(),
     
     sourceIndex: null,
     loadedSources: {},

@@ -6,6 +6,7 @@ import {
     setupFetchMock, reloadApp, longPress
 } from '../helpers.js'
 import * as CustomMonsters from '../../js/services/customMonsters.js'
+import * as MonsterAPI from '../../js/services/monsterApi.js'
 
 describe('Custom Monsters', () => {
     beforeEach(async () => {
@@ -619,6 +620,52 @@ describe('Custom Monsters', () => {
             const results = getAll('.search-result-item')
             const labels = results.map(result => result.textContent)
             expect(labels.some(label => label.includes('Custom Goblin'))).toBe(true)
+        })
+
+        it('defaults monster search to XMM and excludes MM', async () => {
+            vi.resetModules()
+            const originalFetch = globalThis.fetch
+            const calls = []
+            globalThis.fetch = async (url) => {
+                calls.push(url)
+                if (url.includes('index.json')) {
+                    return {
+                        ok: true,
+                        json: async () => ({ MM: 'bestiary-mm.json', XMM: 'bestiary-xmm.json' })
+                    }
+                }
+                if (url.includes('bestiary-xmm.json')) {
+                    return {
+                        ok: true,
+                        json: async () => ({ monster: [{ name: 'Goblin', source: 'XMM' }, { name: 'Skeleton', source: 'XMM' }] })
+                    }
+                }
+                if (url.includes('bestiary-mm.json')) {
+                    return {
+                        ok: true,
+                        json: async () => ({ monster: [{ name: 'Goblin', source: 'MM' }] })
+                    }
+                }
+                return {
+                    ok: true,
+                    json: async () => ({ monster: [] })
+                }
+            }
+
+            try {
+                const freshMonsterApi = (await import('../../js/services/monsterApi.js')).default
+                const defaultSources = freshMonsterApi.DEFAULT_SOURCES
+
+                expect(defaultSources.includes('MM')).toBe(false)
+                expect(defaultSources.includes('XMM')).toBe(true)
+
+                const results = await freshMonsterApi.searchMonsters('goblin', '')
+                expect(results.some(monster => monster.source === 'MM')).toBe(false)
+                expect(results.some(monster => monster.source === 'XMM')).toBe(true)
+                expect(calls.some(url => url.includes('bestiary-mm.json'))).toBe(false)
+            } finally {
+                globalThis.fetch = originalFetch
+            }
         })
 
         it('adds custom monster to encounter', async () => {

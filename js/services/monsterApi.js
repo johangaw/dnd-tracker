@@ -18,8 +18,9 @@ const AVAILABLE_SOURCES = [
     'WBtW', 'WDH', 'WDMM', 'WttHC', 'XDMG', 'XMM', 'XPHB', 'RHW'
 ];
 
-// Default sources to search when no filter is selected (most common books)
-const DEFAULT_SOURCES = ['MM', 'XMM', 'MPMM', 'VGM', 'MTF'];
+// Default sources to search when no filter is selected: all sources except the 2014 MM
+// so XMM is preferred by default without hiding the rest of the bestiary.
+const DEFAULT_SOURCES = AVAILABLE_SOURCES.filter(source => source !== 'MM');
 
 let sourceIndex = null;
 const loadedSources = {};
