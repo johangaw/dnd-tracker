@@ -177,26 +177,35 @@ describe('Routing', () => {
     })
   })
 
-  describe('Navigation via Menu', () => {
-    it('updates hash when clicking Monsters menu', async () => {
-      // Open app menu first
-      await click('#menu-btn')
+  describe('Navigation via Header', () => {
+    it('shows the main sections in the header navigation', () => {
+      const navItems = document.querySelectorAll('.main-nav .nav-item')
+
+      expect(navItems.length).toBe(3)
+      expect(Array.from(navItems).map(item => item.dataset.nav)).toEqual(['encounters', 'custom-monsters', 'characters'])
+    })
+
+    it('hides the main nav when editing a detail view', async () => {
+      const nav = document.querySelector('.main-nav')
+      expect(nav.classList.contains('hidden')).toBe(false)
+
+      seedEncounter({ id: 'test-encounter-1', title: 'Test Encounter' })
+      window.location.hash = '#/encounters/test-encounter-1'
+      window.dispatchEvent(new Event('hashchange'))
       await tick()
-      
-      // Click custom monsters menu
+
+      expect(nav.classList.contains('hidden')).toBe(true)
+    })
+
+    it('updates hash when clicking Monsters nav', async () => {
       await click('#menu-custom-monsters')
-      
+
       expect(window.location.hash).toBe('#/monsters')
     })
 
-    it('updates hash when clicking Characters menu', async () => {
-      // Open app menu first
-      await click('#menu-btn')
-      await tick()
-      
-      // Click characters menu
+    it('updates hash when clicking Characters nav', async () => {
       await click('#menu-characters')
-      
+
       expect(window.location.hash).toBe('#/characters')
     })
   })

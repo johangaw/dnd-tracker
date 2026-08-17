@@ -385,32 +385,44 @@ function initEventHandlers() {
         }
     });
 
-    // === App Menu ===
-    document.getElementById('menu-btn').addEventListener('click', (e) => {
+    // === Main Navigation ===
+    function updateNavSelection(selectedKey) {
+        document.querySelectorAll('.nav-item').forEach((navItem) => {
+            const isActive = navItem.dataset.nav === selectedKey;
+            navItem.classList.toggle('active', isActive);
+            navItem.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+    }
+
+    document.querySelectorAll('.nav-item').forEach((navItem) => {
+        navItem.addEventListener('click', () => {
+            const target = navItem.dataset.nav;
+            if (target === 'encounters') {
+                Router.navigateToList('encounters');
+            } else if (target === 'characters') {
+                Router.navigateToList('characters');
+            } else if (target === 'custom-monsters') {
+                Router.navigateToList('monsters');
+            }
+            updateNavSelection(target);
+        });
+    });
+
+    document.getElementById('menu-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const menu = document.getElementById('app-menu');
-        menu.classList.toggle('hidden');
-        
-        // Close on click outside
-        if (!menu.classList.contains('hidden')) {
-            setTimeout(() => {
-                document.addEventListener('click', hideAppMenu, { once: true });
-            }, 0);
-        }
+        menu?.classList.toggle('hidden');
     });
 
     document.getElementById('menu-encounters')?.addEventListener('click', () => {
-        hideAppMenu();
         Router.navigateToList('encounters');
     });
 
     document.getElementById('menu-custom-monsters')?.addEventListener('click', () => {
-        hideAppMenu();
         Router.navigateToList('monsters');
     });
 
     document.getElementById('menu-characters')?.addEventListener('click', () => {
-        hideAppMenu();
         Router.navigateToList('characters');
     });
 

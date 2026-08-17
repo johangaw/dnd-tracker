@@ -25,6 +25,28 @@ export function getState() {
 export function setView(view) {
     state.currentView = view;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+    const nav = document.querySelector('.main-nav');
+    const isListView = ['encounter-list', 'custom-monsters', 'characters'].includes(view);
+    nav?.classList.toggle('hidden', !isListView);
+
+    const navSelection = {
+        'encounter-list': 'encounters',
+        'encounter-edit': 'encounters',
+        'encounter-run': 'encounters',
+        'custom-monsters': 'custom-monsters',
+        'custom-monster-edit': 'custom-monsters',
+        'characters': 'characters',
+        'character-view': 'characters',
+        'character-edit': 'characters'
+    };
+
+    const activeNav = navSelection[view] || 'encounters';
+    document.querySelectorAll('.nav-item').forEach((navItem) => {
+        const isActive = isListView && navItem.dataset.nav === activeNav;
+        navItem.classList.toggle('active', isActive);
+        navItem.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
     
     // Map view names to element IDs
     const viewIdMap = {
@@ -51,7 +73,7 @@ export function setView(view) {
             title.textContent = state.currentEncounter?.title || 'Combat';
             break;
         case 'custom-monsters':
-            backBtn.classList.remove('hidden');
+            backBtn.classList.add('hidden');
             title.textContent = 'Custom Monsters';
             break;
         case 'custom-monster-edit':
@@ -59,7 +81,7 @@ export function setView(view) {
             title.textContent = state.editingMonster?.id ? 'Edit Monster' : 'New Monster';
             break;
         case 'characters':
-            backBtn.classList.remove('hidden');
+            backBtn.classList.add('hidden');
             title.textContent = 'Characters';
             break;
         case 'character-view':
