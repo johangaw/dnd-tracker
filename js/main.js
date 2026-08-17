@@ -1563,9 +1563,12 @@ async function searchBaselineMonsters(query, source) {
 
     resultsContainer.innerHTML = '<p class="search-hint">Searching...</p>';
 
-    // Get results from both custom monsters and API
-    const customResults = source === 'Custom' || !source ? CustomMonsters.searchCustomMonsters(query) : [];
-    
+    // Get results from both custom monsters and API for the default, custom-only,
+    // and All Sources views.
+    const customResults = source === 'Custom' || source === 'ALL' || !source
+        ? CustomMonsters.searchCustomMonsters(query)
+        : [];
+
     let apiResults = [];
     if (source !== 'Custom') {
         apiResults = await MonsterAPI.searchMonsters(query, source);

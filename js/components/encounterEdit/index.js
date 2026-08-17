@@ -202,14 +202,15 @@ export async function searchMonsters(query, source) {
     results.innerHTML = '<div class="search-loading">Searching...</div>';
 
     try {
-        // Search custom monsters first (if not filtering by specific source or showing Custom)
-        const customMonsters = (!source || source === 'Custom') 
-            ? CustomMonsters.searchCustomMonsters(query) 
+        // Search custom monsters when no source filter is active, when showing custom only,
+        // or when the user selects the All Sources option.
+        const customMonsters = (!source || source === 'Custom' || source === 'ALL')
+            ? CustomMonsters.searchCustomMonsters(query)
             : [];
-        
-        // Search API monsters (if not filtering to Custom only)
-        const apiMonsters = source === 'Custom' 
-            ? [] 
+
+        // Search API monsters unless the filter is narrowed to custom monsters only.
+        const apiMonsters = source === 'Custom'
+            ? []
             : await MonsterAPI.searchMonsters(query, source);
         
         // Combine results, custom monsters first

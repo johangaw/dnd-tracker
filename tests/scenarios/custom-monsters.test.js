@@ -601,6 +601,26 @@ describe('Custom Monsters', () => {
             })
         })
 
+        it('includes custom monsters in All Sources search', async () => {
+            await click('#new-encounter-btn')
+            await type('#encounter-title', 'Test Encounter')
+
+            await click('#add-monster-btn')
+            await tick(50)
+
+            const filter = document.getElementById('monster-source-filter')
+            filter.value = 'ALL'
+            filter.dispatchEvent(new Event('change'))
+            await tick()
+
+            await type('#monster-search-input', 'goblin')
+            await tick(400)
+
+            const results = getAll('.search-result-item')
+            const labels = results.map(result => result.textContent)
+            expect(labels.some(label => label.includes('Custom Goblin'))).toBe(true)
+        })
+
         it('adds custom monster to encounter', async () => {
             await click('#new-encounter-btn')
             await click('#encounter-choice-create-new')
