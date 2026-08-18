@@ -53,7 +53,13 @@ export function setView(view) {
         'character-view': 'character-view-section'
     };
     const viewId = viewIdMap[view] || `${view}-view`;
-    document.getElementById(viewId)?.classList.add('active');
+    // Views are custom elements. Look them up both ways: getElementById and
+    // querySelector can disagree for custom elements in some DOM
+    // implementations, and both lookups are used across the app.
+    const viewEl = document.querySelector(`#${viewId}`);
+    viewEl?.classList.add('active');
+    const viewElById = document.getElementById(viewId);
+    if (viewElById && viewElById !== viewEl) viewElById.classList.add('active');
     
     // Update header
     const backBtn = document.getElementById('back-btn');
