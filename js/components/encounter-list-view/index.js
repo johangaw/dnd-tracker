@@ -2,8 +2,9 @@
 
 import * as Storage from '../../services/storage.js';
 import * as Router from '../../utils/router.js';
-import * as CombatTracker from '../combatTracker/index.js';
+import '../encounter-run-view/index.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
+import encounterRunView from '../encounter-run-view/index.js';
 
 class EncounterListViewElement extends HTMLElement {
     cleanupController = null
@@ -77,7 +78,7 @@ class EncounterListViewElement extends HTMLElement {
                             break;
                         }
                         case 'run':
-                            CombatTracker.init(encounter);
+                            encounterRunView.render(encounter);
                             break;
                         case 'delete':
                             if (confirm('Delete this encounter?')) {

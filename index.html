@@ -48,35 +48,7 @@
             <encounter-edit-view id="encounter-edit-view" class="view"></encounter-edit-view>
 
             <!-- Encounter Run View -->
-            <section id="encounter-run-view" class="view">
-                <div id="initiative-setup" class="initiative-panel">
-                    <h2>Set Initiative</h2>
-                    <div class="initiative-actions">
-                        <button id="add-encounter-monster-setup-btn" class="btn btn-small btn-primary">+ Encounter</button>
-                        <button id="add-combat-monster-btn" class="btn btn-small">+ Search</button>
-                        <button id="add-combat-pc-btn" class="btn btn-small">+ Add PC</button>
-                    </div>
-                    <div id="initiative-list" class="initiative-list"></div>
-                    <button id="start-combat-btn" class="btn btn-primary btn-large">Start Combat</button>
-                </div>
-
-                <div id="combat-tracker" class="combat-panel hidden">
-                    <div class="combat-header">
-                        <div class="round-info">
-                            <span>Round <span id="round-number">1</span></span>
-                        </div>
-                        <div class="combat-header-actions">
-                            <button id="add-encounter-monster-btn" class="btn btn-small btn-primary">+ Encounter</button>
-                            <button id="add-combat-monster-btn-2" class="btn btn-small">+ Search</button>
-                        </div>
-                    </div>
-                    <div id="turn-order" class="turn-order"></div>
-                    <div class="combat-actions">
-                        <button id="prev-turn-btn" class="btn">Previous</button>
-                        <button id="next-turn-btn" class="btn btn-primary">Next Turn</button>
-                    </div>
-                </div>
-            </section>
+            <encounter-run-view id="encounter-run-view" class="view"></encounter-run-view>
 
             <!-- Custom Monsters View -->
             <section id="custom-monsters-view" class="view">
