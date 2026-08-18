@@ -15,7 +15,7 @@ function hideAppMenu() {
 }
 
 import * as EncounterList from './components/encounter-list-view/index.js';
-import * as EncounterEdit from './components/encounterEdit/index.js';
+import * as EncounterEdit from './components/encounter-edit-view/index.js';
 import * as CombatTracker from './components/combatTracker/index.js';
 import * as CustomMonsterList from './components/customMonsters/list.js';
 import * as CustomMonsterEdit from './components/customMonsters/edit.js';
@@ -71,7 +71,7 @@ function initEventHandlers() {
     // Encounter choice modal - Create New
     document.getElementById('encounter-choice-create-new').addEventListener('click', () => {
         closeModals();
-        EncounterEdit.init();
+        EncounterEdit.render();
     });
 
     // Encounter choice modal - Import JSON
@@ -110,65 +110,6 @@ function initEventHandlers() {
         }
     });
 
-    // Add PC button
-    document.getElementById('add-pc-btn').addEventListener('click', () => {
-        const state = getState();
-        state.editingEncounter.pcs.push({ name: '' });
-        EncounterEdit.renderPCList();
-        // Focus the new input
-        const inputs = document.querySelectorAll('.pc-name-input');
-        if (inputs.length > 0) {
-            inputs[inputs.length - 1].focus();
-        }
-    });
-
-    // Add monster button
-    document.getElementById('add-monster-btn').addEventListener('click', () => {
-        EncounterEdit.showMonsterSearch();
-    });
-
-    // Monster search input
-    let searchTimeout;
-    document.getElementById('monster-search-input').addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const source = document.getElementById('monster-source-filter').value;
-            EncounterEdit.searchMonsters(e.target.value, source);
-        }, 300);
-    });
-
-    document.getElementById('monster-source-filter').addEventListener('change', () => {
-        const query = document.getElementById('monster-search-input').value;
-        if (query.length >= 2) {
-            const source = document.getElementById('monster-source-filter').value;
-            EncounterEdit.searchMonsters(query, source);
-        }
-    });
-
-    // Encounter form submit
-    document.getElementById('encounter-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const state = getState();
-        
-        state.editingEncounter.title = document.getElementById('encounter-title').value;
-        state.editingEncounter.description = document.getElementById('encounter-description').value;
-        state.editingEncounter.autoAddMonsters = document.getElementById('auto-add-monsters').checked;
-        
-        // Filter out empty PCs
-        state.editingEncounter.pcs = state.editingEncounter.pcs.filter(pc => pc.name.trim());
-        
-        Storage.saveEncounter(state.editingEncounter);
-        Router.navigateToList('encounters');
-    });
-
-    // Delete encounter button
-    document.getElementById('delete-encounter-btn').addEventListener('click', () => {
-        const state = getState();
-        if (confirm('Delete this encounter?')) {
-            Storage.deleteEncounter(state.editingEncounter.id);
-            Router.navigateToList('encounters');
-        }
-    });
 
 
     // Start combat button
@@ -313,10 +254,7 @@ function initEventHandlers() {
         }
     });
 
-    // Save DM notes button
-    document.getElementById('save-dm-notes-btn').addEventListener('click', () => {
-        EncounterEdit.saveDMNotes();
-    });
+    // DM notes button is now in the web component
 
     // Import encounter buttons
     document.getElementById('import-cancel-btn').addEventListener('click', () => {
@@ -1352,7 +1290,7 @@ function handleRoute() {
             case 'encounters':
                 const encounter = Storage.getEncounter(routeInfo.id);
                 if (encounter) {
-                    EncounterEdit.init(encounter);
+                    EncounterEdit.render(encounter);
                 } else {
                     // Encounter not found, go to list
                     Router.navigateToList('encounters', true);

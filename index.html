@@ -45,75 +45,7 @@
             <encounter-list-view id="encounter-list-view" class="view active"></encounter-list-view>
 
             <!-- Encounter Edit View -->
-            <section id="encounter-edit-view" class="view">
-                <form id="encounter-form" class="form">
-                    <div class="form-group">
-                        <label for="encounter-title">Title</label>
-                        <input type="text" id="encounter-title" placeholder="Encounter name..." required>
-                    </div>
-                    <div class="form-group">
-                        <label for="encounter-description">Description</label>
-                        <textarea id="encounter-description" placeholder="Optional description..." rows="3"></textarea>
-                    </div>
-
-                    <!-- PCs Section -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3>Player Characters</h3>
-                            <button type="button" id="add-pc-btn" class="btn btn-small">+ Add PC</button>
-                        </div>
-                        <div id="pc-list" class="item-list"></div>
-                    </div>
-
-                    <!-- Monsters Section -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3>Monsters</h3>
-                            <button type="button" id="add-monster-btn" class="btn btn-small">+ Add Monster</button>
-                        </div>
-                        <div id="monster-list" class="item-list"></div>
-                    </div>
-
-                    <!-- Combat Settings -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3>Combat Settings</h3>
-                        </div>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="auto-add-monsters">
-                            <span>Add all monsters to combat at start</span>
-                        </label>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save Encounter</button>
-                        <button type="button" id="delete-encounter-btn" class="btn btn-danger hidden">Delete</button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Monster Search Modal -->
-            <div id="monster-search-modal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Search Monsters</h2>
-                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="search-box">
-                            <input type="text" id="monster-search-input" placeholder="Search by name...">
-                            <select id="monster-source-filter">
-                                <option value="" selected>Default</option>
-                                <option value="ALL">All Sources</option>
-                                <option value="Custom">Custom Monsters</option>
-                                <option value="XMM">Monster Manual (2024)</option>
-                                <option value="MM">Monster Manual (2014)</option>
-                            </select>
-                        </div>
-                        <div id="monster-search-results" class="search-results"></div>
-                    </div>
-                </div>
-            </div>
+            <encounter-edit-view id="encounter-edit-view" class="view"></encounter-edit-view>
 
             <!-- Encounter Run View -->
             <section id="encounter-run-view" class="view">
@@ -1037,22 +969,6 @@
                             <input type="number" id="initiative-input" placeholder="0">
                         </div>
                         <button type="button" id="save-initiative-btn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Save</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DM Notes Modal -->
-            <div id="dm-notes-modal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="dm-notes-modal-title">DM Notes</h2>
-                        <button type="button" class="close-modal" aria-label="Close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <textarea id="dm-notes-input" rows="6" placeholder="Add notes about this monster (tactics, special behaviors, plot hooks, etc.)"></textarea>
-                        </div>
-                        <button type="button" id="save-dm-notes-btn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Save Notes</button>
                     </div>
                 </div>
             </div>
