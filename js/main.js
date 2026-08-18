@@ -17,13 +17,11 @@ function hideAppMenu() {
 import * as EncounterList from './components/encounter-list-view/index.js';
 import * as EncounterEdit from './components/encounter-edit-view/index.js';
 import './components/encounter-run-view/index.js';
-import * as CustomMonsterList from './components/customMonsters/list.js';
-import * as CustomMonsterEdit from './components/customMonsters/edit.js';
+import * as CustomMonsterList from './components/custom-monsters-view/index.js';
+import * as CustomMonsterEdit from './components/custom-monster-edit-view/index.js';
 import * as CharacterList from './components/characters/list.js';
 import * as CharacterView from './components/characters/view.js';
 import * as CharacterEdit from './components/characters/edit.js';
-import { showStatBlock, showStatBlockByNameSource } from './components/modals/statBlock.js';
-import { searchMonsters as searchMonsterModal } from './components/modals/monsterSearchModal.js';
 import { showSpellModal, closeSpellModal, initSpellModal } from './components/modals/spellModal.js';
 
 // Track initialization to prevent duplicate event handlers
@@ -167,145 +165,6 @@ function initEventHandlers() {
 
     document.getElementById('menu-characters')?.addEventListener('click', () => {
         Router.navigateToList('characters');
-    });
-
-    // === Custom Monster Events ===
-    
-    // New custom monster button - show choice modal
-    document.getElementById('new-custom-monster-btn').addEventListener('click', () => {
-        document.getElementById('add-monster-choice-modal').classList.add('active');
-    });
-
-    // Choice modal - Create New
-    document.getElementById('choice-create-new').addEventListener('click', () => {
-        closeModals();
-        CustomMonsterEdit.init();
-    });
-
-    // Choice modal - From Existing
-    document.getElementById('choice-from-existing').addEventListener('click', () => {
-        closeModals();
-        document.getElementById('baseline-search-input').value = '';
-        document.getElementById('baseline-search-results').innerHTML = '';
-        document.getElementById('baseline-search-modal').classList.add('active');
-    });
-
-    // Choice modal - Import JSON
-    document.getElementById('choice-import-json').addEventListener('click', () => {
-        closeModals();
-        document.getElementById('import-json-input').value = '';
-        document.getElementById('import-json-error').classList.add('hidden');
-        document.getElementById('import-json-modal').classList.add('active');
-    });
-
-    // Custom monster form submit
-    document.getElementById('custom-monster-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        CustomMonsterEdit.saveMonster();
-    });
-
-    // Preview monster button
-    document.getElementById('preview-monster-btn').addEventListener('click', () => {
-        CustomMonsterEdit.previewMonster();
-    });
-
-    // Delete monster button
-    document.getElementById('delete-monster-btn').addEventListener('click', () => {
-        CustomMonsterEdit.deleteMonster();
-    });
-
-    // Add trait button
-    document.getElementById('add-trait-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addTrait();
-    });
-
-    // Add action button
-    document.getElementById('add-action-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addAction();
-    });
-
-    // Add bonus action button
-    document.getElementById('add-bonus-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addBonusAction();
-    });
-
-    // Add reaction button
-    document.getElementById('add-reaction-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addReaction();
-    });
-
-    // Add spellcasting button
-    document.getElementById('add-spellcasting-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addSpellcasting();
-    });
-
-    // Add legendary action button
-    document.getElementById('add-legendary-btn').addEventListener('click', () => {
-        CustomMonsterEdit.addLegendaryAction();
-    });
-
-    // CR change - update proficiency bonus
-    document.getElementById('monster-cr').addEventListener('change', () => {
-        CustomMonsterEdit.onCRChange();
-    });
-
-    // Custom monster context menu actions
-    document.querySelectorAll('#monster-context-menu .context-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const menu = document.getElementById('monster-context-menu');
-            const monsterId = menu.dataset.monsterId;
-            const action = item.dataset.action;
-            const monster = CustomMonsters.getCustomMonster(monsterId);
-
-            if (!monster) {
-                CustomMonsterList.hideContextMenu();
-                return;
-            }
-
-            switch (action) {
-                case 'view-stats':
-                    showStatBlock(monster);
-                    break;
-                case 'edit':
-                    Router.navigateToItem('monsters', monsterId);
-                    break;
-                case 'copy':
-                    const copy = JSON.parse(JSON.stringify(monster));
-                    copy.id = Date.now().toString();
-                    copy.name = `${copy.name} (Copy)`;
-                    CustomMonsters.saveCustomMonster(copy);
-                    CustomMonsterList.render();
-                    break;
-                case 'copy-json':
-                    const jsonExport = { ...monster };
-                    delete jsonExport.id;
-                    delete jsonExport.isCustom;
-                    const jsonStr = JSON.stringify(jsonExport, null, 2);
-                    navigator.clipboard.writeText(jsonStr).then(() => {
-                        showToast('Monster JSON copied to clipboard!');
-                    }).catch(() => {
-                        prompt('Copy this JSON:', jsonStr);
-                    });
-                    break;
-                case 'share':
-                    CustomMonsters.exportMonsterToURL(monster).then(url => {
-                        navigator.clipboard.writeText(url).then(() => {
-                            showToast('Share link copied to clipboard!');
-                        }).catch(() => {
-                            prompt('Copy this link to share:', url);
-                        });
-                    });
-                    break;
-                case 'delete':
-                    if (confirm(`Delete "${monster.name}"?`)) {
-                        CustomMonsters.deleteCustomMonster(monsterId);
-                        CustomMonsterList.render();
-                    }
-                    break;
-            }
-
-            CustomMonsterList.hideContextMenu();
-        });
     });
 
     // === Character Events ===
@@ -1008,46 +867,6 @@ function initEventHandlers() {
         });
     });
 
-    // === Import JSON Modal ===
-    document.getElementById('import-json-cancel-btn').addEventListener('click', () => {
-        closeModals();
-    });
-
-    // Copy schema URL button
-    document.getElementById('copy-schema-btn').addEventListener('click', async () => {
-        const basePath = window.location.pathname.endsWith('/') 
-            ? window.location.pathname 
-            : window.location.pathname.replace(/\/[^/]*$/, '/');
-        const schemaUrl = `${window.location.origin}${basePath}monster-schema.json`;
-        try {
-            await navigator.clipboard.writeText(schemaUrl);
-            const msg = document.getElementById('schema-copied-msg');
-            msg.classList.remove('hidden');
-            setTimeout(() => msg.classList.add('hidden'), 2000);
-        } catch (e) {
-            // Fallback for older browsers
-            prompt('Copy this URL:', schemaUrl);
-        }
-    });
-
-    document.getElementById('import-json-confirm-btn').addEventListener('click', () => {
-        const input = document.getElementById('import-json-input');
-        const errorEl = document.getElementById('import-json-error');
-        
-        try {
-            const monster = CustomMonsters.importMonsterFromJSON(input.value);
-            CustomMonsters.saveCustomMonster(monster);
-            closeModals();
-            
-            // Navigate to custom monsters view to show the imported monster
-            setView('custom-monsters');
-            CustomMonsterList.render();
-        } catch (e) {
-            errorEl.textContent = e.message;
-            errorEl.classList.remove('hidden');
-        }
-    });
-
     // === Import Monster from URL Modal ===
     document.getElementById('import-monster-cancel-btn').addEventListener('click', () => {
         CustomMonsters.clearMonsterImportParam();
@@ -1063,24 +882,6 @@ function initEventHandlers() {
             closeModals();
             setView('custom-monsters');
             CustomMonsterList.render();
-        }
-    });
-
-    // === Baseline Search Modal ===
-    let baselineSearchTimeout;
-    document.getElementById('baseline-search-input').addEventListener('input', (e) => {
-        clearTimeout(baselineSearchTimeout);
-        baselineSearchTimeout = setTimeout(() => {
-            const source = document.getElementById('baseline-source-filter').value;
-            searchBaselineMonsters(e.target.value, source);
-        }, 300);
-    });
-
-    document.getElementById('baseline-source-filter').addEventListener('change', () => {
-        const query = document.getElementById('baseline-search-input').value;
-        if (query.length >= 2) {
-            const source = document.getElementById('baseline-source-filter').value;
-            searchBaselineMonsters(query, source);
         }
     });
 
@@ -1305,49 +1106,6 @@ async function checkForCharacterImport() {
         return true;
     }
     return false;
-}
-
-// Search for monsters to use as baseline
-async function searchBaselineMonsters(query, source) {
-    const resultsContainer = document.getElementById('baseline-search-results');
-    
-    if (query.length < 2) {
-        resultsContainer.innerHTML = '<p class="search-hint">Type at least 2 characters to search</p>';
-        return;
-    }
-
-    resultsContainer.innerHTML = '<p class="search-hint">Searching...</p>';
-
-    await searchMonsterModal({
-        query,
-        source,
-        container: resultsContainer,
-        emptyMessage: 'No monsters found',
-        onSelect: async ({ name, source, id }) => {
-            let monster;
-            if (source === 'Custom' && id) {
-                monster = CustomMonsters.getCustomMonster(id);
-            } else {
-                monster = await MonsterAPI.getMonster(name, source);
-            }
-
-            if (monster) {
-                closeModals();
-                CustomMonsterEdit.initFromBaseline(monster);
-            }
-        },
-        onViewStats: async ({ name, source, id }) => {
-            if (source === 'Custom' && id) {
-                const monster = CustomMonsters.getCustomMonster(id);
-                if (monster) {
-                    showStatBlock(monster);
-                }
-                return;
-            }
-
-            await showStatBlockByNameSource(name, source);
-        }
-    });
 }
 
 // Reset initialization state (for testing)

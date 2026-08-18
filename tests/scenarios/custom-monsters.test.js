@@ -371,7 +371,7 @@ describe('Custom Monsters', () => {
             
             // Navigate to custom monsters and refresh
             const { setView } = await import('../../js/services/state.js')
-            const CustomMonsterList = await import('../../js/components/customMonsters/list.js')
+            const CustomMonsterList = await import('../../js/components/custom-monsters-view/index.js')
             setView('custom-monsters')
             CustomMonsterList.render()
             await tick()
@@ -436,7 +436,7 @@ describe('Custom Monsters', () => {
             CustomMonsters.saveCustomMonster(monster)
             
             const { setView } = await import('../../js/services/state.js')
-            const CustomMonsterList = await import('../../js/components/customMonsters/list.js')
+            const CustomMonsterList = await import('../../js/components/custom-monsters-view/index.js')
             setView('custom-monsters')
             CustomMonsterList.render()
             await tick()
