@@ -508,8 +508,11 @@ class CustomMonstersViewElement extends HTMLElement {
         const x = e.clientX || e.touches?.[0]?.clientX || 100;
         const y = e.clientY || e.touches?.[0]?.clientY || 100;
 
-        menu.style.left = `${Math.min(x, window.innerWidth - 180)}px`;
-        menu.style.top = `${Math.min(y, window.innerHeight - 250)}px`;
+        const margin = 8;
+        const menuWidth = menu.offsetWidth;
+        const menuHeight = menu.offsetHeight;
+        menu.style.left = `${Math.max(margin, Math.min(x, window.innerWidth - menuWidth - margin))}px`;
+        menu.style.top = `${Math.max(margin, Math.min(y, window.innerHeight - menuHeight - margin))}px`;
 
         // Close on click outside - use setTimeout to avoid the current click triggering it
         setTimeout(() => {
