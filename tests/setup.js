@@ -12,6 +12,14 @@ import { fileURLToPath } from 'url'
 // so elements must be parsed after their definition rather than upgraded
 // into it.
 import '../js/main.js'
+import { resetForTests as resetRecords } from '../js/services/records.js'
+
+// happy-dom does not always provide the WebCrypto APIs the app relies on for
+// id generation, so fall back to Node's implementation.
+if (!globalThis.crypto?.randomUUID) {
+  const { webcrypto } = await import('node:crypto')
+  globalThis.crypto = webcrypto
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
@@ -30,9 +38,12 @@ beforeEach(async () => {
   // Reset the DOM
   document.body.innerHTML = bodyContent
   
-  // Clear localStorage
+  // Clear localStorage. The records layer runs the schema migration lazily and
+  // remembers that it did, so it has to be reset too or data seeded by the next
+  // test would never be migrated.
   localStorage.clear()
-  
+  resetRecords()
+
   // Store original fetch and set up mock
   originalFetch = globalThis.fetch
   

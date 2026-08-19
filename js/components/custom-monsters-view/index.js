@@ -12,6 +12,7 @@ import { searchMonsters as searchMonsterModal } from '../modals/monsterSearchMod
 import customMonsterEditView from '../custom-monster-edit-view/index.js';
 import '../modals/import-monster-modal/index.js';
 import '../modals/folder-modal/index.js';
+import { uuid } from '../../utils/uuid.js';
 
 class CustomMonstersViewElement extends HTMLElement {
     cleanupController = null
@@ -288,7 +289,7 @@ class CustomMonstersViewElement extends HTMLElement {
                         break;
                     case 'copy': {
                         const copy = JSON.parse(JSON.stringify(monster));
-                        copy.id = Date.now().toString();
+                        copy.id = uuid();
                         copy.name = `${copy.name} (Copy)`;
                         CustomMonsters.saveCustomMonster(copy);
                         this.render();

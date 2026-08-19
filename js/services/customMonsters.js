@@ -1,18 +1,17 @@
 // Custom Monsters Service - Handles storage and sharing of user-created monsters
 
 import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
-
-const CUSTOM_MONSTERS_KEY = 'dnd-custom-monsters';
+import { readCollection, writeCollection, CUSTOM_MONSTERS_KEY } from './records.js';
+import { uuid } from '../utils/uuid.js';
 
 // Get all custom monsters
 export function getCustomMonsters() {
-    const data = localStorage.getItem(CUSTOM_MONSTERS_KEY);
-    return data ? JSON.parse(data) : [];
+    return readCollection(CUSTOM_MONSTERS_KEY);
 }
 
 // Save all custom monsters
 export function saveCustomMonsters(monsters) {
-    localStorage.setItem(CUSTOM_MONSTERS_KEY, JSON.stringify(monsters));
+    writeCollection(CUSTOM_MONSTERS_KEY, monsters);
 }
 
 // Get a single custom monster by ID
@@ -51,7 +50,7 @@ export function searchCustomMonsters(query) {
 // Create a new custom monster with default values
 export function createEmptyMonster() {
     return {
-        id: Date.now().toString(),
+        id: uuid(),
         name: '',
         source: 'Custom',
         size: ['M'],
@@ -78,7 +77,7 @@ export function createEmptyMonster() {
 export function createFromBaseline(baseMonster) {
     return {
         ...JSON.parse(JSON.stringify(baseMonster)), // Deep clone
-        id: Date.now().toString(),
+        id: uuid(),
         name: `${baseMonster.name} (Custom)`,
         source: 'Custom',
         baselineSource: baseMonster.source, // Track original source
@@ -105,7 +104,7 @@ export function importMonsterFromJSON(jsonString) {
         
         // Create a valid monster object with defaults for missing fields
         const monster = {
-            id: Date.now().toString(),
+            id: uuid(),
             name: data.name,
             source: data.source || 'Custom',
             size: data.size || ['M'],
@@ -187,7 +186,7 @@ export async function importMonsterFromURL() {
         // Add new ID and ensure it's marked as custom
         return {
             ...data,
-            id: Date.now().toString(),
+            id: uuid(),
             isCustom: true,
             folderIds: []
         };

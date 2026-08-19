@@ -3,20 +3,16 @@
 // stored under its own localStorage key. An item can belong to any number of folders
 // via a `folderIds` array on the item itself.
 
-// Date.now() alone can collide when folders are created back-to-back in the
-// same millisecond (e.g. two quick clicks), so pad it with a random suffix.
-function generateFolderId() {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
+import { readCollection, writeCollection, MONSTER_FOLDERS_KEY, ENCOUNTER_FOLDERS_KEY } from './records.js';
+import { uuid as generateFolderId } from '../utils/uuid.js';
 
 function createFolderStore(storageKey) {
     function getFolders() {
-        const data = localStorage.getItem(storageKey);
-        return data ? JSON.parse(data) : [];
+        return readCollection(storageKey);
     }
 
     function saveFolders(folders) {
-        localStorage.setItem(storageKey, JSON.stringify(folders));
+        writeCollection(storageKey, folders);
     }
 
     function getFolder(id) {
@@ -67,7 +63,7 @@ function createFolderStore(storageKey) {
     return { getFolders, saveFolders, getFolder, createFolder, renameFolder, deleteFolder };
 }
 
-export const MonsterFolders = createFolderStore('dnd-monster-folders');
-export const EncounterFolders = createFolderStore('dnd-encounter-folders');
+export const MonsterFolders = createFolderStore(MONSTER_FOLDERS_KEY);
+export const EncounterFolders = createFolderStore(ENCOUNTER_FOLDERS_KEY);
 
 export default { MonsterFolders, EncounterFolders };

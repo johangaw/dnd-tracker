@@ -8,6 +8,7 @@
 //   #/characters/new - Create new character
 //   #/characters/:id - View character
 //   #/characters/:id/edit - Edit character
+//   #/settings - Backup and restore
 
 // Route configuration
 const routes = {
@@ -23,6 +24,9 @@ const routes = {
         list: 'characters',
         item: 'character-view',
         edit: 'character-edit'
+    },
+    settings: {
+        list: 'settings'
     }
 };
 

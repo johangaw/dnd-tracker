@@ -1,17 +1,17 @@
 // Storage Service - Handles localStorage operations for encounters and monster cache
 
 import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
+import { readCollection, writeCollection, ENCOUNTERS_KEY } from './records.js';
+import { uuid } from '../utils/uuid.js';
 
-const ENCOUNTERS_KEY = 'dnd-encounters';
 const MONSTER_CACHE_KEY = 'dnd-monster-cache';
 
 export function getEncounters() {
-    const data = localStorage.getItem(ENCOUNTERS_KEY);
-    return data ? JSON.parse(data) : [];
+    return readCollection(ENCOUNTERS_KEY);
 }
 
 export function saveEncounters(encounters) {
-    localStorage.setItem(ENCOUNTERS_KEY, JSON.stringify(encounters));
+    writeCollection(ENCOUNTERS_KEY, encounters);
 }
 
 export function getEncounter(id) {
@@ -88,7 +88,7 @@ export async function importEncounterFromURL() {
         
         // Reconstruct the encounter object
         const encounter = {
-            id: Date.now().toString(),
+            id: uuid(),
             title: data.t || 'Imported Encounter',
             description: data.d || '',
             pcs: (data.p || []).map(name => ({ name })),
@@ -141,7 +141,7 @@ export function importEncounterFromJSON(jsonString) {
         
         // Create a valid encounter object with defaults for missing fields
         const encounter = {
-            id: Date.now().toString(),
+            id: uuid(),
             title: data.title,
             description: data.description || '',
             pcs: (data.pcs || []).map(pc => ({

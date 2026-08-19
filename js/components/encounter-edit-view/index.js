@@ -8,6 +8,7 @@ import * as Router from '../../utils/router.js';
 import { escapeHtml, closeModals, showToast } from '../../utils/helpers.js';
 import { showStatBlockByNameSource, showStatBlock } from '../modals/statBlock.js';
 import { searchMonsters as searchMonsterModal } from '../modals/monsterSearchModal.js';
+import { uuid } from '../../utils/uuid.js';
 
 class EncounterEditViewElement extends HTMLElement {
     cleanupController = null
@@ -170,7 +171,7 @@ class EncounterEditViewElement extends HTMLElement {
         const state = getState();
         
         const editingEncounter = encounter || {
-            id: Date.now().toString(),
+            id: uuid(),
             title: '',
             description: '',
             pcs: [],

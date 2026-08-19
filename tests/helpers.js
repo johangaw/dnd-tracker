@@ -1,6 +1,7 @@
 // Test helpers for interacting with the app
 import { fireEvent, waitFor, getByText, queryByText, getByPlaceholderText, getByRole } from '@testing-library/dom'
 import { mockIndex, mockBestiary, getMockMonster } from './mocks/monsters.js'
+import { uuid } from '../js/utils/uuid.js'
 
 // Mock spell data for testing
 const mockSpellData = {
@@ -414,20 +415,28 @@ export async function runEncounterByTitle(title) {
 export function seedEncounter(encounter) {
   const encounters = JSON.parse(localStorage.getItem('dnd-encounters') || '[]')
   encounters.push({
-    id: encounter.id || Date.now().toString(),
+    id: encounter.id || uuid(),
     title: encounter.title || 'Test Encounter',
     description: encounter.description || '',
     pcs: encounter.pcs || [],
     monsters: encounter.monsters || [],
     autoAddMonsters: encounter.autoAddMonsters || false,
-    folderIds: encounter.folderIds || []
+    folderIds: encounter.folderIds || [],
+    updatedAt: encounter.updatedAt || Date.now()
   })
   localStorage.setItem('dnd-encounters', JSON.stringify(encounters))
 }
 
-// Get all encounters from localStorage
+// Get all live encounters from localStorage. Deleted records are kept in
+// storage as tombstones so the deletion can propagate to other devices, so
+// they have to be filtered out the same way readCollection() does.
 export function getStoredEncounters() {
-  return JSON.parse(localStorage.getItem('dnd-encounters') || '[]')
+  return JSON.parse(localStorage.getItem('dnd-encounters') || '[]').filter(e => !e.deletedAt)
+}
+
+// Deleted records, for tests that assert on tombstoning itself
+export function getStoredTombstones(key = 'dnd-encounters') {
+  return JSON.parse(localStorage.getItem(key) || '[]').filter(e => e.deletedAt)
 }
 
 // Re-render the encounter list without re-initializing the app

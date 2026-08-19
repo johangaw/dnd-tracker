@@ -27,7 +27,7 @@ export function setView(view) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
     const nav = document.querySelector('.main-nav');
-    const isListView = ['encounter-list', 'custom-monsters', 'characters'].includes(view);
+    const isListView = ['encounter-list', 'custom-monsters', 'characters', 'settings'].includes(view);
     nav?.classList.toggle('hidden', !isListView);
 
     const navSelection = {
@@ -38,7 +38,8 @@ export function setView(view) {
         'custom-monster-edit': 'custom-monsters',
         'characters': 'characters',
         'character-view': 'characters',
-        'character-edit': 'characters'
+        'character-edit': 'characters',
+        'settings': 'settings'
     };
 
     const activeNav = navSelection[view] || 'encounters';
@@ -97,6 +98,10 @@ export function setView(view) {
         case 'character-edit':
             backBtn.classList.remove('hidden');
             title.textContent = state.editingCharacter?.id ? 'Edit Character' : 'New Character';
+            break;
+        case 'settings':
+            backBtn.classList.add('hidden');
+            title.textContent = 'Settings';
             break;
     }
 }

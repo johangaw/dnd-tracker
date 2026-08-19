@@ -1,15 +1,8 @@
 // Characters Service - Handles storage of D&D 2024 character sheets
 
 import { compress, decompress, isCompressed, legacyDecode } from '../utils/compression.js';
-
-const CHARACTERS_KEY = 'dnd-characters';
-
-// Counter for unique ID generation (prevents collisions when creating multiple characters quickly)
-let idCounter = 0;
-
-function generateUniqueId() {
-    return `${Date.now()}-${++idCounter}`;
-}
+import { readCollection, writeCollection, CHARACTERS_KEY } from './records.js';
+import { uuid as generateUniqueId } from '../utils/uuid.js';
 
 // D&D 2024 Skills with their associated abilities
 export const SKILLS = {
@@ -79,13 +72,12 @@ export const SKILLS_BY_ABILITY = {
 
 // Get all characters
 export function getCharacters() {
-    const data = localStorage.getItem(CHARACTERS_KEY);
-    return data ? JSON.parse(data) : [];
+    return readCollection(CHARACTERS_KEY);
 }
 
 // Save all characters
 export function saveCharacters(characters) {
-    localStorage.setItem(CHARACTERS_KEY, JSON.stringify(characters));
+    writeCollection(CHARACTERS_KEY, characters);
 }
 
 // Get a single character by ID
@@ -97,10 +89,9 @@ export function getCharacter(id) {
 export function saveCharacter(character) {
     const characters = getCharacters();
     const index = characters.findIndex(c => c.id === character.id);
-    
-    // Update timestamp
-    character.updatedAt = Date.now();
-    
+
+    // `updatedAt` is stamped by the records layer, which owns the one clock all
+    // conflict resolution compares against.
     if (index >= 0) {
         characters[index] = character;
     } else {
@@ -339,7 +330,7 @@ export function importCharacterFromJSON(jsonString) {
         const character = {
             ...createEmptyCharacter(),
             ...data,
-            id: Date.now().toString()
+            id: generateUniqueId()
         };
         
         return character;
@@ -388,7 +379,7 @@ export async function importCharacterFromURL() {
         return {
             ...createEmptyCharacter(),
             ...data,
-            id: Date.now().toString()
+            id: generateUniqueId()
         };
     } catch (e) {
         console.error('Failed to import character from URL:', e);

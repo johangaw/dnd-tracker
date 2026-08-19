@@ -21,6 +21,7 @@ import * as CustomMonsterEdit from './components/custom-monster-edit-view/index.
 import * as CharacterList from './components/characters-view/index.js';
 import * as CharacterView from './components/character-view/index.js';
 import * as CharacterEdit from './components/character-edit-view/index.js';
+import * as Settings from './components/settings-view/index.js';
 import { showSpellModal, closeSpellModal, isSpellModalActive } from './components/modals/spellModal.js';
 // Modals shared across multiple views live here; view-exclusive modals are
 // imported by the view component that owns them (encounter-run-view,
@@ -138,6 +139,8 @@ function initEventHandlers() {
                 Router.navigateToList('characters');
             } else if (target === 'custom-monsters') {
                 Router.navigateToList('monsters');
+            } else if (target === 'settings') {
+                Router.navigateToList('settings');
             }
             updateNavSelection(target);
         });
@@ -159,6 +162,10 @@ function initEventHandlers() {
 
     document.getElementById('menu-characters')?.addEventListener('click', () => {
         Router.navigateToList('characters');
+    });
+
+    document.getElementById('menu-settings')?.addEventListener('click', () => {
+        Router.navigateToList('settings');
     });
 
     // === Import Monster from URL Modal ===
@@ -278,6 +285,10 @@ function handleRoute() {
                 setCharacterEditSource(null);
                 setView('characters');
                 CharacterList.render();
+                break;
+            case 'settings':
+                setView('settings');
+                Settings.render();
                 break;
         }
     }

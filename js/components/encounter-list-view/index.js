@@ -10,6 +10,7 @@ import '../modals/import-modal/index.js';
 import '../modals/add-encounter-choice-modal/index.js';
 import '../modals/import-encounter-json-modal/index.js';
 import '../modals/folder-modal/index.js';
+import { uuid } from '../../utils/uuid.js';
 
 class EncounterListViewElement extends HTMLElement {
     cleanupController = null
@@ -96,7 +97,7 @@ class EncounterListViewElement extends HTMLElement {
                             break;
                         case 'copy': {
                             const copy = JSON.parse(JSON.stringify(encounter));
-                            copy.id = Date.now().toString();
+                            copy.id = uuid();
                             copy.title = `${copy.title} (Copy)`;
                             Storage.saveEncounter(copy);
                             this.render();

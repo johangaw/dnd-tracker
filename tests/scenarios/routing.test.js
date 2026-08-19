@@ -181,8 +181,8 @@ describe('Routing', () => {
     it('shows the main sections in the header navigation', () => {
       const navItems = document.querySelectorAll('.main-nav .nav-item')
 
-      expect(navItems.length).toBe(3)
-      expect(Array.from(navItems).map(item => item.dataset.nav)).toEqual(['encounters', 'custom-monsters', 'characters'])
+      expect(navItems.length).toBe(4)
+      expect(Array.from(navItems).map(item => item.dataset.nav)).toEqual(['encounters', 'custom-monsters', 'characters', 'settings'])
     })
 
     it('hides the main nav when editing a detail view', async () => {
