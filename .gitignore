@@ -33,3 +33,5 @@ coverage/
 *.tmp
 *.swp
 *.bak
+
+.claude/worktrees
