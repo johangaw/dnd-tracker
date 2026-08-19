@@ -69,7 +69,8 @@ export function createEmptyMonster() {
         cr: '1',
         trait: [],
         action: [],
-        isCustom: true
+        isCustom: true,
+        folderIds: []
     };
 }
 
@@ -82,7 +83,8 @@ export function createFromBaseline(baseMonster) {
         source: 'Custom',
         baselineSource: baseMonster.source, // Track original source
         baselineName: baseMonster.name,     // Track original name
-        isCustom: true
+        isCustom: true,
+        folderIds: []
     };
 }
 
@@ -136,7 +138,8 @@ export function importMonsterFromJSON(jsonString) {
             senses: data.senses || [],
             languages: data.languages || [],
             spellcasting: data.spellcasting || [],
-            isCustom: true
+            isCustom: true,
+            folderIds: data.folderIds || []
         };
         
         return monster;
@@ -151,10 +154,12 @@ export async function exportMonsterToURL(monster) {
     // Create a copy without the id (will be regenerated on import)
     const exportData = {
         ...monster,
-        id: undefined
+        id: undefined,
+        folderIds: undefined
     };
     delete exportData.id;
-    
+    delete exportData.folderIds;
+
     const json = JSON.stringify(exportData);
     const encoded = await compress(json);
     const url = `${window.location.origin}${window.location.pathname}?importMonster=${encoded}#/monsters`;
@@ -183,7 +188,8 @@ export async function importMonsterFromURL() {
         return {
             ...data,
             id: Date.now().toString(),
-            isCustom: true
+            isCustom: true,
+            folderIds: []
         };
     } catch (e) {
         console.error('Failed to import monster from URL:', e);

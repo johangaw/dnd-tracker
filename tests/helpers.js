@@ -419,7 +419,8 @@ export function seedEncounter(encounter) {
     description: encounter.description || '',
     pcs: encounter.pcs || [],
     monsters: encounter.monsters || [],
-    autoAddMonsters: encounter.autoAddMonsters || false
+    autoAddMonsters: encounter.autoAddMonsters || false,
+    folderIds: encounter.folderIds || []
   })
   localStorage.setItem('dnd-encounters', JSON.stringify(encounters))
 }

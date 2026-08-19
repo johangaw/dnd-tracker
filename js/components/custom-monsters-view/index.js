@@ -4,16 +4,19 @@ import * as CustomMonsters from '../../services/customMonsters.js';
 import * as MonsterAPI from '../../services/monsterApi.js';
 import { formatCR, getHP, getAC } from '../../services/monsterApi.js';
 import { setView } from '../../services/state.js';
+import { MonsterFolders } from '../../services/folders.js';
 import * as Router from '../../utils/router.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
 import { showStatBlock, showStatBlockByNameSource } from '../modals/statBlock.js';
 import { searchMonsters as searchMonsterModal } from '../modals/monsterSearchModal.js';
 import customMonsterEditView from '../custom-monster-edit-view/index.js';
 import '../modals/import-monster-modal/index.js';
+import '../modals/folder-modal/index.js';
 
 class CustomMonstersViewElement extends HTMLElement {
     cleanupController = null
     searchTimeout = null
+    activeFolderFilter = null // null = All, 'unfiled' = no folders, otherwise a folder id
 
     constructor() {
         super();
@@ -24,6 +27,10 @@ class CustomMonstersViewElement extends HTMLElement {
 
         // Render the internal structure: list container + new-monster button + context menu + modals
         this.innerHTML = `
+            <div class="folder-filter-bar">
+                <div id="monster-folder-chips" class="folder-chips"></div>
+                <button id="manage-monster-folders-btn" class="icon-btn" aria-label="Manage Folders" title="Manage Folders">📁</button>
+            </div>
             <div id="custom-monsters-list" class="list"></div>
             <button id="new-custom-monster-btn" class="fab" aria-label="New Custom Monster">
                 <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
@@ -33,11 +40,15 @@ class CustomMonstersViewElement extends HTMLElement {
             <div id="monster-context-menu" class="context-menu hidden">
                 <button class="context-item" data-action="view-stats">View Stats</button>
                 <button class="context-item" data-action="edit">Edit</button>
+                <button class="context-item" data-action="folders">Folders...</button>
                 <button class="context-item" data-action="copy">Duplicate</button>
                 <button class="context-item" data-action="copy-json">Copy JSON</button>
                 <button class="context-item" data-action="share">Share Link</button>
                 <button class="context-item danger" data-action="delete">Delete</button>
             </div>
+
+            <!-- Folder Modal -->
+            <folder-modal id="monster-folder-modal" class="modal"></folder-modal>
 
             <!-- Add Monster Choice Modal -->
             <div id="add-monster-choice-modal" class="modal">
@@ -128,6 +139,16 @@ class CustomMonstersViewElement extends HTMLElement {
 
     setupEventHandlers() {
         const signal = this.cleanupController.signal;
+
+        // Manage folders button
+        this.querySelector('#manage-monster-folders-btn').addEventListener('click', () => {
+            this.querySelector('#monster-folder-modal').open({
+                folderStore: MonsterFolders,
+                getItems: CustomMonsters.getCustomMonsters,
+                saveItems: CustomMonsters.saveCustomMonsters,
+                onFoldersChanged: () => this.render()
+            });
+        }, {signal});
 
         // New custom monster button - show choice modal
         this.querySelector('#new-custom-monster-btn').addEventListener('click', () => {
@@ -252,6 +273,19 @@ class CustomMonstersViewElement extends HTMLElement {
                     case 'edit':
                         Router.navigateToItem('monsters', monsterId);
                         break;
+                    case 'folders':
+                        this.querySelector('#monster-folder-modal').open({
+                            folderStore: MonsterFolders,
+                            getItems: CustomMonsters.getCustomMonsters,
+                            saveItems: CustomMonsters.saveCustomMonsters,
+                            item: monster,
+                            onChange: (folderIds) => {
+                                monster.folderIds = folderIds;
+                                CustomMonsters.saveCustomMonster(monster);
+                            },
+                            onFoldersChanged: () => this.render()
+                        });
+                        break;
                     case 'copy': {
                         const copy = JSON.parse(JSON.stringify(monster));
                         copy.id = Date.now().toString();
@@ -305,18 +339,75 @@ class CustomMonstersViewElement extends HTMLElement {
         this.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
     }
 
+    renderFolderChips() {
+        const chipsContainer = this.querySelector('#monster-folder-chips');
+        if (!chipsContainer) return;
+
+        const allMonsters = CustomMonsters.getCustomMonsters();
+        const folders = MonsterFolders.getFolders();
+
+        // Reset filter if it points at a folder that no longer exists
+        if (this.activeFolderFilter && this.activeFolderFilter !== 'unfiled' &&
+            !folders.some(f => f.id === this.activeFolderFilter)) {
+            this.activeFolderFilter = null;
+        }
+
+        const unfiledCount = allMonsters.filter(m => !m.folderIds || m.folderIds.length === 0).length;
+
+        const chips = [
+            `<button class="folder-chip ${!this.activeFolderFilter ? 'active' : ''}" data-filter="">All <span class="count">${allMonsters.length}</span></button>`,
+            ...folders.map(f => {
+                const count = allMonsters.filter(m => m.folderIds?.includes(f.id)).length;
+                return `<button class="folder-chip ${this.activeFolderFilter === f.id ? 'active' : ''}" data-filter="${f.id}">${escapeHtml(f.name)} <span class="count">${count}</span></button>`;
+            })
+        ];
+
+        if (folders.length > 0) {
+            chips.push(`<button class="folder-chip ${this.activeFolderFilter === 'unfiled' ? 'active' : ''}" data-filter="unfiled">Unfiled <span class="count">${unfiledCount}</span></button>`);
+        }
+
+        chipsContainer.innerHTML = chips.join('');
+
+        chipsContainer.querySelectorAll('.folder-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                this.activeFolderFilter = chip.dataset.filter || null;
+                this.render();
+            });
+        });
+    }
+
     render() {
+        this.renderFolderChips();
+
         const container = this.querySelector('#custom-monsters-list');
-        const monsters = CustomMonsters.getCustomMonsters();
+        const allMonsters = CustomMonsters.getCustomMonsters();
 
         if (!container) return;
 
-        if (monsters.length === 0) {
+        if (allMonsters.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                     <h3>No Custom Monsters</h3>
                     <p>Create your own monsters or import from JSON</p>
+                </div>
+            `;
+            return;
+        }
+
+        let monsters = allMonsters;
+        if (this.activeFolderFilter === 'unfiled') {
+            monsters = allMonsters.filter(m => !m.folderIds || m.folderIds.length === 0);
+        } else if (this.activeFolderFilter) {
+            monsters = allMonsters.filter(m => m.folderIds?.includes(this.activeFolderFilter));
+        }
+
+        if (monsters.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <h3>No Monsters Here</h3>
+                    <p>Nothing in this folder yet</p>
                 </div>
             `;
             return;

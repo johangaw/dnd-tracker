@@ -175,7 +175,8 @@ class EncounterEditViewElement extends HTMLElement {
             description: '',
             pcs: [],
             monsters: [],
-            autoAddMonsters: false
+            autoAddMonsters: false,
+            folderIds: []
         };
         
         setEditingEncounter(editingEncounter);

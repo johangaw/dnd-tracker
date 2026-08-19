@@ -99,7 +99,8 @@ export async function importEncounterFromURL() {
                 hp: m.h,
                 comment: m.cm || ''
             })),
-            autoAddMonsters: data.a === 1
+            autoAddMonsters: data.a === 1,
+            folderIds: []
         };
         
         return encounter;
@@ -153,7 +154,8 @@ export function importEncounterFromJSON(jsonString) {
                 hp: m.hp || m.h || 0,
                 comment: m.comment || m.cm || ''
             })),
-            autoAddMonsters: data.autoAddMonsters || false
+            autoAddMonsters: data.autoAddMonsters || false,
+            folderIds: data.folderIds || []
         };
         
         return encounter;
