@@ -159,11 +159,11 @@ describe('Custom Monsters', () => {
             expect(customMonstersList.textContent).toContain('No Custom Monsters')
         })
 
-        it('shows back button in custom monsters view', async () => {
+        it('hides back button in custom monsters view', async () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
-            
-            expect(isVisible('#back-btn')).toBe(true)
+
+            expect(isVisible('#back-btn')).toBe(false)
         })
 
         it('returns to encounter list when back is clicked from custom monsters', async () => {
