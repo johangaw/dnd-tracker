@@ -22,6 +22,14 @@ class EncounterRunViewElement extends HTMLElement {
 
         // Render the internal structure (children only)
         this.innerHTML = `
+            <div id="encounter-notes" class="encounter-notes hidden">
+                <button type="button" id="encounter-notes-toggle" class="encounter-notes-toggle">
+                    <span class="encounter-notes-title">📝 Encounter Notes</span>
+                    <span id="encounter-notes-chevron" class="encounter-notes-chevron">▾</span>
+                </button>
+                <div id="encounter-notes-body" class="encounter-notes-body"></div>
+            </div>
+
             <div id="initiative-setup" class="initiative-panel">
                 <h2>Set Initiative</h2>
                 <div class="initiative-actions">
@@ -102,6 +110,11 @@ class EncounterRunViewElement extends HTMLElement {
         this.querySelector('#prev-turn-btn').addEventListener('click', () => {
             this.prevTurn();
         }, { signal });
+
+        // Encounter notes toggle
+        this.querySelector('#encounter-notes-toggle').addEventListener('click', () => {
+            this.querySelector('#encounter-notes').classList.toggle('collapsed');
+        }, { signal });
     }
 
     // Handlers for the modals this view drives. They live outside the component
@@ -130,6 +143,16 @@ class EncounterRunViewElement extends HTMLElement {
     // Initialize run mode (combat)
     render(encounter) {
         setCurrentEncounter(JSON.parse(JSON.stringify(encounter)));
+
+        // Show encounter notes (description) if present
+        const notesEl = this.querySelector('#encounter-notes');
+        const notes = (encounter.description || '').trim();
+        if (notes) {
+            this.querySelector('#encounter-notes-body').innerHTML = escapeHtml(notes).replace(/\n/g, '<br>');
+            notesEl.classList.remove('hidden');
+        } else {
+            notesEl.classList.add('hidden');
+        }
 
         const combatState = {
             round: 1,

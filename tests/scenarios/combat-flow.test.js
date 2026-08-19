@@ -445,6 +445,97 @@ describe('Combat Flow', () => {
     })
   })
 
+  describe('Encounter Notes', () => {
+    it('shows encounter notes when the encounter has a description', async () => {
+      seedEncounter({
+        id: 'notes-test',
+        title: 'Notes Test',
+        description: 'Watch out for the trap door in the north corner.',
+        pcs: [{ name: 'Hero' }],
+        monsters: [],
+        autoAddMonsters: false
+      })
+      await initApp()
+
+      const card = document.querySelector('.encounter-card')
+      await longPress(card)
+      await click('[data-action="run"]')
+
+      expect(isVisible('#encounter-notes')).toBe(true)
+      expect(getText('#encounter-notes-body')).toBe('Watch out for the trap door in the north corner.')
+    })
+
+    it('hides encounter notes when the encounter has no description', async () => {
+      seedEncounter({
+        id: 'no-notes-test',
+        title: 'No Notes Test',
+        description: '',
+        pcs: [{ name: 'Hero' }],
+        monsters: [],
+        autoAddMonsters: false
+      })
+      await initApp()
+
+      const card = document.querySelector('.encounter-card')
+      await longPress(card)
+      await click('[data-action="run"]')
+
+      expect(isVisible('#encounter-notes')).toBe(false)
+    })
+
+    it('collapses and expands notes when the header is clicked', async () => {
+      seedEncounter({
+        id: 'collapse-notes-test',
+        title: 'Collapse Notes Test',
+        description: 'Remember the merchant is secretly a doppelganger.',
+        pcs: [{ name: 'Hero' }],
+        monsters: [],
+        autoAddMonsters: false
+      })
+      await initApp()
+
+      const card = document.querySelector('.encounter-card')
+      await longPress(card)
+      await click('[data-action="run"]')
+
+      const notesPanel = document.querySelector('#encounter-notes')
+      expect(notesPanel.classList.contains('collapsed')).toBe(false)
+
+      await click('#encounter-notes-toggle')
+      expect(notesPanel.classList.contains('collapsed')).toBe(true)
+
+      await click('#encounter-notes-toggle')
+      expect(notesPanel.classList.contains('collapsed')).toBe(false)
+    })
+
+    it('keeps notes visible after combat starts', async () => {
+      seedEncounter({
+        id: 'notes-during-combat',
+        title: 'Notes During Combat',
+        description: 'The boss flees at 25% HP.',
+        pcs: [{ name: 'Hero' }],
+        monsters: [
+          { name: 'Goblin', source: 'MM', cr: '1/4', hp: 7, comment: '' }
+        ],
+        autoAddMonsters: true
+      })
+      await initApp()
+
+      const card = document.querySelector('.encounter-card')
+      await longPress(card)
+      await click('[data-action="run"]')
+
+      const initInputs = getAll('.init-input')
+      await type(initInputs[0], '10')
+      await type(initInputs[1], '5')
+
+      await click('#start-combat-btn')
+
+      expect(isVisible('#encounter-notes')).toBe(true)
+      expect(getText('#encounter-notes-body')).toBe('The boss flees at 25% HP.')
+    })
+  })
+
   describe('Removing Combatants', () => {
     beforeEach(async () => {
       seedEncounter({

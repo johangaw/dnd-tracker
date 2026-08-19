@@ -1,5 +1,59 @@
 /* Combat Tracker Component Styles */
 
+/* Encounter Notes */
+.encounter-notes {
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.encounter-notes.hidden {
+    display: none;
+}
+
+.encounter-notes-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    font: inherit;
+    text-align: left;
+}
+
+.encounter-notes-title {
+    font-weight: 600;
+}
+
+.encounter-notes-chevron {
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+
+.encounter-notes.collapsed .encounter-notes-chevron {
+    transform: rotate(-90deg);
+}
+
+.encounter-notes-body {
+    padding: 0 12px 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.encounter-notes.collapsed .encounter-notes-body {
+    display: none;
+}
+
 /* Initiative Panel */
 .initiative-panel {
     display: flex;
