@@ -4,6 +4,15 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+// Import main.js once, eagerly, so every custom element it registers
+// (view and modal web components) is defined *before* the first
+// `document.body.innerHTML = ...` assignment below. happy-dom's custom
+// element upgrade path (defining an element after matching tags already
+// exist in the DOM) does not reliably restore attributes such as `class`,
+// so elements must be parsed after their definition rather than upgraded
+// into it.
+import '../js/main.js'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 

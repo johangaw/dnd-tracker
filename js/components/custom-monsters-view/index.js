@@ -9,6 +9,7 @@ import { escapeHtml, showToast } from '../../utils/helpers.js';
 import { showStatBlock, showStatBlockByNameSource } from '../modals/statBlock.js';
 import { searchMonsters as searchMonsterModal } from '../modals/monsterSearchModal.js';
 import customMonsterEditView from '../custom-monster-edit-view/index.js';
+import '../modals/import-monster-modal/index.js';
 
 class CustomMonstersViewElement extends HTMLElement {
     cleanupController = null
@@ -111,6 +112,9 @@ class CustomMonstersViewElement extends HTMLElement {
                     </div>
                 </div>
             </div>
+
+            <!-- Import Monster Modal (from URL) -->
+            <import-monster-modal id="import-monster-modal" class="modal"></import-monster-modal>
         `;
 
         this.render();

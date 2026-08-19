@@ -21,7 +21,13 @@ import * as CustomMonsterEdit from './components/custom-monster-edit-view/index.
 import * as CharacterList from './components/characters-view/index.js';
 import * as CharacterView from './components/character-view/index.js';
 import * as CharacterEdit from './components/character-edit-view/index.js';
-import { showSpellModal, closeSpellModal, initSpellModal } from './components/modals/spellModal.js';
+import { showSpellModal, closeSpellModal, isSpellModalActive } from './components/modals/spellModal.js';
+// Modals shared across multiple views live here; view-exclusive modals are
+// imported by the view component that owns them (encounter-run-view,
+// encounter-list-view, custom-monsters-view).
+import './components/modals/stat-block-modal/index.js';
+import './components/modals/spell-modal/index.js';
+import './components/modals/hp-modal/index.js';
 
 // Track initialization to prevent duplicate event handlers
 let initialized = false;
@@ -62,39 +68,31 @@ function initEventHandlers() {
 
     // New encounter button - show choice modal
     document.getElementById('new-encounter-btn').addEventListener('click', () => {
-        document.getElementById('add-encounter-choice-modal').classList.add('active');
+        document.querySelector('add-encounter-choice-modal').open();
     });
 
-    // Encounter choice modal - Create New
-    document.getElementById('encounter-choice-create-new').addEventListener('click', () => {
+    // Encounter choice modal - Create New / Import JSON
+    document.querySelector('add-encounter-choice-modal').onCreateNew(() => {
         closeModals();
         EncounterEdit.render();
     });
-
-    // Encounter choice modal - Import JSON
-    document.getElementById('encounter-choice-import-json').addEventListener('click', () => {
+    document.querySelector('add-encounter-choice-modal').onImportJson(() => {
         closeModals();
-        document.getElementById('import-encounter-json-input').value = '';
-        document.getElementById('import-encounter-json-error').classList.add('hidden');
-        document.getElementById('import-encounter-json-modal').classList.add('active');
+        document.querySelector('import-encounter-json-modal').open();
     });
 
-    // Import Encounter JSON Modal - Cancel
-    document.getElementById('import-encounter-json-cancel-btn').addEventListener('click', () => {
+    // Import Encounter JSON Modal - Cancel / Confirm
+    document.querySelector('import-encounter-json-modal').onCancel(() => {
         closeModals();
     });
+    document.querySelector('import-encounter-json-modal').onConfirm((jsonInput) => {
+        const modal = document.querySelector('import-encounter-json-modal');
 
-    // Import Encounter JSON Modal - Confirm
-    document.getElementById('import-encounter-json-confirm-btn').addEventListener('click', () => {
-        const jsonInput = document.getElementById('import-encounter-json-input').value.trim();
-        const errorEl = document.getElementById('import-encounter-json-error');
-        
         if (!jsonInput) {
-            errorEl.textContent = 'Please enter JSON data';
-            errorEl.classList.remove('hidden');
+            modal.showError('Please enter JSON data');
             return;
         }
-        
+
         try {
             const encounter = Storage.importEncounterFromJSON(jsonInput);
             Storage.saveEncounter(encounter);
@@ -102,19 +100,16 @@ function initEventHandlers() {
             EncounterList.render();
             showToast(`Imported "${encounter.title}"`);
         } catch (e) {
-            errorEl.textContent = e.message;
-            errorEl.classList.remove('hidden');
+            modal.showError(e.message);
         }
     });
 
-
     // Import encounter buttons
-    document.getElementById('import-cancel-btn').addEventListener('click', () => {
+    document.querySelector('import-modal').onCancel(() => {
         Storage.clearImportParam();
         closeModals();
     });
-
-    document.getElementById('import-confirm-btn').addEventListener('click', () => {
+    document.querySelector('import-modal').onConfirm(() => {
         const state = getState();
         if (state.importingEncounter) {
             Storage.saveEncounter(state.importingEncounter);
@@ -167,12 +162,12 @@ function initEventHandlers() {
     });
 
     // === Import Monster from URL Modal ===
-    document.getElementById('import-monster-cancel-btn').addEventListener('click', () => {
+    document.querySelector('import-monster-modal').onCancel(() => {
         CustomMonsters.clearMonsterImportParam();
         closeModals();
     });
 
-    document.getElementById('import-monster-confirm-btn').addEventListener('click', () => {
+    document.querySelector('import-monster-modal').onConfirm(() => {
         const state = getState();
         if (state.importingMonster) {
             CustomMonsters.saveCustomMonster(state.importingMonster);
@@ -184,31 +179,14 @@ function initEventHandlers() {
         }
     });
 
-    // Close modals via close button or backdrop click — only affect the target modal
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        if (btn.closest('#spell-modal')) return; // Skip spell modal
-        btn.addEventListener('click', (e) => {
-            const modal = btn.closest('.modal');
-            if (modal) modal.classList.remove('active');
-        });
-    });
-
-    // Close modal on backdrop click (only the clicked modal)
-    document.querySelectorAll('.modal').forEach(modal => {
-        if (modal.id === 'spell-modal') return; // Skip spell modal
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-    });
+    // Note: close button / backdrop-click handling for every top-level modal
+    // is self-managed by each modal's own web component.
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             // Close spell modal first if it's open, otherwise close other modals
-            const spellModal = document.getElementById('spell-modal');
-            if (spellModal?.classList.contains('active')) {
+            if (isSpellModalActive()) {
                 closeSpellModal();
             } else {
                 closeModals();
@@ -308,10 +286,7 @@ function handleRoute() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     initEventHandlers();
-    
-    // Initialize spell modal (separate close handling)
-    initSpellModal();
-    
+
     // Preload monster index
     MonsterAPI.loadIndex();
     
@@ -351,14 +326,12 @@ async function checkForImport() {
         // Show import modal with encounter info
         const pcCount = encounter.pcs?.length || 0;
         const monsterCount = encounter.monsters?.length || 0;
-        
-        document.getElementById('import-encounter-info').innerHTML = `
+
+        document.querySelector('import-modal').open(`
             <strong>${encounter.title}</strong><br>
             ${encounter.description ? `<em>${encounter.description}</em><br>` : ''}
             ${pcCount} PC${pcCount !== 1 ? 's' : ''}, ${monsterCount} monster${monsterCount !== 1 ? 's' : ''}
-        `;
-        
-        document.getElementById('import-modal').classList.add('active');
+        `);
         return true;
     }
     return false;
@@ -374,13 +347,11 @@ async function checkForMonsterImport() {
         const hp = MonsterAPI.getHP(monster);
         const ac = MonsterAPI.getAC(monster);
         const cr = MonsterAPI.formatCR(monster.cr);
-        
-        document.getElementById('import-monster-info').innerHTML = `
+
+        document.querySelector('import-monster-modal').open(`
             <strong>${monster.name}</strong><br>
             CR ${cr} | AC ${ac} | HP ${hp}
-        `;
-        
-        document.getElementById('import-monster-modal').classList.add('active');
+        `);
         return true;
     }
     return false;

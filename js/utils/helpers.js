@@ -148,10 +148,6 @@ export function formatSpellList(spells) {
 // Close all modals
 export function closeModals() {
     document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-    // Reset character HP modal state if active
-    if (window.resetCharacterHpModal) {
-        window.resetCharacterHpModal();
-    }
 }
 
 

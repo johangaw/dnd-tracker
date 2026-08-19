@@ -80,7 +80,6 @@ class CharacterViewElement extends HTMLElement {
         `;
 
         this.setupEventHandlers();
-        this.exposeGlobals();
     }
 
     disconnectedCallback() {
@@ -132,49 +131,6 @@ class CharacterViewElement extends HTMLElement {
             }, {signal});
         });
 
-        // The character-only fields of the shared #hp-modal live outside this
-        // component (the modal is shared with encounter-run-view), so listen on
-        // the document. Capture phase is used because `input` events are not
-        // guaranteed to bubble in every dispatch path.
-        document.addEventListener('input', (e) => {
-            // Update effective max display when reduction changes
-            if (e.target.id === 'hp-max-reduction') {
-                if (!this.isCharacterHpModalActive()) return;
-                const character = Characters.getCharacter(this.hpModalCharacterId);
-                if (!character) return;
-
-                const reduction = parseInt(document.getElementById('hp-max-reduction').value) || 0;
-                this.hpModalEffectiveMax = Math.max(0, (character.hitPointsMax || 0) - reduction);
-
-                // Cap current HP at effective max
-                if (this.hpModalCurrentHp > this.hpModalEffectiveMax) {
-                    this.hpModalCurrentHp = this.hpModalEffectiveMax;
-                }
-
-                this.updateCharacterHPDisplay();
-                return;
-            }
-
-            // Update temp HP when input changes
-            if (e.target.id === 'hp-temp-input') {
-                if (!this.isCharacterHpModalActive()) return;
-                this.hpModalTempHp = parseInt(document.getElementById('hp-temp-input').value) || 0;
-                this.updateCharacterHPDisplay();
-            }
-        }, {signal, capture: true});
-    }
-
-    // Expose character HP/money modal helpers used by the shared HP modal handlers
-    // (encounter-run-view) and by the rendered character sheet.
-    exposeGlobals() {
-        window.openCharacterHpModal = (characterId) => this.openCharacterHpModal(characterId);
-        window.isCharacterHpModalActive = () => this.isCharacterHpModalActive();
-        window.applyCharacterHPDelta = () => this.applyCharacterHPDelta();
-        window.addToCharacterHPDelta = (amount) => this.addToCharacterHPDelta(amount);
-        window.updateCharacterHPPreview = () => this.updateCharacterHPPreview();
-        window.saveCharacterHP = () => this.saveCharacterHP();
-        window.resetCharacterHpModal = () => this.resetCharacterHpModal();
-        window.openMoneyModal = (characterId) => this.openMoneyModal(characterId);
     }
 
     // Get current character ID
@@ -518,9 +474,7 @@ class CharacterViewElement extends HTMLElement {
 
         // Add click handler for HP section
         container.querySelector('.hp-clickable')?.addEventListener('click', () => {
-            if (window.openCharacterHpModal) {
-                window.openCharacterHpModal(characterId);
-            }
+            this.openCharacterHpModal(characterId);
         });
 
         // Add click handlers for spell slot items (entire row is clickable)
@@ -547,9 +501,7 @@ class CharacterViewElement extends HTMLElement {
 
         // Add click handler for currency row (money management)
         container.querySelector('.currency-clickable')?.addEventListener('click', () => {
-            if (window.openMoneyModal) {
-                window.openMoneyModal(characterId);
-            }
+            this.openMoneyModal(characterId);
         });
 
         // Add click handlers for trackers
@@ -706,132 +658,83 @@ class CharacterViewElement extends HTMLElement {
         if (!character) return;
 
         this.hpModalCharacterId = characterId;
-        const modal = document.getElementById('hp-modal');
-        const characterFields = document.getElementById('hp-character-fields');
-        const instanceSelector = document.getElementById('hp-instance-selector');
-        const tempDisplay = document.getElementById('hp-temp-display');
+        const modal = document.querySelector('hp-modal');
 
         // Calculate effective max HP
         this.hpModalEffectiveMax = Characters.getEffectiveMaxHp(character);
         this.hpModalCurrentHp = character.hitPointsCurrent ?? 0;
         this.hpModalTempHp = character.hitPointsTemp || 0;
 
+        modal.configure({
+            onAdjust: (amount) => this.addToCharacterHPDelta(amount),
+            onReset: () => this.resetCharacterHPDelta(),
+            onApply: () => this.saveCharacterHP(),
+            onAmountInput: () => this.updateCharacterHPPreview(),
+            onTempInput: () => this.onCharacterTempHpInput(),
+            onMaxReductionInput: () => this.onCharacterMaxReductionInput(),
+        });
+
         // Set up modal for character mode
-        document.getElementById('hp-modal-title').textContent = `${character.name} - HP`;
-        document.getElementById('current-hp').textContent = this.hpModalCurrentHp;
-        document.getElementById('max-hp').textContent = this.hpModalEffectiveMax;
-        document.getElementById('hp-custom-amount').value = '0';
+        modal.setTitle(`${character.name} - HP`);
+        modal.setHpDisplay(this.hpModalCurrentHp, this.hpModalEffectiveMax);
+        modal.setAmount(0);
 
         // Show temp HP in display if present
         if (this.hpModalTempHp > 0) {
-            document.getElementById('hp-temp-value').textContent = this.hpModalTempHp;
-            tempDisplay.classList.remove('hidden');
+            modal.showTempDisplay(this.hpModalTempHp);
         } else {
-            tempDisplay.classList.add('hidden');
+            modal.hideTempDisplay();
         }
 
-        // Show character-specific fields
-        characterFields.classList.remove('hidden');
-        document.getElementById('hp-temp-input').value = this.hpModalTempHp;
-        document.getElementById('hp-max-reduction').value = character.hitPointsMaxReduction || 0;
+        // Show character-specific fields, hide the instance selector (monsters only)
+        modal.showCharacterFields();
+        modal.setTempInput(this.hpModalTempHp);
+        modal.setMaxReductionInput(character.hitPointsMaxReduction || 0);
+        modal.hideInstanceSelector();
+        modal.hidePreview();
 
-        // Hide instance selector (not used for characters)
-        instanceSelector.classList.add('hidden');
-
-        // Hide HP preview initially
-        document.getElementById('hp-preview').classList.add('hidden');
-
-        // Update HP display styling
-        this.updateCharacterHPDisplayStyle();
-
-        modal.classList.add('active');
-    }
-
-    updateCharacterHPDisplayStyle() {
-        const display = document.querySelector('#hp-modal .hp-display');
-        const percent = this.hpModalCurrentHp / this.hpModalEffectiveMax;
-        display.classList.remove('low', 'critical');
-        if (percent <= 0.25) display.classList.add('critical');
-        else if (percent <= 0.5) display.classList.add('low');
+        modal.open();
     }
 
     updateCharacterHPDisplay() {
-        document.getElementById('current-hp').textContent = this.hpModalCurrentHp;
-        document.getElementById('max-hp').textContent = this.hpModalEffectiveMax;
+        const modal = document.querySelector('hp-modal');
+        modal.setHpDisplay(this.hpModalCurrentHp, this.hpModalEffectiveMax);
 
-        // Update temp HP display
-        const tempDisplay = document.getElementById('hp-temp-display');
         if (this.hpModalTempHp > 0) {
-            document.getElementById('hp-temp-value').textContent = this.hpModalTempHp;
-            tempDisplay.classList.remove('hidden');
+            modal.showTempDisplay(this.hpModalTempHp);
         } else {
-            tempDisplay.classList.add('hidden');
+            modal.hideTempDisplay();
         }
 
-        // Also update the input field
-        document.getElementById('hp-temp-input').value = this.hpModalTempHp;
-
-        this.updateCharacterHPDisplayStyle();
+        modal.setTempInput(this.hpModalTempHp);
     }
 
-    isCharacterHpModalActive() {
-        return this.hpModalCharacterId !== null;
-    }
-
-    // Apply HP delta for character (handles temp HP for damage)
-    applyCharacterHPDelta() {
-        if (!this.isCharacterHpModalActive()) return;
-
-        const input = document.getElementById('hp-custom-amount');
-        const delta = parseInt(input.value) || 0;
-
-        if (delta === 0) return;
-
-        if (delta < 0) {
-            // Damage: reduce temp HP first, then current
-            let damage = Math.abs(delta);
-            if (this.hpModalTempHp > 0) {
-                const tempDamage = Math.min(this.hpModalTempHp, damage);
-                this.hpModalTempHp -= tempDamage;
-                damage -= tempDamage;
-            }
-            this.hpModalCurrentHp = Math.max(0, this.hpModalCurrentHp - damage);
-        } else {
-            // Healing: increase current HP up to effective max (doesn't affect temp HP)
-            this.hpModalCurrentHp = Math.min(this.hpModalEffectiveMax, this.hpModalCurrentHp + delta);
-        }
-
-        this.updateCharacterHPDisplay();
-        input.value = '0';
-        document.getElementById('hp-preview').classList.add('hidden');
-        input.classList.remove('damage', 'heal');
+    // Reset the pending HP delta (Reset button)
+    resetCharacterHPDelta() {
+        const modal = document.querySelector('hp-modal');
+        modal.setAmount(0);
+        this.updateCharacterHPPreview();
     }
 
     // Add to HP delta for character (just updates input and preview)
     addToCharacterHPDelta(amount) {
-        const input = document.getElementById('hp-custom-amount');
-        const currentValue = parseInt(input.value) || 0;
-        input.value = currentValue + amount;
+        const modal = document.querySelector('hp-modal');
+        modal.setAmount(modal.getAmount() + amount);
         this.updateCharacterHPPreview();
     }
 
     // Update HP preview for character
     updateCharacterHPPreview() {
-        const input = document.getElementById('hp-custom-amount');
-        const preview = document.getElementById('hp-preview');
-        const previewValue = document.getElementById('hp-preview-value');
-
-        const delta = parseInt(input.value) || 0;
+        const modal = document.querySelector('hp-modal');
+        const delta = modal.getAmount();
 
         if (delta === 0) {
-            preview.classList.add('hidden');
-            input.classList.remove('damage', 'heal');
+            modal.hidePreview();
+            modal.setAmountTone(null);
             return;
         }
 
-        preview.classList.remove('hidden');
-        input.classList.remove('damage', 'heal');
-        input.classList.add(delta < 0 ? 'damage' : 'heal');
+        modal.setAmountTone(delta < 0 ? 'damage' : 'heal');
 
         // Calculate preview considering temp HP for damage
         let previewHp;
@@ -847,14 +750,35 @@ class CharacterViewElement extends HTMLElement {
             previewHp = Math.min(this.hpModalEffectiveMax, this.hpModalCurrentHp + delta);
         }
 
-        previewValue.textContent = previewHp;
-        previewValue.classList.toggle('dead', previewHp <= 0);
+        modal.showPreview(previewHp, previewHp <= 0);
+    }
+
+    // Update effective max HP when the max-reduction input changes
+    onCharacterMaxReductionInput() {
+        const character = Characters.getCharacter(this.hpModalCharacterId);
+        if (!character) return;
+
+        const modal = document.querySelector('hp-modal');
+        const reduction = modal.getMaxReductionInput();
+        this.hpModalEffectiveMax = Math.max(0, (character.hitPointsMax || 0) - reduction);
+
+        // Cap current HP at effective max
+        if (this.hpModalCurrentHp > this.hpModalEffectiveMax) {
+            this.hpModalCurrentHp = this.hpModalEffectiveMax;
+        }
+
+        this.updateCharacterHPDisplay();
+    }
+
+    // Update temp HP when its input changes
+    onCharacterTempHpInput() {
+        const modal = document.querySelector('hp-modal');
+        this.hpModalTempHp = modal.getTempInput();
+        this.updateCharacterHPDisplay();
     }
 
     // Save character HP and close modal
     saveCharacterHP() {
-        if (!this.isCharacterHpModalActive()) return;
-
         const character = Characters.getCharacter(this.hpModalCharacterId);
         if (!character) return;
 
@@ -862,8 +786,8 @@ class CharacterViewElement extends HTMLElement {
         const characterId = this.hpModalCharacterId;
 
         // Apply any pending HP delta before saving
-        const input = document.getElementById('hp-custom-amount');
-        const delta = parseInt(input.value) || 0;
+        const modal = document.querySelector('hp-modal');
+        const delta = modal.getAmount();
 
         if (delta !== 0) {
             if (delta < 0) {
@@ -883,7 +807,7 @@ class CharacterViewElement extends HTMLElement {
 
         character.hitPointsCurrent = this.hpModalCurrentHp;
         character.hitPointsTemp = this.hpModalTempHp;
-        character.hitPointsMaxReduction = parseInt(document.getElementById('hp-max-reduction').value) || 0;
+        character.hitPointsMaxReduction = modal.getMaxReductionInput();
 
         Characters.saveCharacter(character);
         closeModals();
@@ -895,18 +819,6 @@ class CharacterViewElement extends HTMLElement {
         }
 
         showToast('HP updated');
-    }
-
-    // Reset character HP modal on close
-    resetCharacterHpModal() {
-        this.hpModalCharacterId = null;
-        this.hpModalCurrentHp = 0;
-        this.hpModalTempHp = 0;
-        this.hpModalEffectiveMax = 0;
-
-        // Hide character-specific fields
-        document.getElementById('hp-character-fields')?.classList.add('hidden');
-        document.getElementById('hp-temp-display')?.classList.add('hidden');
     }
 
     // === Money Management Modal ===

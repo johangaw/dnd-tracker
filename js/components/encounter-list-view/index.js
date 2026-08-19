@@ -5,6 +5,9 @@ import * as Router from '../../utils/router.js';
 import '../encounter-run-view/index.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
 import encounterRunView from '../encounter-run-view/index.js';
+import '../modals/import-modal/index.js';
+import '../modals/add-encounter-choice-modal/index.js';
+import '../modals/import-encounter-json-modal/index.js';
 
 class EncounterListViewElement extends HTMLElement {
     cleanupController = null
@@ -32,6 +35,15 @@ class EncounterListViewElement extends HTMLElement {
                 <button class="context-item" data-action="run">Run Encounter</button>
                 <button class="context-item danger" data-action="delete">Delete</button>
             </div>
+
+            <!-- Add Encounter Choice Modal -->
+            <add-encounter-choice-modal id="add-encounter-choice-modal" class="modal"></add-encounter-choice-modal>
+
+            <!-- Import Encounter JSON Modal -->
+            <import-encounter-json-modal id="import-encounter-json-modal" class="modal"></import-encounter-json-modal>
+
+            <!-- Import Encounter Modal (from URL) -->
+            <import-modal id="import-modal" class="modal"></import-modal>
         `;
 
         this.render();

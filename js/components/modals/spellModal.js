@@ -15,15 +15,13 @@ export async function showSpellModal(spellName) {
         return;
     }
 
-    const modal = document.getElementById('spell-modal');
+    const modal = document.querySelector('spell-modal');
     if (!modal) {
         console.error('Spell modal not found in DOM');
         return;
     }
 
-    document.getElementById('spell-modal-name').textContent = spell.name;
-    document.getElementById('spell-modal-content').innerHTML = renderSpellBlock(spell);
-    modal.classList.add('active');
+    modal.show(spell.name, renderSpellBlock(spell));
 }
 
 /**
@@ -329,41 +327,20 @@ function cleanSpellText(text) {
  * Close the spell modal
  */
 export function closeSpellModal() {
-    const modal = document.getElementById('spell-modal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    document.querySelector('spell-modal')?.close();
 }
 
 /**
- * Initialize spell modal event handlers
- * Should be called once on app initialization
+ * Whether the spell modal is currently open (used to special-case the
+ * Escape key ahead of the generic "close all modals" handling).
  */
-export function initSpellModal() {
-    const modal = document.getElementById('spell-modal');
-    if (!modal) return;
-
-    // Close button - only close spell modal, not all modals
-    const closeBtn = modal.querySelector('.close-modal');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeSpellModal();
-        });
-    }
-
-    // Backdrop click - only close spell modal
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            e.stopPropagation();
-            closeSpellModal();
-        }
-    });
+export function isSpellModalActive() {
+    return !!document.querySelector('spell-modal')?.isActive();
 }
 
 export default {
     showSpellModal,
     closeSpellModal,
-    initSpellModal,
+    isSpellModalActive,
     renderSpellBlock
 };

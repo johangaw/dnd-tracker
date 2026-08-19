@@ -33,26 +33,13 @@ function getTokenUrl(monster) {
 
 export async function showStatBlockByNameSource(name, source, comment = '') {
     const monster = await MonsterAPI.getMonster(name, source);
-    
+
     if (!monster) {
         alert('Could not load monster stats');
         return;
     }
 
-    const modal = document.getElementById('stat-block-modal');
-    document.getElementById('stat-block-name').textContent = monster.name;
-    
-    // Render base stat block
-    let html = renderStatBlock(monster, comment);
-    
-    // Fetch and append lair actions/regional effects if monster has legendaryGroup
-    const lairHtml = await renderLairSection(monster);
-    if (lairHtml) {
-        html += lairHtml;
-    }
-    
-    document.getElementById('stat-block-content').innerHTML = html;
-    modal.classList.add('active');
+    await showStatBlock(monster, comment);
 }
 
 // Show stat block for a monster object directly (used for custom monsters)
@@ -62,20 +49,16 @@ export async function showStatBlock(monster, comment = '') {
         return;
     }
 
-    const modal = document.getElementById('stat-block-modal');
-    document.getElementById('stat-block-name').textContent = monster.name;
-    
     // Render base stat block
     let html = renderStatBlock(monster, comment);
-    
+
     // Fetch and append lair actions/regional effects if monster has legendaryGroup
     const lairHtml = await renderLairSection(monster);
     if (lairHtml) {
         html += lairHtml;
     }
-    
-    document.getElementById('stat-block-content').innerHTML = html;
-    modal.classList.add('active');
+
+    document.querySelector('stat-block-modal')?.show(monster.name, html);
 }
 
 /**

@@ -5,10 +5,13 @@ import * as CustomMonsters from '../../services/customMonsters.js';
 import { getState, setView, setCurrentEncounter, setCombatState, setSelectedMonsterIndex, setSelectedInstanceIndex, setMonsterQuantity } from '../../services/state.js';
 import { escapeHtml, closeModals } from '../../utils/helpers.js';
 import { showStatBlockByNameSource, showStatBlock as showStatBlockModal } from '../modals/statBlock.js';
+import '../modals/encounter-monsters-modal/index.js';
+import '../modals/combat-monster-search-modal/index.js';
+import '../modals/combat-pc-modal/index.js';
+import '../modals/initiative-modal/index.js';
 
 class EncounterRunViewElement extends HTMLElement {
     cleanupController = null
-    combatSearchTimeout = null
 
     constructor() {
         super();
@@ -46,15 +49,20 @@ class EncounterRunViewElement extends HTMLElement {
                     <button id="next-turn-btn" class="btn btn-primary">Next Turn</button>
                 </div>
             </div>
+
+            <!-- Modals used only by this view -->
+            <encounter-monsters-modal id="encounter-monsters-modal" class="modal"></encounter-monsters-modal>
+            <combat-monster-search-modal id="combat-monster-search-modal" class="modal"></combat-monster-search-modal>
+            <combat-pc-modal id="combat-pc-modal" class="modal"></combat-pc-modal>
+            <initiative-modal id="initiative-modal" class="modal"></initiative-modal>
         `;
 
         this.setupEventHandlers();
-        this.setupModalEventHandlers();
+        this.setupModals();
     }
 
     disconnectedCallback() {
         this.cleanupController?.abort();
-        clearTimeout(this.combatSearchTimeout);
     }
 
     // Handlers for elements inside this component
@@ -84,10 +92,7 @@ class EncounterRunViewElement extends HTMLElement {
 
         // Add PC (opens modal)
         this.querySelector('#add-combat-pc-btn').addEventListener('click', () => {
-            document.getElementById('combat-pc-name').value = '';
-            document.getElementById('combat-pc-initiative').value = '';
-            document.getElementById('combat-pc-modal').classList.add('active');
-            document.getElementById('combat-pc-name').focus();
+            this.querySelector('combat-pc-modal').open();
         }, { signal });
 
         // Turn navigation
@@ -100,99 +105,26 @@ class EncounterRunViewElement extends HTMLElement {
     }
 
     // Handlers for the modals this view drives. They live outside the component
-    // (and are parsed after it), so listen on the document instead of on the
-    // modal elements themselves. The #hp-modal is shared with the character
-    // sheet, so its handlers defer to character mode when that owns the dialog.
-    setupModalEventHandlers() {
-        const signal = this.cleanupController.signal;
-        const isCharacterMode = () => !!(window.isCharacterHpModalActive && window.isCharacterHpModalActive());
-        const applyHP = () => isCharacterMode() ? window.saveCharacterHP() : this.applyHPDelta();
+    // (and hp-modal is parsed outside it, shared with the character sheet).
+    // Each modal owns its own control wiring and exposes callback
+    // registration methods, so this just connects them to this view's logic.
+    setupModals() {
+        this.querySelector('combat-pc-modal').onConfirm(({ name, initiative }) => {
+            this.addPCToCombat(name, initiative);
+        });
 
-        document.addEventListener('click', (e) => {
-            const target = e.target;
+        this.querySelector('initiative-modal').onSave((value) => {
+            this.saveInitiative(value);
+        });
 
-            // Confirm add PC
-            if (target.closest('#add-combat-pc-confirm')) {
-                const name = document.getElementById('combat-pc-name').value.trim();
-                const initiative = parseInt(document.getElementById('combat-pc-initiative').value) || 0;
-                if (name) this.addPCToCombat(name, initiative);
-                return;
-            }
-
-            // Monster quantity controls
-            if (target.closest('#qty-decrease') || target.closest('#qty-increase')) {
-                const state = getState();
-                const delta = target.closest('#qty-increase') ? 1 : -1;
-                setMonsterQuantity(Math.min(20, Math.max(1, state.monsterQuantity + delta)));
-                document.getElementById('monster-quantity').textContent = state.monsterQuantity;
-                return;
-            }
-
-            // Save initiative
-            if (target.closest('#save-initiative-btn')) {
-                this.saveInitiative();
-                return;
-            }
-
-            // HP quick adjust buttons stage a delta rather than applying it
-            const adjBtn = target.closest('.hp-controls .hp-adj-btn');
-            if (adjBtn) {
-                const amount = parseInt(adjBtn.dataset.amount);
-                if (isCharacterMode()) {
-                    window.addToCharacterHPDelta(amount);
-                } else {
-                    this.addToHPDelta(amount);
-                }
-                return;
-            }
-
-            if (target.closest('#hp-reset-btn')) {
-                this.resetHPDelta();
-                // Reset also clears the preview in character mode
-                if (isCharacterMode()) {
-                    document.getElementById('hp-preview').classList.add('hidden');
-                    document.getElementById('hp-custom-amount').classList.remove('damage', 'heal');
-                }
-                return;
-            }
-
-            if (target.closest('#hp-apply-btn')) {
-                applyHP();
-            }
-        }, { signal });
-
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'combat-monster-search-input') {
-                clearTimeout(this.combatSearchTimeout);
-                const query = e.target.value;
-                this.combatSearchTimeout = setTimeout(() => {
-                    this.searchCombatMonsters(query, document.getElementById('combat-monster-source-filter')?.value);
-                }, 300);
-                return;
-            }
-
-            if (e.target.id === 'hp-custom-amount') {
-                if (isCharacterMode()) {
-                    window.updateCharacterHPPreview();
-                } else {
-                    this.updateHPPreview();
-                }
-            }
-        }, { signal });
-
-        document.addEventListener('change', (e) => {
-            if (e.target.id !== 'combat-monster-source-filter') return;
-            const query = document.getElementById('combat-monster-search-input').value;
-            if (query.length >= 2) {
-                this.searchCombatMonsters(query, e.target.value);
-            }
-        }, { signal });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter') return;
-            if (e.target.id === 'initiative-input') this.saveInitiative();
-            else if (e.target.id === 'hp-custom-amount') applyHP();
-        }, { signal });
+        this.querySelector('combat-monster-search-modal').onSearch((query, source) => {
+            this.searchCombatMonsters(query, source);
+        });
+        this.querySelector('combat-monster-search-modal').onQuantityDelta((delta) => {
+            const state = getState();
+            setMonsterQuantity(Math.min(20, Math.max(1, state.monsterQuantity + delta)));
+            this.querySelector('combat-monster-search-modal').setQuantity(state.monsterQuantity);
+        });
     }
 
     // Initialize run mode (combat)
@@ -603,18 +535,13 @@ class EncounterRunViewElement extends HTMLElement {
         setSelectedMonsterIndex(combatantIndex);
         const combatant = state.combatState.combatants[combatantIndex];
 
-        document.getElementById('initiative-modal-title').textContent = `${combatant.name} Initiative`;
-        document.getElementById('initiative-input').value = combatant.initiative;
-        document.getElementById('initiative-modal').classList.add('active');
-        document.getElementById('initiative-input').focus();
-        document.getElementById('initiative-input').select();
+        this.querySelector('initiative-modal').open(`${combatant.name} Initiative`, combatant.initiative);
     }
 
-    saveInitiative() {
+    saveInitiative(newInit) {
         const state = getState();
         if (state.selectedMonsterIndex === null) return;
 
-        const newInit = parseInt(document.getElementById('initiative-input').value) || 0;
         state.combatState.combatants[state.selectedMonsterIndex].initiative = newInit;
 
         // Re-sort combatants by initiative
@@ -633,34 +560,51 @@ class EncounterRunViewElement extends HTMLElement {
         const state = getState();
         setSelectedMonsterIndex(combatantIndex);
         const combatant = state.combatState.combatants[combatantIndex];
+        const modal = document.querySelector('hp-modal');
 
-        const modal = document.getElementById('hp-modal');
-        const instanceSelector = document.getElementById('hp-instance-selector');
+        modal.configure({
+            onAdjust: (amount) => this.addToHPDelta(amount),
+            onReset: () => this.resetHPDelta(),
+            onApply: () => this.applyHPDelta(),
+            onAmountInput: () => this.updateHPPreview(),
+            onInstanceSelect: (idx) => this.selectHPInstance(idx),
+        });
 
-        document.getElementById('hp-modal-title').textContent = `${combatant.name} HP`;
-        document.getElementById('hp-custom-amount').value = '0';
+        modal.setTitle(`${combatant.name} HP`);
+        modal.setAmount(0);
+        modal.hideCharacterFields();
+        modal.hideTempDisplay();
 
         // Show instance selector if multiple instances
         if (combatant.instances.length > 1) {
             setSelectedInstanceIndex(0);
-            instanceSelector.classList.remove('hidden');
             this.renderInstanceSelector(combatant);
         } else {
             setSelectedInstanceIndex(0);
-            instanceSelector.classList.add('hidden');
+            modal.hideInstanceSelector();
         }
 
         const instance = combatant.instances[state.selectedInstanceIndex];
         this.updateHPDisplay(instance.hp, instance.maxHp);
         this.updateHPPreview();
 
-        modal.classList.add('active');
+        modal.open();
+    }
+
+    selectHPInstance(index) {
+        const state = getState();
+        setSelectedInstanceIndex(index);
+        document.querySelector('hp-modal').setAmount(0);
+        const selected = state.combatState.combatants[state.selectedMonsterIndex];
+        const instance = selected.instances[state.selectedInstanceIndex];
+        this.updateHPDisplay(instance.hp, instance.maxHp);
+        this.updateHPPreview();
+        this.renderInstanceSelector(selected);
     }
 
     renderInstanceSelector(combatant) {
         const state = getState();
-        const container = document.getElementById('hp-instance-selector');
-        container.innerHTML = combatant.instances.map((inst, idx) => {
+        const html = combatant.instances.map((inst, idx) => {
             const isDead = inst.hp <= 0;
             const isActive = idx === state.selectedInstanceIndex;
             return `
@@ -671,65 +615,41 @@ class EncounterRunViewElement extends HTMLElement {
             `;
         }).join('');
 
-        container.querySelectorAll('.instance-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                setSelectedInstanceIndex(parseInt(btn.dataset.instance));
-                document.getElementById('hp-custom-amount').value = '0';
-                const selected = state.combatState.combatants[state.selectedMonsterIndex];
-                const instance = selected.instances[state.selectedInstanceIndex];
-                this.updateHPDisplay(instance.hp, instance.maxHp);
-                this.updateHPPreview();
-                this.renderInstanceSelector(selected);
-            });
-        });
+        document.querySelector('hp-modal').showInstanceSelector(html);
     }
 
     updateHPDisplay(current, max) {
-        const display = document.querySelector('.hp-display');
-        document.getElementById('current-hp').textContent = current;
-        document.getElementById('max-hp').textContent = max;
-
-        const percent = current / max;
-        display.classList.remove('low', 'critical');
-        if (percent <= 0.25) display.classList.add('critical');
-        else if (percent <= 0.5) display.classList.add('low');
+        document.querySelector('hp-modal').setHpDisplay(current, max);
     }
 
     updateHPPreview() {
         const state = getState();
-        const input = document.getElementById('hp-custom-amount');
-        const preview = document.getElementById('hp-preview');
-        const previewValue = document.getElementById('hp-preview-value');
-
-        const delta = parseInt(input.value) || 0;
+        const modal = document.querySelector('hp-modal');
+        const delta = modal.getAmount();
 
         if (delta === 0) {
-            preview.classList.add('hidden');
-            input.classList.remove('damage', 'heal');
+            modal.hidePreview();
+            modal.setAmountTone(null);
             return;
         }
 
-        preview.classList.remove('hidden');
-        input.classList.remove('damage', 'heal');
-        input.classList.add(delta < 0 ? 'damage' : 'heal');
+        modal.setAmountTone(delta < 0 ? 'damage' : 'heal');
 
         // Calculate and show preview
         const combatant = state.combatState.combatants[state.selectedMonsterIndex];
         const instance = combatant.instances[state.selectedInstanceIndex];
         const newHp = Math.max(0, Math.min(instance.maxHp, instance.hp + delta));
-        previewValue.textContent = newHp;
-        previewValue.classList.toggle('dead', newHp <= 0);
+        modal.showPreview(newHp, newHp <= 0);
     }
 
     addToHPDelta(amount) {
-        const input = document.getElementById('hp-custom-amount');
-        const currentValue = parseInt(input.value) || 0;
-        input.value = currentValue + amount;
+        const modal = document.querySelector('hp-modal');
+        modal.setAmount(modal.getAmount() + amount);
         this.updateHPPreview();
     }
 
     resetHPDelta() {
-        document.getElementById('hp-custom-amount').value = '0';
+        document.querySelector('hp-modal').setAmount(0);
         this.updateHPPreview();
     }
 
@@ -737,8 +657,8 @@ class EncounterRunViewElement extends HTMLElement {
         const state = getState();
         if (state.selectedMonsterIndex === null) return;
 
-        const input = document.getElementById('hp-custom-amount');
-        const delta = parseInt(input.value) || 0;
+        const modal = document.querySelector('hp-modal');
+        const delta = modal.getAmount();
 
         if (delta === 0) return;
 
@@ -747,7 +667,7 @@ class EncounterRunViewElement extends HTMLElement {
         instance.hp = Math.max(0, Math.min(instance.maxHp, instance.hp + delta));
 
         this.updateHPDisplay(instance.hp, instance.maxHp);
-        input.value = '0';
+        modal.setAmount(0);
         this.updateHPPreview();
 
         // Update instance selector if visible
@@ -780,14 +700,14 @@ class EncounterRunViewElement extends HTMLElement {
 
     // Combat monster search
     async searchCombatMonsters(query, source) {
-        const results = document.getElementById('combat-monster-search-results');
+        const modal = this.querySelector('combat-monster-search-modal');
 
         if (query.length < 2) {
-            results.innerHTML = '<div class="search-empty">Type at least 2 characters...</div>';
+            modal.setResultsHtml('<div class="search-empty">Type at least 2 characters...</div>');
             return;
         }
 
-        results.innerHTML = '<div class="search-loading">Searching...</div>';
+        modal.setResultsHtml('<div class="search-loading">Searching...</div>');
 
         try {
             // Search custom monsters when no source filter is active, when showing custom only,
@@ -805,11 +725,11 @@ class EncounterRunViewElement extends HTMLElement {
             const monsters = [...customMonsters, ...apiMonsters];
 
             if (monsters.length === 0) {
-                results.innerHTML = '<div class="search-empty">No monsters found</div>';
+                modal.setResultsHtml('<div class="search-empty">No monsters found</div>');
                 return;
             }
 
-            results.innerHTML = monsters.map(m => {
+            modal.setResultsHtml(monsters.map(m => {
                 const isCustom = m.isCustom || m.source === 'Custom';
                 return `
                 <div class="search-result-item" data-name="${escapeHtml(m.name)}" data-source="${m.source}" data-id="${m.id || ''}">
@@ -820,17 +740,18 @@ class EncounterRunViewElement extends HTMLElement {
                     <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}" data-id="${m.id || ''}">Stats</button>
                 </div>
                 `;
-            }).join('');
+            }).join(''));
+
+            const results = modal.getResultsElement();
 
             // Add click handler for adding monster
             results.querySelectorAll('.search-result-info').forEach(item => {
                 item.addEventListener('click', async () => {
-                    const state = getState();
                     const parent = item.closest('.search-result-item');
                     const name = parent.dataset.name;
                     const source = parent.dataset.source;
                     const id = parent.dataset.id;
-                    await this.addMonsterToCombat(name, source, state.monsterQuantity, false, id || null);
+                    await this.addMonsterToCombat(name, source, modal.getQuantity(), false, id || null);
                 });
             });
 
@@ -854,32 +775,29 @@ class EncounterRunViewElement extends HTMLElement {
                 });
             });
         } catch (error) {
-            results.innerHTML = '<div class="search-empty">Error searching monsters</div>';
+            modal.setResultsHtml('<div class="search-empty">Error searching monsters</div>');
         }
     }
 
     // Show combat monster search modal
     showCombatMonsterSearch() {
         setMonsterQuantity(1);
-        document.getElementById('monster-quantity').textContent = '1';
-        document.getElementById('combat-monster-search-input').value = '';
-        document.getElementById('combat-monster-search-results').innerHTML =
-            '<div class="search-empty">Type to search for monsters...</div>';
-        document.getElementById('combat-monster-search-modal').classList.add('active');
-        document.getElementById('combat-monster-search-input').focus();
+        const modal = this.querySelector('combat-monster-search-modal');
+        modal.setQuantity(1);
+        modal.open();
     }
 
     // Show encounter monsters modal for quick adding
     showEncounterMonstersModal() {
         const state = getState();
-        const container = document.getElementById('encounter-monsters-list');
+        const modal = this.querySelector('encounter-monsters-modal');
 
         // Get unique monsters from the encounter
         const encounterMonsters = state.currentEncounter?.monsters || [];
 
         if (encounterMonsters.length === 0) {
-            container.innerHTML = '<div class="search-empty">No monsters in this encounter</div>';
-            document.getElementById('encounter-monsters-modal').classList.add('active');
+            modal.setContent('<div class="search-empty">No monsters in this encounter</div>');
+            modal.open();
             return;
         }
 
@@ -903,7 +821,7 @@ class EncounterRunViewElement extends HTMLElement {
             }
         });
 
-        container.innerHTML = Object.values(uniqueMonsters).map(m => {
+        modal.setContent(Object.values(uniqueMonsters).map(m => {
             const key = `${m.name}|${m.source}`;
             const inCombat = combatCounts[key] || 0;
             return `
@@ -915,7 +833,9 @@ class EncounterRunViewElement extends HTMLElement {
                 <span class="in-combat-count ${inCombat > 0 ? 'has-count' : ''}" data-name="${escapeHtml(m.name)}" data-source="${m.source}">${inCombat > 0 ? inCombat : ''}</span>
                 <button class="btn btn-small view-stats-btn" data-name="${escapeHtml(m.name)}" data-source="${m.source}">Stats</button>
             </div>
-        `}).join('');
+        `}).join(''));
+
+        const container = modal.getContentElement();
 
         // Add click handlers for adding monster
         container.querySelectorAll('.encounter-monster-item .search-result-info').forEach(item => {
@@ -953,7 +873,7 @@ class EncounterRunViewElement extends HTMLElement {
             });
         });
 
-        document.getElementById('encounter-monsters-modal').classList.add('active');
+        modal.open();
     }
 }
 
