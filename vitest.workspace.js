@@ -2,8 +2,9 @@
 //
 // The app tests drive real DOM through happy-dom and rely on tests/setup.js,
 // which imports js/main.js eagerly to register the custom elements. The Lambda
-// tests exercise plain server-side modules and must NOT load that setup, since
-// there is no document for it to touch.
+// and tooling tests exercise plain server-side modules - one of them binds real
+// sockets - and must NOT load that setup, since there is no document for it to
+// touch.
 
 export default [
     {
@@ -17,9 +18,9 @@ export default [
     },
     {
         test: {
-            name: 'lambda',
+            name: 'node',
             environment: 'node',
-            include: ['tests/lambda/**/*.test.js'],
+            include: ['tests/lambda/**/*.test.js', 'tests/tools/**/*.test.js'],
             globals: true
         }
     }

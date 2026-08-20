@@ -17,6 +17,7 @@ applied by hand because it is what grants CI its permissions in the first place.
 |---|---|
 | `bin/app.js` | CDK entry point; declares both stacks |
 | `lib/app-stack.js` | Everything: S3, CloudFront, Cognito, DynamoDB, Lambda, HTTP API |
+| `lib/csp.mjs` | The Content-Security-Policy, shared by the stack, the check and the dev server |
 | `lib/github-oidc-stack.js` | The IAM role GitHub Actions assumes. Bootstrap only |
 | `lambda/` | The sync handler. Plain `.mjs`, no dependencies, no build step |
 | `deploy.sh` | Uploads the app and invalidates the cache. CI runs this same script |
@@ -109,12 +110,36 @@ node csp-check.mjs               # after adding any new external resource
 
 `csp-check.mjs` needs a browser once: `npx playwright install chromium`.
 
-`npm run dev` at the root serves the app on `http://localhost:3000`. Sign-in
-works there — that origin is a registered Cognito callback, and Cognito's token
-endpoint allows any origin — but syncing does not, because `/api` only exists
-behind CloudFront. To exercise sync locally, put a proxy in front that forwards
-`/api` to the `ApiEndpoint` output, or point `CONFIG.apiBase` at that endpoint
-and add a CORS rule to the HTTP API for the duration.
+## Running the app locally
+
+```sh
+npm run dev        # http://localhost:3000
+```
+
+[`scripts/dev-server.mjs`](../scripts/dev-server.mjs) stands in for CloudFront,
+because a plain static file server is not a fair test of anything: it does not
+serve the API from the app's own origin, it does not rewrite extensionless paths
+to the app shell, and it sends no Content-Security-Policy. UI work developed
+against one of those only meets the real conditions after it is merged.
+
+So the dev server does all three. `/api/*` is proxied to the **deployed** HTTP
+API, which keeps every request same-origin exactly as in production — no CORS is
+involved locally, just as none is involved in production. It finds the endpoint
+from the `ApiEndpoint` stack output using your AWS credentials; set
+`API_ENDPOINT` to override, or `PORT` to move off 3000.
+
+Sign-in works locally too: `http://localhost:3000/` is a registered Cognito
+callback URL, PKCE's secure-context requirement treats localhost as secure, and
+Cognito's token endpoint accepts any origin. Port 3000 is the only port where
+this holds — the callback URL is registered, not inferred.
+
+None of it is required. With no AWS credentials and an empty `js/config.js` the
+server still runs and the app is fully usable offline, which is how it shipped
+before sync existed; the startup banner says which of the three are active.
+
+The parity is covered by `tests/tools/dev-server.test.js`, so a change to the
+CloudFront behaviours that is not mirrored here shows up as a failing test
+rather than as a surprise after deploying.
 
 ## Things that are load-bearing
 

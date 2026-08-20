@@ -17,7 +17,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildContentSecurityPolicy } from './lib/app-stack.js';
+import { buildContentSecurityPolicy } from './lib/csp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4322;

@@ -4,7 +4,7 @@
   "description": "D&D Encounter Tracker - A web app for managing D&D 5e combat encounters",
   "type": "module",
   "scripts": {
-    "dev": "npx serve .",
+    "dev": "node scripts/dev-server.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
