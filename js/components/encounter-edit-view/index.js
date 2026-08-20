@@ -4,15 +4,19 @@ import * as Storage from '../../services/storage.js';
 import * as MonsterAPI from '../../services/monsterApi.js';
 import * as CustomMonsters from '../../services/customMonsters.js';
 import { getState, setView, setEditingEncounter, setEditingMonsterIndex } from '../../services/state.js';
-import * as Router from '../../utils/router.js';
-import { escapeHtml, closeModals, showToast } from '../../utils/helpers.js';
+import { escapeHtml, closeModals } from '../../utils/helpers.js';
 import { showStatBlockByNameSource, showStatBlock } from '../modals/statBlock.js';
 import { searchMonsters as searchMonsterModal } from '../modals/monsterSearchModal.js';
 import { uuid } from '../../utils/uuid.js';
+import { createAutosave, bindFormAutosave } from '../../utils/autosave.js';
 
 class EncounterEditViewElement extends HTMLElement {
     cleanupController = null
     searchTimeout = null
+    autosave = createAutosave(() => this.persist())
+    // Suppressed while the form is being populated, so painting the existing
+    // encounter into the fields is not mistaken for an edit.
+    autosaveReady = false
 
     constructor() {
         super();
@@ -62,10 +66,7 @@ class EncounterEditViewElement extends HTMLElement {
                     </label>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Encounter</button>
-                    <button type="button" id="delete-encounter-btn" class="btn btn-danger hidden">Delete</button>
-                </div>
+                <p id="encounter-title-required" class="error-text hidden">Add a title to save this encounter.</p>
             </form>
 
             <!-- Monster Search Modal -->
@@ -120,14 +121,20 @@ class EncounterEditViewElement extends HTMLElement {
         const form = this.querySelector('#encounter-form');
         const addPcBtn = this.querySelector('#add-pc-btn');
         const addMonsterBtn = this.querySelector('#add-monster-btn');
-        const deleteBtn = this.querySelector('#delete-encounter-btn');
         const saveDmNotesBtn = this.querySelector('#save-dm-notes-btn');
         const monsterSearchInput = this.querySelector('#monster-search-input');
         const monsterSourceFilter = this.querySelector('#monster-source-filter');
         const closeModalsButtons = this.querySelectorAll('.close-modal');
 
-        // Form submission
-        form.addEventListener('submit', (e) => this.handleFormSubmit(e), {signal: this.cleanupController.signal});
+        // There is no save button; every edit is persisted as it is made.
+        // Enter in a text field still submits the form, so swallow that and
+        // treat it as a commit.
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.autosave.saveNow();
+        }, {signal: this.cleanupController.signal});
+
+        bindFormAutosave(form, this.autosave, this.cleanupController.signal);
 
         // Add PC button
         addPcBtn.addEventListener('click', () => this.addPC(), {signal: this.cleanupController.signal});
@@ -152,9 +159,6 @@ class EncounterEditViewElement extends HTMLElement {
             }
         }, {signal: this.cleanupController.signal});
 
-        // Delete encounter button
-        deleteBtn.addEventListener('click', () => this.deleteEncounter(), {signal: this.cleanupController.signal});
-
         // Save DM notes button
         saveDmNotesBtn.addEventListener('click', () => this.saveDMNotes(), {signal: this.cleanupController.signal});
 
@@ -169,6 +173,8 @@ class EncounterEditViewElement extends HTMLElement {
 
     render(encounter = null) {
         const state = getState();
+        this.autosaveReady = false;
+        this.autosave.cancel();
         
         const editingEncounter = encounter || {
             id: uuid(),
@@ -186,16 +192,37 @@ class EncounterEditViewElement extends HTMLElement {
         this.querySelector('#encounter-description').value = editingEncounter.description || '';
         this.querySelector('#auto-add-monsters').checked = editingEncounter.autoAddMonsters || false;
         
-        const deleteBtn = this.querySelector('#delete-encounter-btn');
-        if (encounter) {
-            deleteBtn.classList.remove('hidden');
-        } else {
-            deleteBtn.classList.add('hidden');
-        }
+        this.querySelector('#encounter-title-required').classList.add('hidden');
 
         this.renderPCList();
         this.renderMonsterList();
         setView('encounter-edit');
+        this.autosaveReady = true;
+    }
+
+    // Persist the encounter as it currently stands. An encounter with no title
+    // is not written at all: a title is what identifies it in the list, and a
+    // brand new encounter should not appear there the moment it is opened.
+    persist() {
+        const state = getState();
+        const encounter = state.editingEncounter;
+        if (!this.autosaveReady || !encounter) return;
+
+        encounter.title = this.querySelector('#encounter-title').value;
+        encounter.description = this.querySelector('#encounter-description').value;
+        encounter.autoAddMonsters = this.querySelector('#auto-add-monsters').checked;
+
+        const hasTitle = !!encounter.title.trim();
+        this.querySelector('#encounter-title-required').classList.toggle('hidden', hasTitle);
+        if (!hasTitle) return;
+
+        // PCs are dropped from the stored copy while their name is still blank,
+        // but kept in the editing state so a freshly added row does not vanish
+        // from under the cursor.
+        Storage.saveEncounter({
+            ...encounter,
+            pcs: (encounter.pcs || []).filter(pc => pc.name.trim())
+        });
     }
 
     renderPCList() {
@@ -211,6 +238,8 @@ class EncounterEditViewElement extends HTMLElement {
                 </button>
             </div>
         `).join('');
+
+        this.autosave.saveNow();
 
         // Add event listeners
         container.querySelectorAll('.pc-name-input').forEach((input, index) => {
@@ -248,6 +277,8 @@ class EncounterEditViewElement extends HTMLElement {
                 </button>
             </div>
         `).join('');
+
+        this.autosave.saveNow();
 
         // Notes buttons
         container.querySelectorAll('.notes-btn').forEach(btn => {
@@ -388,27 +419,9 @@ class EncounterEditViewElement extends HTMLElement {
         this.querySelector('#monster-search-input').focus();
     }
 
-    handleFormSubmit(e) {
-        e.preventDefault();
-        const state = getState();
-        
-        state.editingEncounter.title = this.querySelector('#encounter-title').value;
-        state.editingEncounter.description = this.querySelector('#encounter-description').value;
-        state.editingEncounter.autoAddMonsters = this.querySelector('#auto-add-monsters').checked;
-        
-        // Filter out empty PCs
-        state.editingEncounter.pcs = state.editingEncounter.pcs.filter(pc => pc.name.trim());
-        
-        Storage.saveEncounter(state.editingEncounter);
-        Router.navigateToList('encounters');
-    }
-
-    deleteEncounter() {
-        const state = getState();
-        if (confirm('Delete this encounter?')) {
-            Storage.deleteEncounter(state.editingEncounter.id);
-            Router.navigateToList('encounters');
-        }
+    // Called when leaving the view, so a debounced keystroke is not lost.
+    flushAutosave() {
+        this.autosave.flush();
     }
 }
 

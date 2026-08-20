@@ -336,6 +336,13 @@ export async function submitForm(formSelector) {
   await tick()
 }
 
+// Leave an edit view through the header back button. The edit views autosave,
+// so this is how an edit session ends - there is no save button to click.
+export async function leaveEditView() {
+  await click('#back-btn')
+  await tick()
+}
+
 // Wait for next tick (microtask)
 export function tick(ms = 10) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -473,8 +480,8 @@ export async function createEncounterViaUI({ title, description = '', pcs = [], 
     await setChecked('#auto-add-monsters', true)
   }
   
-  // Save the encounter
-  await submitForm('#encounter-form')
+  // Nothing to submit: the form autosaves. Leave it the way a user would.
+  await leaveEditView()
 }
 
 // Helper to add a monster to encounter (requires monster search modal to be working)

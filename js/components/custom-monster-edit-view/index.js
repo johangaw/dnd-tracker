@@ -2,10 +2,10 @@
 
 import * as CustomMonsters from '../../services/customMonsters.js';
 import { getState, setView } from '../../services/state.js';
-import * as Router from '../../utils/router.js';
 import { escapeHtml } from '../../utils/helpers.js';
 import { getHP, getAC, getProficiencyBonus } from '../../services/monsterApi.js';
 import { showStatBlock } from '../modals/statBlock.js';
+import { createAutosave, bindFormAutosave } from '../../utils/autosave.js';
 
 const SIZE_OPTIONS = [
     ['T', 'Tiny'], ['S', 'Small'], ['M', 'Medium'],
@@ -33,6 +33,10 @@ const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 class CustomMonsterEditViewElement extends HTMLElement {
     cleanupController = null
+    autosave = createAutosave(() => this.persist())
+    // Suppressed while the form is being populated, so painting the existing
+    // monster into the fields is not mistaken for an edit.
+    autosaveReady = false
 
     constructor() {
         super();
@@ -231,10 +235,10 @@ class CustomMonsterEditViewElement extends HTMLElement {
                     <div id="legendary-list" class="item-list"></div>
                 </div>
 
+                <p id="monster-name-required" class="error-text hidden">Add a name to save this monster.</p>
+
                 <div class="form-actions">
                     <button type="button" id="preview-monster-btn" class="btn">Preview</button>
-                    <button type="submit" class="btn btn-primary">Save Monster</button>
-                    <button type="button" id="delete-monster-btn" class="btn btn-danger hidden">Delete</button>
                 </div>
             </form>
         `;
@@ -249,15 +253,18 @@ class CustomMonsterEditViewElement extends HTMLElement {
     setupEventHandlers() {
         const signal = this.cleanupController.signal;
 
-        // Form submission
-        this.querySelector('#custom-monster-form').addEventListener('submit', (e) => {
+        // There is no save button; every edit is persisted as it is made.
+        // Enter in a text field still submits the form, so swallow that and
+        // treat it as a commit.
+        const form = this.querySelector('#custom-monster-form');
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.saveMonster();
+            this.autosave.saveNow();
         }, {signal});
 
-        // Preview / delete buttons
+        bindFormAutosave(form, this.autosave, signal);
+
         this.querySelector('#preview-monster-btn').addEventListener('click', () => this.previewMonster(), {signal});
-        this.querySelector('#delete-monster-btn').addEventListener('click', () => this.deleteMonster(), {signal});
 
         // Add-item buttons
         this.querySelector('#add-trait-btn').addEventListener('click', () => this.addTrait(), {signal});
@@ -301,6 +308,9 @@ class CustomMonsterEditViewElement extends HTMLElement {
 
         if (!monster) return;
 
+        this.autosaveReady = false;
+        this.autosave.cancel();
+
         // Basic info
         this.field('monster-name').value = monster.name || '';
         this.field('monster-size').value = Array.isArray(monster.size) ? monster.size[0] : (monster.size || 'M');
@@ -341,13 +351,28 @@ class CustomMonsterEditViewElement extends HTMLElement {
         this.renderSpellcasting();
         this.renderLegendaryActions();
 
-        // Show delete button only for existing monsters
-        const deleteBtn = this.field('delete-monster-btn');
-        if (monster.id && CustomMonsters.getCustomMonster(monster.id)) {
-            deleteBtn.classList.remove('hidden');
-        } else {
-            deleteBtn.classList.add('hidden');
-        }
+        this.field('monster-name-required').classList.add('hidden');
+
+        this.autosaveReady = true;
+    }
+
+    // Persist the monster as it currently stands. A monster with no name is not
+    // written at all: the name is what identifies it in the list, and a brand
+    // new monster should not appear there the moment it is opened.
+    persist() {
+        if (!this.autosaveReady || !getState().editingMonster) return;
+
+        const monster = this.collectFormData();
+        const hasName = !!monster.name;
+        this.field('monster-name-required').classList.toggle('hidden', hasName);
+        if (!hasName) return;
+
+        CustomMonsters.saveCustomMonster(monster);
+    }
+
+    // Called when leaving the view, so a debounced keystroke is not lost.
+    flushAutosave() {
+        this.autosave.flush();
     }
 
     // Render a name/description item list (traits, actions, bonus actions, reactions, legendary)
@@ -355,6 +380,8 @@ class CustomMonsterEditViewElement extends HTMLElement {
         const state = getState();
         const container = this.field(containerId);
         const items = state.editingMonster[key] || [];
+
+        this.autosave.saveNow();
 
         if (items.length === 0) {
             container.innerHTML = `<p class="empty-hint">${emptyHint}</p>`;
@@ -471,6 +498,8 @@ class CustomMonsterEditViewElement extends HTMLElement {
         const container = this.field('spellcasting-list');
 
         const spellcasting = monster.spellcasting || [];
+
+        this.autosave.saveNow();
 
         if (spellcasting.length === 0) {
             container.innerHTML = '<p class="empty-hint">No spellcasting added</p>';
@@ -679,33 +708,6 @@ class CustomMonsterEditViewElement extends HTMLElement {
         }
 
         showStatBlock(monster);
-    }
-
-    // Collect form data and save monster
-    saveMonster() {
-        const monster = this.collectFormData();
-
-        if (!monster.name) {
-            alert('Monster name is required');
-            return;
-        }
-
-        CustomMonsters.saveCustomMonster(monster);
-
-        // Return to list
-        Router.navigateToList('monsters');
-    }
-
-    // Delete current monster
-    deleteMonster() {
-        const monster = getState().editingMonster;
-
-        if (monster && monster.id) {
-            if (confirm(`Delete "${monster.name}"?`)) {
-                CustomMonsters.deleteCustomMonster(monster.id);
-                Router.navigateToList('monsters');
-            }
-        }
     }
 
     // Update proficiency bonus display based on CR

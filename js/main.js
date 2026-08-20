@@ -4,7 +4,7 @@ import * as Storage from './services/storage.js';
 import * as MonsterAPI from './services/monsterApi.js';
 import * as CustomMonsters from './services/customMonsters.js';
 import * as Characters from './services/characters.js';
-import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setImportingCharacter, setCharacterEditSource } from './services/state.js';
+import { getState, setView, setMonsterQuantity, setImportingEncounter, setImportingMonster, setImportingCharacter, setCharacterEditSource, flushActiveView } from './services/state.js';
 import { closeModals, showToast } from './utils/helpers.js';
 import * as Router from './utils/router.js';
 
@@ -39,6 +39,14 @@ let initialized = false;
 function initEventHandlers() {
     if (initialized) return;
     initialized = true;
+    // The edit views autosave, and typing is debounced. Backgrounding the app
+    // (or closing the tab) has to commit whatever is still pending, because on
+    // mobile the page may never get another chance to run.
+    window.addEventListener('pagehide', flushActiveView);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushActiveView();
+    });
+
     // Back button
     document.getElementById('back-btn').addEventListener('click', () => {
         const state = getState();

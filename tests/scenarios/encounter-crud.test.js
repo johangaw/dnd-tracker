@@ -6,7 +6,7 @@ import {
   initApp, 
   click, 
   type, 
-  submitForm, 
+  leaveEditView,
   tick,
   exists, 
   isVisible, 
@@ -57,8 +57,9 @@ describe('Encounter CRUD', () => {
 
     it('creates a simple encounter with just a title', async () => {
       await click('#new-encounter-btn')
+      await click('#encounter-choice-create-new')
       await type('#encounter-title', 'Goblin Ambush')
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       // Should return to list view
       expect(isVisible('#encounter-list-view')).toBe(true)
@@ -74,9 +75,10 @@ describe('Encounter CRUD', () => {
 
     it('creates an encounter with title and description', async () => {
       await click('#new-encounter-btn')
+      await click('#encounter-choice-create-new')
       await type('#encounter-title', 'Forest Encounter')
       await type('#encounter-description', 'A group of bandits blocks the road')
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       const encounters = getStoredEncounters()
       expect(encounters[0].description).toBe('A group of bandits blocks the road')
@@ -84,6 +86,7 @@ describe('Encounter CRUD', () => {
 
     it('creates an encounter with PCs', async () => {
       await click('#new-encounter-btn')
+      await click('#encounter-choice-create-new')
       await type('#encounter-title', 'Party Fight')
       
       // Add first PC
@@ -96,7 +99,7 @@ describe('Encounter CRUD', () => {
       const pcInputs2 = getAll('.pc-name-input')
       await type(pcInputs2[1], 'Gandalf')
       
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       const encounters = getStoredEncounters()
       expect(encounters[0].pcs).toHaveLength(2)
@@ -106,9 +109,10 @@ describe('Encounter CRUD', () => {
 
     it('creates an encounter with auto-add monsters setting enabled', async () => {
       await click('#new-encounter-btn')
+      await click('#encounter-choice-create-new')
       await type('#encounter-title', 'Auto Combat')
       await setChecked('#auto-add-monsters', true)
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       const encounters = getStoredEncounters()
       expect(encounters[0].autoAddMonsters).toBe(true)
@@ -127,7 +131,7 @@ describe('Encounter CRUD', () => {
       const inputs = getAll('.pc-name-input')
       await type(inputs[1], 'Fighter')
       
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       const encounters = getStoredEncounters()
       expect(encounters[0].pcs).toHaveLength(1)
@@ -206,7 +210,7 @@ describe('Encounter CRUD', () => {
       titleInput.value = ''
       await type('#encounter-title', 'Updated Title')
       
-      await submitForm('#encounter-form')
+      await leaveEditView()
       
       // Should be back to list with updated title
       expect(document.body.textContent).toContain('Updated Title')
@@ -217,12 +221,13 @@ describe('Encounter CRUD', () => {
       expect(encounters[0].title).toBe('Updated Title')
     })
 
-    it('shows delete button when editing existing encounter', async () => {
+    it('has no save or delete buttons - edits autosave', async () => {
       const card = document.querySelector('.encounter-card')
       await longPress(card)
       await click('#context-menu [data-action="edit"]')
-      
-      expect(isVisible('#delete-encounter-btn')).toBe(true)
+
+      expect(exists('#delete-encounter-btn')).toBe(false)
+      expect(exists('#encounter-form [type="submit"]')).toBe(false)
     })
   })
 

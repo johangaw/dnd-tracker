@@ -5,8 +5,14 @@ import * as Spells from '../../services/spells.js';
 import * as ClassFeatures from '../../services/classFeatures.js';
 import * as ClassSpellLists from '../../data/classSpellLists.js';
 import { getState, setView } from '../../services/state.js';
-import * as Router from '../../utils/router.js';
 import { escapeHtml, showToast } from '../../utils/helpers.js';
+import { createAutosave, bindFormAutosave } from '../../utils/autosave.js';
+
+// The character sheet has no Save button: edits are persisted as they are made.
+// Autosave stays off while the form is being populated, so painting an existing
+// character into the fields is not mistaken for an edit.
+let autosaveReady = false;
+const autosave = createAutosave(() => persistCharacter());
 
 // Feature picker state
 let featurePickerState = {
@@ -383,11 +389,7 @@ class CharacterEditViewElement extends HTMLElement {
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="button" id="cancel-character-btn" class="btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Character</button>
-                    <button type="button" id="delete-character-btn" class="btn btn-danger hidden">Delete</button>
-                </div>
+                <p id="char-name-required" class="error-text hidden">Add a name to save this character.</p>
             </form>
 
             <!-- Spell Picker Modal -->
@@ -502,39 +504,16 @@ class CharacterEditViewElement extends HTMLElement {
     setupEventHandlers() {
         const signal = this.cleanupController.signal;
 
-        // Character form submit
-        this.querySelector('#character-form').addEventListener('submit', (e) => {
+        // There is no save button; every edit is persisted as it is made.
+        // Enter in a text field still submits the form, so swallow that and
+        // treat it as a commit.
+        const form = this.querySelector('#character-form');
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const savedCharacter = saveCharacter();
-            if (savedCharacter) {
-                // Navigate based on where we came from
-                const state = getState();
-                if (state.characterEditSource === 'view') {
-                    Router.navigateToItem('characters', savedCharacter.id);
-                } else {
-                    Router.navigateToList('characters');
-                }
-            }
+            autosave.saveNow();
         }, {signal});
 
-        // Cancel character edit
-        this.querySelector('#cancel-character-btn').addEventListener('click', () => {
-            const state = getState();
-            const routeInfo = Router.parseHash();
-            if (state.characterEditSource === 'view' && routeInfo.id) {
-                Router.navigateToItem('characters', routeInfo.id);
-            } else {
-                Router.navigateToList('characters');
-            }
-        }, {signal});
-
-        // Delete character button
-        this.querySelector('#delete-character-btn').addEventListener('click', () => {
-            if (deleteCharacter()) {
-                // Always go to list after delete
-                Router.navigateToList('characters');
-            }
-        }, {signal});
+        bindFormAutosave(form, autosave, signal);
 
         // Character level change - update proficiency
         this.querySelector('#char-level').addEventListener('change', () => {
@@ -669,6 +648,11 @@ class CharacterEditViewElement extends HTMLElement {
     renderForm() {
         renderForm();
     }
+
+    // Called when leaving the view, so a debounced keystroke is not lost.
+    flushAutosave() {
+        autosave.flush();
+    }
 }
 
 // Initialize the edit form with a character (or empty for new)
@@ -691,6 +675,9 @@ export function renderForm() {
     const character = state.editingCharacter;
 
     if (!character) return;
+
+    autosaveReady = false;
+    autosave.cancel();
 
     // Basic Info
     setInputValue('char-name', character.name);
@@ -779,13 +766,9 @@ export function renderForm() {
     // Update subclass suggestions based on class
     updateSubclassSuggestions();
 
-    // Show delete button only for existing characters
-    const deleteBtn = document.getElementById('delete-character-btn');
-    if (character.id && Characters.getCharacter(character.id)) {
-        deleteBtn?.classList.remove('hidden');
-    } else {
-        deleteBtn?.classList.add('hidden');
-    }
+    document.getElementById('char-name-required')?.classList.add('hidden');
+
+    autosaveReady = true;
 }
 
 // Helper to safely set input value
@@ -850,6 +833,8 @@ export function renderFeatures() {
     if (!container) return;
 
     const features = character.features || [];
+
+    autosave.saveNow();
 
     if (features.length === 0) {
         container.innerHTML = '<p class="empty-hint">No features added</p>';
@@ -930,6 +915,8 @@ export function renderEquipment() {
 
     const equipment = character.equipment || [];
 
+    autosave.saveNow();
+
     if (equipment.length === 0) {
         container.innerHTML = '<p class="empty-hint">No equipment added</p>';
         return;
@@ -994,6 +981,8 @@ export function renderAttacks() {
 
     const attacks = character.attacks || [];
 
+    autosave.saveNow();
+
     if (attacks.length === 0) {
         container.innerHTML = '<p class="empty-hint">No attacks added</p>';
         return;
@@ -1054,6 +1043,8 @@ export function renderTrackers() {
     if (!container) return;
 
     const trackers = character.trackers || [];
+
+    autosave.saveNow();
 
     if (trackers.length === 0) {
         container.innerHTML = '<p class="empty-hint">No trackers added</p>';
@@ -1177,6 +1168,8 @@ function getOrdinalSuffix(n) {
 export function renderSpells() {
     const state = getState();
     const character = state.editingCharacter;
+
+    autosave.saveNow();
 
     // Cantrips
     const cantripsContainer = document.getElementById('cantrips-list');
@@ -1614,38 +1607,18 @@ function collectFormData() {
     return character;
 }
 
-// Save character - returns saved character or null if validation fails
-export function saveCharacter() {
-    const character = collectFormData();
+// Persist the character as it currently stands. A character with no name is not
+// written at all: the name is what identifies it in the list, and a brand new
+// character should not appear there the moment the sheet is opened.
+export function persistCharacter() {
+    if (!autosaveReady || !getState().editingCharacter) return;
 
-    if (!character.name) {
-        alert('Character name is required');
-        return null;
-    }
+    const character = collectFormData();
+    const hasName = !!character.name;
+    document.getElementById('char-name-required')?.classList.toggle('hidden', hasName);
+    if (!hasName) return;
 
     Characters.saveCharacter(character);
-    return character;
-}
-
-// Delete current character - returns true if deleted
-export function deleteCharacter() {
-    const state = getState();
-    const character = state.editingCharacter;
-
-    if (character && character.id) {
-        if (confirm(`Delete "${character.name}"?`)) {
-            Characters.deleteCharacter(character.id);
-            return true;
-        }
-    }
-    return false;
-}
-
-// Cancel editing and return to list
-export function cancelEdit() {
-    const state = getState();
-    state.editingCharacter = null;
-    setView('characters');
 }
 
 // Update subclass suggestions based on current class
@@ -1915,7 +1888,5 @@ export default {
     closeFeaturePicker,
     renderFeaturePickerResults,
     updateSubclassSuggestions,
-    saveCharacter,
-    deleteCharacter,
-    cancelEdit
+    persistCharacter
 };

@@ -22,7 +22,17 @@ export function getState() {
     return state;
 }
 
+// Commit any autosave the currently visible view still has pending.
+export function flushActiveView() {
+    const active = document.querySelector('.view.active');
+    active?.flushAutosave?.();
+}
+
 export function setView(view) {
+    // The edit views autosave, and typing is debounced. Leaving a view is the
+    // last chance to write a keystroke that is still pending.
+    flushActiveView();
+
     state.currentView = view;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
@@ -161,6 +171,7 @@ export function setImportingCharacter(character) {
 // Default export for backward compatibility
 export default {
     getState,
+    flushActiveView,
     setView,
     setCurrentEncounter,
     setEditingEncounter,

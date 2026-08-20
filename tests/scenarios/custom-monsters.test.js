@@ -1,7 +1,7 @@
 // Tests for Custom Monsters feature
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { 
-    initApp, click, type, clearAndType, submitForm, tick,
+    initApp, click, type, clearAndType, leaveEditView, tick,
     exists, isVisible, getText, getAll, count, getValue,
     setupFetchMock, reloadApp, longPress
 } from '../helpers.js'
@@ -197,7 +197,7 @@ describe('Custom Monsters', () => {
             await clearAndType('#monster-ac', '18')
             
             // Save
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Should return to list
             expect(document.getElementById('custom-monsters-view').classList.contains('active')).toBe(true)
@@ -211,23 +211,24 @@ describe('Custom Monsters', () => {
             expect(monsters[0].name).toBe('Test Dragon')
         })
 
-        it('requires monster name', async () => {
-            // Mock alert
-            const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
-            
+        it('does not autosave a monster that has no name', async () => {
             await click('#menu-btn')
             await click('#menu-custom-monsters')
             await click('#new-custom-monster-btn')
             await click('#choice-create-new')
-            
-            // Don't fill in name, just try to save
-            await submitForm('#custom-monster-form')
-            
-            // Should show alert
-            expect(alertMock).toHaveBeenCalledWith('Monster name is required')
-            
-            // Should still be on edit view
-            expect(document.getElementById('custom-monster-edit-view').classList.contains('active')).toBe(true)
+
+            // Edit something other than the name
+            await clearAndType('#monster-hp', '99')
+
+            // Nothing is stored, and the form says why
+            expect(CustomMonsters.getCustomMonsters().length).toBe(0)
+            expect(isVisible('#monster-name-required')).toBe(true)
+
+            // Naming it saves it, and the hint goes away
+            await type('#monster-name', 'Nameless No More')
+
+            expect(CustomMonsters.getCustomMonsters().length).toBe(1)
+            expect(isVisible('#monster-name-required')).toBe(false)
         })
 
         it('adds traits to monster', async () => {
@@ -247,7 +248,7 @@ describe('Custom Monsters', () => {
             await type('.trait-name', 'Pack Tactics')
             await type('.trait-desc', 'Gains advantage when ally is adjacent')
             
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Check saved monster has trait
             const monsters = CustomMonsters.getCustomMonsters()
@@ -272,7 +273,7 @@ describe('Custom Monsters', () => {
             await type('.action-name', 'Multiattack')
             await type('.action-desc', 'Makes two claw attacks')
             
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Check saved monster has action
             const monsters = CustomMonsters.getCustomMonsters()
@@ -297,7 +298,7 @@ describe('Custom Monsters', () => {
             await type('.bonus-name', 'Cunning Action')
             await type('.bonus-desc', 'Can Dash, Disengage, or Hide as a bonus action')
             
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Check saved monster has bonus action
             const monsters = CustomMonsters.getCustomMonsters()
@@ -322,7 +323,7 @@ describe('Custom Monsters', () => {
             await type('.reaction-name', 'Parry')
             await type('.reaction-desc', 'Adds 2 to AC against one melee attack')
             
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Check saved monster has reaction
             const monsters = CustomMonsters.getCustomMonsters()
@@ -350,7 +351,7 @@ describe('Custom Monsters', () => {
             await type('.spellcasting-header', 'The creature can cast spells using Charisma (spell save DC 15).')
             await type('.spellcasting-spells', 'At will: detect magic, light\n1/day each: fireball, lightning bolt')
             
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             // Check saved monster has spellcasting
             const monsters = CustomMonsters.getCustomMonsters()
@@ -396,11 +397,12 @@ describe('Custom Monsters', () => {
             expect(getValue('#monster-name')).toBe('Existing Monster')
         })
 
-        it('shows delete button when editing existing monster', async () => {
+        it('has no save or delete buttons - edits autosave', async () => {
             await click('.monster-card')
             await click('#monster-context-menu [data-action="edit"]')
-            
-            expect(isVisible('#delete-monster-btn')).toBe(true)
+
+            expect(exists('#delete-monster-btn')).toBe(false)
+            expect(exists('#custom-monster-form [type="submit"]')).toBe(false)
         })
 
         it('updates existing monster', async () => {
@@ -408,21 +410,10 @@ describe('Custom Monsters', () => {
             await click('#monster-context-menu [data-action="edit"]')
             
             await clearAndType('#monster-name', 'Updated Monster')
-            await submitForm('#custom-monster-form')
+            await leaveEditView()
             
             const monsters = CustomMonsters.getCustomMonsters()
             expect(monsters[0].name).toBe('Updated Monster')
-        })
-
-        it('deletes monster from edit view', async () => {
-            vi.spyOn(window, 'confirm').mockReturnValue(true)
-            
-            await click('.monster-card')
-            await click('#monster-context-menu [data-action="edit"]')
-            await click('#delete-monster-btn')
-            
-            const monsters = CustomMonsters.getCustomMonsters()
-            expect(monsters.length).toBe(0)
         })
     })
 
