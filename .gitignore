@@ -5,6 +5,10 @@ node_modules/
 dist/
 build/
 
+# CDK synthesized templates
+infra/cdk.out/
+.cdk.staging/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

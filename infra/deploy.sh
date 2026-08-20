@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 #
-# Deploys the D&D Tracker to S3 + CloudFront.
+# Uploads the app to S3 and invalidates the CloudFront cache.
 #
-#   ./infra/deploy.sh              upload the app and invalidate the cache
-#   ./infra/deploy.sh --stack      also create/update the CloudFormation stack first
+#   ./infra/deploy.sh              upload content only
+#   ./infra/deploy.sh --stack      run `cdk deploy` for the infrastructure first
 #
-# The GitHub Actions workflow calls this same script, so the exclude list and
-# cache headers have exactly one definition.
+# Infrastructure itself is defined with the CDK (infra/lib/*.js) and is deployed
+# by CI. Content upload stays here rather than using a CDK BucketDeployment,
+# because that would push the ~17 MB data/ tree through a Lambda-backed custom
+# resource on every deploy instead of syncing only what changed.
 
 set -euo pipefail
 
@@ -14,17 +16,9 @@ STACK_NAME="${STACK_NAME:-dnd-tracker-site}"
 AWS_REGION="${AWS_REGION:-eu-north-1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-DEPLOY_STACK=false
-[[ "${1:-}" == "--stack" ]] && DEPLOY_STACK=true
-
-if $DEPLOY_STACK; then
-  echo "==> Deploying stack $STACK_NAME"
-  aws cloudformation deploy \
-    --region "$AWS_REGION" \
-    --stack-name "$STACK_NAME" \
-    --template-file "$ROOT_DIR/infra/template.yaml" \
-    --capabilities CAPABILITY_IAM \
-    --no-fail-on-empty-changeset
+if [[ "${1:-}" == "--stack" ]]; then
+  echo "==> Deploying infrastructure with CDK"
+  (cd "$ROOT_DIR/infra" && npx cdk deploy "$STACK_NAME" --require-approval never)
 fi
 
 stack_output() {
@@ -40,7 +34,7 @@ DISTRIBUTION_ID="$(stack_output DistributionId)"
 SITE_URL="$(stack_output SiteUrl)"
 
 if [[ -z "$BUCKET" || "$BUCKET" == "None" ]]; then
-  echo "Could not read stack outputs. Has the stack been created? Try: $0 --stack" >&2
+  echo "Could not read stack outputs. Has the stack been deployed? Try: $0 --stack" >&2
   exit 1
 fi
 
@@ -63,8 +57,8 @@ EXCLUDES=(
 )
 
 # --size-only matters more than it looks: a CI checkout gives every file a fresh
-# mtime, so the default size+mtime comparison would re-upload the ~17 MB data/
-# tree on every single deploy.
+# mtime, so the default size-and-mtime comparison would re-upload the ~17 MB
+# data/ tree on every single deploy.
 echo "==> Uploading reference data to s3://$BUCKET"
 aws s3 sync "$ROOT_DIR/data" "s3://$BUCKET/data" \
   --region "$AWS_REGION" \

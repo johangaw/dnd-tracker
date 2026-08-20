@@ -6,7 +6,8 @@ on:
   # Lets you re-deploy the current main without pushing a commit.
   workflow_dispatch:
 
-# Two deploys running at once would race on the S3 sync and the invalidation.
+# Two deploys at once would race on the CDK stack, the S3 sync and the
+# invalidation.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -22,6 +23,9 @@ jobs:
     environment:
       name: production
       url: ${{ steps.deploy.outputs.site_url }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
+      STACK_NAME: ${{ vars.STACK_NAME || 'dnd-tracker-site' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +33,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            infra/package-lock.json
 
       - run: npm ci
 
@@ -40,13 +47,20 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
-          aws-region: ${{ vars.AWS_REGION || 'eu-north-1' }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy
+      # CI owns the infrastructure as well as the content, so pushing to main is
+      # the single path to production for both.
+      - name: Install CDK dependencies
+        run: npm ci
+        working-directory: infra
+
+      - name: Deploy infrastructure
+        run: npx cdk deploy "$STACK_NAME" --require-approval never
+        working-directory: infra
+
+      - name: Deploy content
         id: deploy
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
-          STACK_NAME: ${{ vars.STACK_NAME || 'dnd-tracker-site' }}
         run: |
           ./infra/deploy.sh | tee deploy.log
           echo "site_url=$(grep -oE 'https://[a-z0-9]+\.cloudfront\.net' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"

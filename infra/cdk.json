@@ -1,0 +1,14 @@
+{
+  "app": "node bin/app.js",
+  "output": "cdk.out",
+  "watch": {
+    "include": ["bin/**", "lib/**"]
+  },
+  "context": {
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": ["aws"],
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
+    "@aws-cdk/aws-cloudfront:useOriginAccessControl": true
+  }
+}

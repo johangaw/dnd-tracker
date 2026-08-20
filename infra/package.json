@@ -1,0 +1,19 @@
+{
+  "name": "dnd-tracker-infra",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AWS CDK infrastructure for the D&D Tracker",
+  "scripts": {
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --require-approval never",
+    "bootstrap": "cdk bootstrap"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.1029.4",
+    "aws-cdk-lib": "^2.221.0",
+    "constructs": "^10.4.2",
+    "playwright": "^1.62.1"
+  }
+}
