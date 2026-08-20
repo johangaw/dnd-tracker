@@ -16,9 +16,13 @@ STACK_NAME="${STACK_NAME:-dnd-tracker-site}"
 AWS_REGION="${AWS_REGION:-eu-north-1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+APP_NAME="${APP_NAME:-dnd-tracker}"
+
 if [[ "${1:-}" == "--stack" ]]; then
+  # The OIDC stack is not deployed here: it defines the role CI runs as, and is
+  # applied by hand once during setup.
   echo "==> Deploying infrastructure with CDK"
-  (cd "$ROOT_DIR/infra" && npx cdk deploy "$STACK_NAME" --require-approval never)
+  (cd "$ROOT_DIR/infra" && npx cdk deploy "$APP_NAME-site" "$APP_NAME-api" --require-approval never)
 fi
 
 stack_output() {

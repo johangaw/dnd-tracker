@@ -4,6 +4,7 @@
 
 import { App } from 'aws-cdk-lib';
 import { SiteStack } from '../lib/site-stack.js';
+import { ApiStack } from '../lib/api-stack.js';
 import { GitHubOidcStack } from '../lib/github-oidc-stack.js';
 
 const app = new App();
@@ -22,7 +23,15 @@ const env = {
     region: process.env.CDK_DEFAULT_REGION
 };
 
-new SiteStack(app, `${appName}-site`, { env, appName });
+const site = new SiteStack(app, `${appName}-site`, { env, appName });
+
+// The API needs the site's URL for the Cognito callback and for CORS, so CDK
+// deploys the site stack first and passes the value across.
+new ApiStack(app, `${appName}-api`, {
+    env,
+    appName,
+    siteUrl: site.siteUrl
+});
 
 new GitHubOidcStack(app, `${appName}-github-oidc`, {
     env,

@@ -109,53 +109,155 @@ const mockLegendaryGroups = {
   ]
 }
 
-// Setup fetch mock for monster data
-export function setupFetchMock() {
-  globalThis.fetch = async (url) => {
-    // Handle index.json
-    if (url.includes('index.json')) {
-      return {
-        ok: true,
-        json: async () => mockIndex
-      }
+const jsonResponse = (data, ok = true, status = 200) => ({
+  ok,
+  status,
+  json: async () => data,
+  text: async () => JSON.stringify(data)
+})
+
+// The reference data the app loads from data/ at runtime.
+export const referenceDataMatchers = [
+  url => url.includes('index.json') && jsonResponse(mockIndex),
+  url => url.includes('bestiary-') && jsonResponse(mockBestiary),
+  url => url.includes('legendarygroups.json') && jsonResponse(mockLegendaryGroups),
+  url => url.includes('data/spells/') && jsonResponse(mockSpellData)
+]
+
+// Installs a fetch mock built from a list of matchers, each of which returns a
+// response or a falsy value to decline. Sync and auth mocks layer on top of the
+// reference data ones rather than replacing them.
+export function installFetchMock(matchers = []) {
+  const all = [...matchers, ...referenceDataMatchers]
+
+  globalThis.fetch = async (url, options) => {
+    for (const matcher of all) {
+      const response = await matcher(String(url), options)
+      if (response) return response
     }
-    
-    // Handle bestiary files
-    if (url.includes('bestiary-')) {
-      return {
-        ok: true,
-        json: async () => mockBestiary
-      }
-    }
-    
-    // Handle legendary groups
-    if (url.includes('legendarygroups.json')) {
-      return {
-        ok: true,
-        json: async () => mockLegendaryGroups
-      }
-    }
-    
-    // Handle spell files (both absolute and relative paths)
-    if (url.includes('data/spells/')) {
-      return {
-        ok: true,
-        json: async () => mockSpellData
-      }
-    }
-    
-    // Default: return empty
-    return {
-      ok: false,
-      json: async () => ({})
-    }
+    return jsonResponse({}, false, 404)
   }
 }
 
-// Initialize the app by importing main.js
-export async function initApp() {
-  setupFetchMock()
-  
+// Setup fetch mock for monster data
+export function setupFetchMock() {
+  installFetchMock()
+}
+
+// A stand-in for the sync Lambda that implements the same conditional-write
+// semantics, so client tests assert against realistic behaviour rather than
+// hand-written responses.
+export function mockSyncServer({ apiBase = 'https://api.test', now = () => Date.now() } = {}) {
+  const server = {
+    // col -> id -> { updatedAt, deletedAt, data, sv }
+    records: new Map(),
+    pullCalls: [],
+    pushCalls: [],
+    failNextWith: null,
+
+    seed(col, record) {
+      if (!server.records.has(col)) server.records.set(col, new Map())
+      const { updatedAt, deletedAt, ...data } = record
+      server.records.get(col).set(record.id, {
+        updatedAt,
+        deletedAt: deletedAt ?? null,
+        data: deletedAt ? null : data,
+        sv: record.sv ?? now()
+      })
+      return server
+    },
+
+    all() {
+      const out = []
+      for (const [col, byId] of server.records) {
+        for (const [id, item] of byId) out.push({ col, id, ...item })
+      }
+      return out
+    },
+
+    get(col, id) {
+      return server.records.get(col)?.get(id)
+    }
+  }
+
+  let sequence = 0
+  const nextSv = () => Math.max(now(), ++sequence)
+
+  const matcher = async (url, options) => {
+    if (!url.startsWith(apiBase)) return null
+
+    if (server.failNextWith) {
+      const failure = server.failNextWith
+      server.failNextWith = null
+      if (failure === 'network') throw new TypeError('Failed to fetch')
+      return jsonResponse({ error: 'Server error' }, false, failure)
+    }
+
+    // Every route requires a bearer token, as the real one does.
+    if (!options?.headers?.authorization?.startsWith('Bearer ')) {
+      return jsonResponse({ error: 'Missing bearer token' }, false, 401)
+    }
+
+    const body = options.body ? JSON.parse(options.body) : {}
+
+    if (url.endsWith('/sync/pull')) {
+      server.pullCalls.push(body)
+      const cursor = body.cursor ?? 0
+      const records = server.all().filter(r => r.sv > cursor)
+      const maxSv = records.reduce((max, r) => Math.max(max, r.sv), cursor)
+      return jsonResponse({ records, cursor: maxSv, now: now() })
+    }
+
+    if (url.endsWith('/sync/push')) {
+      server.pushCalls.push(body)
+      const applied = []
+      const conflicts = []
+
+      for (const record of body.records ?? []) {
+        const existing = server.get(record.col, record.id)
+        // The same condition the real handler puts on the write.
+        if (existing && existing.updatedAt > record.updatedAt) {
+          conflicts.push({ col: record.col, id: record.id, ...existing })
+          continue
+        }
+        if (!server.records.has(record.col)) server.records.set(record.col, new Map())
+        const sv = nextSv()
+        server.records.get(record.col).set(record.id, {
+          updatedAt: record.updatedAt,
+          deletedAt: record.deletedAt ?? null,
+          data: record.data,
+          sv
+        })
+        applied.push({ col: record.col, id: record.id, sv })
+      }
+
+      return jsonResponse({ applied, conflicts, now: now() })
+    }
+
+    return jsonResponse({ error: 'Not found' }, false, 404)
+  }
+
+  server.matcher = matcher
+  return server
+}
+
+// Pretends the user is signed in, with a token that will not need refreshing.
+export function signInFake({ sub = 'user-123', email = 'dm@example.com' } = {}) {
+  localStorage.setItem('dnd-auth', JSON.stringify({
+    accessToken: 'fake-access-token',
+    refreshToken: 'fake-refresh-token',
+    expiresAt: Date.now() + 3600_000,
+    sub,
+    email
+  }))
+}
+
+// Initialize the app by importing main.js.
+// Pass extra fetch matchers (e.g. a mockSyncServer) to layer them on top of the
+// reference-data ones, since this reinstalls the fetch mock.
+export async function initApp({ fetchMatchers = [] } = {}) {
+  installFetchMock(fetchMatchers)
+
   // Dynamically import main.js to trigger initialization
   // We need to reset the module cache first
   const mainModule = await import('../js/main.js')

@@ -19,19 +19,29 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 // This policy is exercised against every view by infra/csp-check.mjs - widen it
 // there first if you add an external resource, or the breakage will only show
 // up in production.
-export const CONTENT_SECURITY_POLICY = [
-    "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://5e.tools",
-    "connect-src 'self'",
-    "font-src 'self'",
-    "manifest-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'none'",
-    "frame-ancestors 'none'"
-].join('; ');
+//
+// connect-src has to cover the two backends the app talks to: the Lambda
+// Function URL for sync and the Cognito hosted UI for the token exchange.
+// Neither hostname is known here - the API stack is built after this one, and
+// making this stack depend on it would be circular - so both are matched by
+// host pattern, narrowed to this region where possible.
+export function buildContentSecurityPolicy(region) {
+    return [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https://5e.tools",
+        `connect-src 'self' https://*.lambda-url.${region}.on.aws https://*.auth.${region}.amazoncognito.com`,
+        "font-src 'self'",
+        "manifest-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        // The sign-in redirect leaves the app entirely, so this only has to
+        // permit the Cognito hosted UI to be navigated to as a form target.
+        "form-action 'self'",
+        "frame-ancestors 'none'"
+    ].join('; ');
+}
 
 export class SiteStack extends Stack {
     constructor(scope, id, props = {}) {
@@ -82,7 +92,7 @@ export class SiteStack extends Stack {
         const securityHeaders = new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeadersPolicy', {
             responseHeadersPolicyName: `${appName}-security-headers`,
             securityHeadersBehavior: {
-                contentSecurityPolicy: { contentSecurityPolicy: CONTENT_SECURITY_POLICY, override: true },
+                contentSecurityPolicy: { contentSecurityPolicy: buildContentSecurityPolicy(this.region), override: true },
                 contentTypeOptions: { override: true },
                 frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
                 referrerPolicy: {
@@ -144,5 +154,6 @@ export class SiteStack extends Stack {
 
         this.bucket = bucket;
         this.distribution = distribution;
+        this.siteUrl = `https://${distribution.distributionDomainName}`;
     }
 }

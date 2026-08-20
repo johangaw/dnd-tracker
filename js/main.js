@@ -22,6 +22,8 @@ import * as CharacterList from './components/characters-view/index.js';
 import * as CharacterView from './components/character-view/index.js';
 import * as CharacterEdit from './components/character-edit-view/index.js';
 import * as Settings from './components/settings-view/index.js';
+import * as Auth from './services/auth.js';
+import * as Sync from './services/sync.js';
 import { showSpellModal, closeSpellModal, isSpellModalActive } from './components/modals/spellModal.js';
 // Modals shared across multiple views live here; view-exclusive modals are
 // imported by the view component that owns them (encounter-run-view,
@@ -294,13 +296,32 @@ function handleRoute() {
     }
 }
 
+// Completes a Cognito sign-in if the page was loaded via the OAuth redirect.
+// Runs before routing and before the import checks, so that the ?code= and
+// ?state= parameters are consumed and stripped while a ?import= share link on
+// the same URL survives untouched.
+async function completeSignIn() {
+    try {
+        if (await Auth.handleRedirect()) {
+            showToast('Signed in');
+        }
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     initEventHandlers();
 
     // Preload monster index
     MonsterAPI.loadIndex();
-    
+
+    completeSignIn().finally(() => {
+        // A no-op unless a backend is configured and the user is signed in.
+        Sync.initSync();
+    });
+
     // Handle initial route first (so the correct view is shown behind any import modal)
     handleRoute();
     

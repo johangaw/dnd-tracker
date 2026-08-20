@@ -17,10 +17,16 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONTENT_SECURITY_POLICY } from './lib/site-stack.js';
+import { buildContentSecurityPolicy } from './lib/site-stack.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4322;
+const REGION = process.env.AWS_REGION || 'eu-north-1';
+const CONTENT_SECURITY_POLICY = buildContentSecurityPolicy(REGION);
+
+// Stand-ins for the real backends, matching the shapes the policy has to allow.
+const FAKE_API = `https://abcdef123.lambda-url.${REGION}.on.aws`;
+const FAKE_COGNITO = `dnd-tracker-123.auth.${REGION}.amazoncognito.com`;
 
 let chromium;
 try {
@@ -96,6 +102,29 @@ for (const route of routes) {
 const dataFetched = await page.evaluate(async () => (await fetch('/data/bestiary/index.json')).ok);
 console.log(`  ${dataFetched ? 'ok  ' : 'FAIL'} reference data fetch`);
 if (!dataFetched) errors.push('Could not fetch /data/bestiary/index.json under the policy');
+
+// The two backends the app talks to. A CSP that blocks these would leave the
+// app looking fine until the moment someone tries to sign in or sync, so they
+// are checked explicitly rather than left to be discovered in production.
+// Both are stubbed, so what is being tested is whether the request is allowed
+// to leave the page at all, not whether anything answers.
+for (const [label, url] of [
+    ['sync API request allowed', `${FAKE_API}/sync/pull`],
+    ['Cognito token request allowed', `https://${FAKE_COGNITO}/oauth2/token`]
+]) {
+    await page.route(url, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+    const allowed = await page.evaluate(async target => {
+        try {
+            await fetch(target, { method: 'POST', body: '{}' });
+            return true;
+        } catch {
+            // A CSP block surfaces to the page as a rejected fetch.
+            return false;
+        }
+    }, url);
+    console.log(`  ${allowed ? 'ok  ' : 'FAIL'} ${label}`);
+    if (!allowed) errors.push(`Policy blocks ${url}`);
+}
 
 await browser.close();
 server.close();

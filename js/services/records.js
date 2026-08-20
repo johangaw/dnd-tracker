@@ -112,7 +112,13 @@ export function readRaw(key) {
 
 // Writes without diffing or stamping. Only the sync apply-path should use this:
 // applying a pull must not mark the records it just received as dirty.
+//
+// It still has to ensure the migration has run. Otherwise writing here first
+// would leave the schema version unset, and the next read would migrate - which
+// regenerates ids and would silently detach these records from the dirty list
+// and from anything referencing them.
 export function writeRaw(key, items) {
+    ensureMigrated();
     localStorage.setItem(key, JSON.stringify(items));
 }
 

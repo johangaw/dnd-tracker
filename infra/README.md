@@ -10,9 +10,11 @@ applied by hand because it is what grants CI its permissions in the first place.
 
 | File | What it is |
 |---|---|
-| `bin/app.js` | CDK entry point; declares both stacks |
+| `bin/app.js` | CDK entry point; declares all three stacks |
 | `lib/site-stack.js` | The site: S3 bucket, CloudFront, OAC, cache and security-header policies |
+| `lib/api-stack.js` | Sync backend: DynamoDB, Cognito, and one Lambda behind a Function URL |
 | `lib/github-oidc-stack.js` | The IAM role GitHub Actions assumes. Bootstrap only |
+| `lambda/` | The sync handler. Plain `.mjs`, no dependencies, no build step |
 | `deploy.sh` | Uploads the app and invalidates the cache. CI runs this same script |
 | `csp-check.mjs` | Loads the app under the real CSP and fails on any violation |
 
@@ -57,12 +59,31 @@ Take the printed `DeployRoleArn` and add it to the repository under
 ### 3. Push
 
 From here on, every push to `main` runs the tests and then deploys both the
-infrastructure and the app. To create the site immediately without waiting for a
-push, run the Deploy workflow from the Actions tab, or locally:
+infrastructure and the app. To create everything immediately without waiting for
+a push, run the Deploy workflow from the Actions tab, or locally:
 
 ```sh
 ./infra/deploy.sh --stack
 ```
+
+### 4. Point the app at the backend
+
+Sync stays invisible until `js/config.js` is filled in, so the app ships and runs
+purely locally until this step. Read the values off the API stack:
+
+```sh
+aws cloudformation describe-stacks --stack-name dnd-tracker-api \
+  --query 'Stacks[0].Outputs' --output table
+```
+
+Copy `ApiBaseUrl`, `UserPoolId`, `UserPoolClientId` and `CognitoDomain` into
+[`js/config.js`](../js/config.js), set `region`, and push. A Sync section then
+appears in Settings.
+
+This file is written by hand rather than generated: none of these values are
+secrets — a user pool id and a public app client id are meant to be visible in a
+browser — and generating it would mean adding a build step to an app that
+deliberately has none.
 
 CloudFront takes 5–15 minutes to roll out the first time. The URL is printed at
 the end, and is also available later as:
@@ -114,7 +135,32 @@ breakage will only appear in production.
 
 **The site bucket is `RemovalPolicy.RETAIN`.** Its contents are all reproducible
 from git, but retaining means a stack mistake cannot silently delete the live
-site.
+site. The DynamoDB table and the Cognito user pool are `RETAIN` for a much
+stronger reason: they hold the only copy of the users' data and accounts.
+
+**The DynamoDB index has to be right the first time.** `ChangesBySv` is a *local*
+secondary index, and AWS only allows an LSI to be created together with its
+table. Changing it later means rebuilding the table and migrating the data. It is
+what makes the delta pull a single query on one partition.
+
+**DynamoDB is in provisioned mode, with autoscaling off.** The always-free 25
+RCU/25 WCU applies to provisioned capacity only; on-demand has no perpetual free
+tier. With autoscaling off, a runaway bug throttles and retries instead of
+billing.
+
+**The Lambda has reserved concurrency of 10.** Its Function URL is `AuthType:
+NONE`, so it is reachable by anyone on the internet and the token check in
+`lambda/router.mjs` is the only thing in front of the data. The concurrency cap,
+the 1 MB body limit and DynamoDB's fixed capacity are the three walls that keep
+an abusive caller from costing anything.
+
+**Sync CORS is configured on the Function URL, not in the handler.** Setting the
+headers in both places produces duplicates and browsers reject every response.
+Preflight is answered by the Function URL and never invokes the function, so it
+never appears in the logs.
+
+**Cognito threat protection is off.** It is billed per monthly active user and is
+not in the free tier.
 
 **The deploy role's trust policy is pinned** to
 `repo:<owner>/<repo>:ref:refs/heads/main`. Without that condition any GitHub
@@ -124,7 +170,11 @@ repository in the world could assume it. Change the repo via
 ## Cost
 
 Everything used here has a *permanent* free tier: CloudFront 1 TB/month out and
-10M requests, S3 at a few cents for ~20 MB of storage. Expect **$0.00–0.01/month**.
+10M requests, Lambda 1M requests, DynamoDB 25 GB plus 25 provisioned RCU/WCU,
+Cognito 10,000 monthly active users, CloudWatch Logs 5 GB. S3 costs a few cents
+for ~20 MB of storage, and DynamoDB point-in-time recovery adds roughly $0.02 for
+a database this size — enabled deliberately, because it holds the only server
+copy of the data. Expect **$0.00–0.05/month**.
 
 Worth setting an AWS Budget alert at $1 anyway. Adding a custom domain later
 means a Route 53 hosted zone at $0.50/month (the ACM certificate itself is free,

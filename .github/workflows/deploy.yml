@@ -25,7 +25,9 @@ jobs:
       url: ${{ steps.deploy.outputs.site_url }}
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
-      STACK_NAME: ${{ vars.STACK_NAME || 'dnd-tracker-site' }}
+      APP_NAME: ${{ vars.APP_NAME || 'dnd-tracker' }}
+      # The stack whose outputs deploy.sh reads to upload content.
+      STACK_NAME: ${{ vars.APP_NAME || 'dnd-tracker' }}-site
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +57,10 @@ jobs:
         run: npm ci
         working-directory: infra
 
+      # The site and API stacks only. The OIDC stack is deliberately excluded:
+      # it defines the very role this job is running as.
       - name: Deploy infrastructure
-        run: npx cdk deploy "$STACK_NAME" --require-approval never
+        run: npx cdk deploy "$APP_NAME-site" "$APP_NAME-api" --require-approval never
         working-directory: infra
 
       - name: Deploy content

@@ -9,6 +9,7 @@
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": ["aws"],
     "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
-    "@aws-cdk/aws-cloudfront:useOriginAccessControl": true
+    "@aws-cdk/aws-cloudfront:useOriginAccessControl": true,
+    "@aws-cdk/core:defaultCrossStackReferences": "strong"
   }
 }
