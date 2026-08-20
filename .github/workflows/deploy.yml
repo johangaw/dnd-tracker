@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # Lets you re-deploy the current main without pushing a commit.
+  workflow_dispatch:
+
+# Two deploys running at once would race on the S3 sync and the invalidation.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  # Required to request the OIDC token that AWS exchanges for role credentials.
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.site_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # A broken build must never reach the site.
+      - name: Run tests
+        run: npm test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-north-1' }}
+
+      - name: Deploy
+        id: deploy
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
+          STACK_NAME: ${{ vars.STACK_NAME || 'dnd-tracker-site' }}
+        run: |
+          ./infra/deploy.sh | tee deploy.log
+          echo "site_url=$(grep -oE 'https://[a-z0-9]+\.cloudfront\.net' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"

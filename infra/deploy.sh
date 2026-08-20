@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+#
+# Deploys the D&D Tracker to S3 + CloudFront.
+#
+#   ./infra/deploy.sh              upload the app and invalidate the cache
+#   ./infra/deploy.sh --stack      also create/update the CloudFormation stack first
+#
+# The GitHub Actions workflow calls this same script, so the exclude list and
+# cache headers have exactly one definition.
+
+set -euo pipefail
+
+STACK_NAME="${STACK_NAME:-dnd-tracker-site}"
+AWS_REGION="${AWS_REGION:-eu-north-1}"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+DEPLOY_STACK=false
+[[ "${1:-}" == "--stack" ]] && DEPLOY_STACK=true
+
+if $DEPLOY_STACK; then
+  echo "==> Deploying stack $STACK_NAME"
+  aws cloudformation deploy \
+    --region "$AWS_REGION" \
+    --stack-name "$STACK_NAME" \
+    --template-file "$ROOT_DIR/infra/template.yaml" \
+    --capabilities CAPABILITY_IAM \
+    --no-fail-on-empty-changeset
+fi
+
+stack_output() {
+  aws cloudformation describe-stacks \
+    --region "$AWS_REGION" \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" \
+    --output text
+}
+
+BUCKET="$(stack_output BucketName)"
+DISTRIBUTION_ID="$(stack_output DistributionId)"
+SITE_URL="$(stack_output SiteUrl)"
+
+if [[ -z "$BUCKET" || "$BUCKET" == "None" ]]; then
+  echo "Could not read stack outputs. Has the stack been created? Try: $0 --stack" >&2
+  exit 1
+fi
+
+# Everything that is not part of the running app.
+EXCLUDES=(
+  --exclude '.git/*'
+  --exclude '.github/*'
+  --exclude '.claude/*'
+  --exclude 'node_modules/*'
+  --exclude 'tests/*'
+  --exclude 'infra/*'
+  --exclude 'scripts/*'
+  --exclude '*.md'
+  --exclude 'package.json'
+  --exclude 'package-lock.json'
+  --exclude 'vitest.config.js'
+  --exclude 'monster-schema.json'
+  --exclude '.DS_Store'
+  --exclude '*/.DS_Store'
+)
+
+# --size-only matters more than it looks: a CI checkout gives every file a fresh
+# mtime, so the default size+mtime comparison would re-upload the ~17 MB data/
+# tree on every single deploy.
+echo "==> Uploading reference data to s3://$BUCKET"
+aws s3 sync "$ROOT_DIR/data" "s3://$BUCKET/data" \
+  --region "$AWS_REGION" \
+  --size-only \
+  --delete \
+  --cache-control 'public,max-age=31536000,immutable'
+
+echo "==> Uploading app files to s3://$BUCKET"
+aws s3 sync "$ROOT_DIR" "s3://$BUCKET" \
+  --region "$AWS_REGION" \
+  --size-only \
+  --delete \
+  --exclude 'data/*' \
+  "${EXCLUDES[@]}" \
+  --cache-control 'public,max-age=60'
+
+# Never invalidate '/*': it would evict the whole immutable data/ tree and make
+# every user re-download it. Only the files that actually change are listed.
+echo "==> Invalidating CloudFront cache"
+INVALIDATION_ID="$(aws cloudfront create-invalidation \
+  --distribution-id "$DISTRIBUTION_ID" \
+  --paths '/' '/index.html' '/manifest.json' '/js/*' '/css/*' \
+  --query 'Invalidation.Id' \
+  --output text)"
+
+echo "==> Waiting for invalidation $INVALIDATION_ID"
+aws cloudfront wait invalidation-completed \
+  --distribution-id "$DISTRIBUTION_ID" \
+  --id "$INVALIDATION_ID"
+
+echo
+echo "Deployed: $SITE_URL"
