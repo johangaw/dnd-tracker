@@ -17,16 +17,16 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildContentSecurityPolicy } from './lib/site-stack.js';
+import { buildContentSecurityPolicy } from './lib/app-stack.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4322;
 const REGION = process.env.AWS_REGION || 'eu-north-1';
-const CONTENT_SECURITY_POLICY = buildContentSecurityPolicy(REGION);
 
-// Stand-ins for the real backends, matching the shapes the policy has to allow.
-const FAKE_API = `https://abcdef123.lambda-url.${REGION}.on.aws`;
+// A stand-in for the real hosted UI domain: the only cross-origin host left in
+// the policy now that the API is served same-origin at /api.
 const FAKE_COGNITO = `dnd-tracker-123.auth.${REGION}.amazoncognito.com`;
+const CONTENT_SECURITY_POLICY = buildContentSecurityPolicy({ cognitoDomain: FAKE_COGNITO });
 
 let chromium;
 try {
@@ -44,9 +44,16 @@ const TYPES = {
 const server = http.createServer((req, res) => {
     const url = decodeURIComponent(req.url.split('?')[0]);
     let file = path.join(ROOT, url === '/' ? 'index.html' : url);
-    // Mirror CloudFront's 403/404 fallback to the app shell.
-    if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    // Mirror the CloudFront function: an extensionless path is a route and is
+    // rewritten to the app shell, while a missing *file* stays a 404 rather
+    // than quietly becoming HTML.
+    if (!file.startsWith(ROOT) || !path.extname(file)) {
         file = path.join(ROOT, 'index.html');
+    }
+    if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+        res.statusCode = 404;
+        res.end('Not found');
+        return;
     }
     res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
     res.setHeader('Content-Type', TYPES[path.extname(file)] || 'application/octet-stream');
@@ -103,13 +110,14 @@ const dataFetched = await page.evaluate(async () => (await fetch('/data/bestiary
 console.log(`  ${dataFetched ? 'ok  ' : 'FAIL'} reference data fetch`);
 if (!dataFetched) errors.push('Could not fetch /data/bestiary/index.json under the policy');
 
-// The two backends the app talks to. A CSP that blocks these would leave the
-// app looking fine until the moment someone tries to sign in or sync, so they
-// are checked explicitly rather than left to be discovered in production.
+// The two things the app talks to: its own /api path, and the Cognito hosted
+// UI. A CSP that blocks these would leave the app looking fine until the moment
+// someone tries to sign in or sync, so they are checked explicitly rather than
+// left to be discovered in production.
 // Both are stubbed, so what is being tested is whether the request is allowed
 // to leave the page at all, not whether anything answers.
 for (const [label, url] of [
-    ['sync API request allowed', `${FAKE_API}/sync/pull`],
+    ['sync API request allowed', `http://localhost:${PORT}/api/sync/pull`],
     ['Cognito token request allowed', `https://${FAKE_COGNITO}/oauth2/token`]
 ]) {
     await page.route(url, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));

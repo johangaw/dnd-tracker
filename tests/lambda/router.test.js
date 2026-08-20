@@ -1,8 +1,10 @@
-// Sync API routing, validation and authorisation.
+// Sync API routing, validation and identity handling.
 //
-// The Function URL is publicly reachable, so the security-relevant assertions
-// here are that nothing runs without a valid token and that a caller can never
-// cause a key outside their own partition to be touched.
+// API Gateway's JWT authorizer verifies the token before the handler runs, so
+// the security-relevant assertions here are about what the handler does with
+// the claims it is handed: it must refuse anything that is not a Cognito
+// access token, and a caller must never be able to cause a key outside their
+// own partition to be touched.
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { route, MAX_RECORDS_PER_PUSH, PULL_SLACK_MS } from '../../infra/lambda/router.mjs'
@@ -32,22 +34,22 @@ function fakeDdb() {
 let ddb, clock
 
 function deps(overrides = {}) {
-  return {
-    ddb,
-    now: () => clock,
-    verify: async token => {
-      if (token !== 'good-token') throw new Error('Invalid token')
-      return { sub: 'user-123', email: 'dm@example.com' }
-    },
-    ...overrides
-  }
+  return { ddb, now: () => clock, ...overrides }
 }
 
-function request(method, path, body, { token = 'good-token' } = {}) {
+// What API Gateway hands the handler after a successful token verification.
+const ACCESS_CLAIMS = {
+  sub: 'user-123',
+  email: 'dm@example.com',
+  token_use: 'access',
+  scope: 'openid email'
+}
+
+function request(method, path, body, { claims = ACCESS_CLAIMS } = {}) {
   return {
     method,
     path,
-    headers: token ? { authorization: `Bearer ${token}` } : {},
+    claims,
     body: body === undefined ? undefined : JSON.stringify(body)
   }
 }
@@ -58,42 +60,33 @@ beforeEach(() => {
 })
 
 describe('Sync API', () => {
-  describe('Authentication', () => {
-    it('rejects a request with no Authorization header', async () => {
-      const res = await route(request('POST', '/sync/pull', {}, { token: null }), deps())
+  describe('Identity', () => {
+    it('rejects a request that arrives with no claims', async () => {
+      const res = await route(request('POST', '/sync/pull', {}, { claims: null }), deps())
       expect(res.statusCode).toBe(401)
     })
 
-    it('rejects a bad token', async () => {
-      const res = await route(request('POST', '/sync/pull', {}, { token: 'forged' }), deps())
+    it('rejects an id token', async () => {
+      const claims = { sub: 'user-123', email: 'dm@example.com', token_use: 'id' }
+      const res = await route(request('POST', '/sync/pull', {}, { claims }), deps())
       expect(res.statusCode).toBe(401)
     })
 
-    it('rejects a non-bearer scheme', async () => {
-      const res = await route({
-        method: 'POST', path: '/sync/pull',
-        headers: { authorization: 'Basic dXNlcjpwYXNz' }, body: '{}'
-      }, deps())
+    it('rejects claims with no subject', async () => {
+      const claims = { ...ACCESS_CLAIMS, sub: undefined }
+      const res = await route(request('POST', '/sync/pull', {}, { claims }), deps())
       expect(res.statusCode).toBe(401)
     })
 
-    it('never touches the database when the token is bad', async () => {
-      await route(request('POST', '/sync/push', { records: [] }, { token: 'forged' }), deps())
+    it('never touches the database when the claims are unusable', async () => {
+      await route(request('POST', '/sync/push', { records: [] }, { claims: null }), deps())
       expect(ddb.putCalls).toHaveLength(0)
       expect(ddb.listChangesCalls).toHaveLength(0)
-    })
-
-    it('accepts an Authorization header with capitalised name', async () => {
-      const res = await route({
-        method: 'POST', path: '/sync/pull',
-        headers: { Authorization: 'Bearer good-token' }, body: '{}'
-      }, deps())
-      expect(res.statusCode).toBe(200)
     })
   })
 
   describe('Isolation between users', () => {
-    it('scopes a pull to the subject from the verified token', async () => {
+    it('scopes a pull to the subject from the verified claims', async () => {
       await route(request('POST', '/sync/pull', { cursor: 0 }), deps())
       expect(ddb.listChangesCalls[0].sub).toBe('user-123')
     })
@@ -232,7 +225,7 @@ describe('Sync API', () => {
     it('rejects an oversized request body before parsing it', async () => {
       const res = await route({
         method: 'POST', path: '/sync/push',
-        headers: { authorization: 'Bearer good-token' },
+        claims: ACCESS_CLAIMS,
         body: 'x'.repeat(1_000_001)
       }, deps())
       expect(res.statusCode).toBe(413)
@@ -241,7 +234,7 @@ describe('Sync API', () => {
     it('rejects a body that is not JSON', async () => {
       const res = await route({
         method: 'POST', path: '/sync/push',
-        headers: { authorization: 'Bearer good-token' },
+        claims: ACCESS_CLAIMS,
         body: 'not json'
       }, deps())
       expect(res.statusCode).toBe(400)
@@ -252,6 +245,23 @@ describe('Sync API', () => {
     it('returns the caller identity from /me', async () => {
       const res = await route(request('GET', '/me'), deps())
       expect(res.body).toMatchObject({ sub: 'user-123', email: 'dm@example.com' })
+    })
+
+    // CloudFront forwards /api/* to API Gateway verbatim, so this is the path
+    // the handler actually sees in production.
+    it('accepts the /api prefix CloudFront forwards', async () => {
+      const res = await route(request('GET', '/api/me'), deps())
+      expect(res.statusCode).toBe(200)
+    })
+
+    it('still accepts a path without the prefix', async () => {
+      const res = await route(request('GET', '/me'), deps())
+      expect(res.statusCode).toBe(200)
+    })
+
+    it('404s an unknown path under the prefix', async () => {
+      const res = await route(request('GET', '/api/admin'), deps())
+      expect(res.statusCode).toBe(404)
     })
 
     it('tolerates a trailing slash', async () => {

@@ -6,7 +6,7 @@
 // adding a build step to an app that deliberately has none.
 //
 // Get the values with:
-//   aws cloudformation describe-stacks --stack-name dnd-tracker-api \
+//   aws cloudformation describe-stacks --stack-name dnd-tracker \
 //     --query 'Stacks[0].Outputs' --output table
 //
 // While these are blank the app runs exactly as it always has: entirely local,
@@ -17,7 +17,12 @@ export const CONFIG = {
     userPoolId: '',
     clientId: '',
     cognitoDomain: '',
-    apiBase: ''
+    // Not a stack output and not something to change: CloudFront serves the
+    // sync API from this path on the app's own origin, which is what keeps
+    // every sync request same-origin and free of CORS. Point it at the
+    // ApiEndpoint output only if you are running the app from somewhere that
+    // is not behind that distribution.
+    apiBase: '/api'
 };
 
 export function isSyncConfigured() {

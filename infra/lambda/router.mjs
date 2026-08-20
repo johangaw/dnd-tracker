@@ -1,8 +1,12 @@
-// Request routing and authorisation for the sync API.
+// Request routing and record validation for the sync API.
 //
 // Deliberately pure: `route()` takes its dependencies as arguments so the whole
-// surface can be tested with a fake DynamoDB and a fake token verifier, without
-// the AWS SDK ever being imported.
+// surface can be tested with a fake DynamoDB, without the AWS SDK ever being
+// imported.
+//
+// Tokens are not handled here. API Gateway's JWT authorizer verifies the
+// Cognito access token before the function is invoked and hands over the
+// claims, so this module's job is to trust `sub` and nothing else.
 
 // Mirrors SYNCED_KEYS in js/services/records.js. Anything not listed here is
 // rejected, so a client cannot invent collections and use the table as
@@ -33,6 +37,11 @@ export const PULL_PAGE_LIMIT = 200;
 // timeout of a few seconds. Five minutes is enormous by comparison.
 export const PULL_SLACK_MS = 5 * 60 * 1000;
 
+// CloudFront serves the API under /api on the app's own origin and forwards the
+// path unchanged, so the routes below are declared without the prefix and it is
+// stripped on the way in.
+const PATH_PREFIX = '/api';
+
 class HttpError extends Error {
     constructor(statusCode, message) {
         super(message);
@@ -56,17 +65,18 @@ function parseBody(request) {
     }
 }
 
-async function authenticate(request, verify) {
-    const header = request.headers?.authorization || request.headers?.Authorization || '';
-    const [scheme, token] = header.split(' ');
-    assert(scheme?.toLowerCase() === 'bearer' && token, 401, 'Missing bearer token');
+// The authorizer cannot reach this function without a valid token, so these
+// checks are about what *kind* of token it was, not whether it was genuine.
+function identify(request) {
+    const claims = request.claims;
+    assert(claims && typeof claims === 'object', 401, 'Missing token claims');
+    // An id token from the same pool has the same issuer and audience and would
+    // satisfy a plain JWT check. Routes require the `openid` scope, which id
+    // tokens do not carry, and this is the second half of that guard.
+    assert(claims.token_use === 'access', 401, 'Not an access token');
+    assert(typeof claims.sub === 'string' && claims.sub.length > 0, 401, 'Token has no subject');
 
-    try {
-        const claims = await verify(token);
-        return { sub: claims.sub, email: claims.email ?? null };
-    } catch (e) {
-        throw new HttpError(401, e.message || 'Invalid token');
-    }
+    return { sub: claims.sub, email: claims.email ?? null };
 }
 
 function validateRecord(record) {
@@ -135,16 +145,18 @@ const ROUTES = [
 
 export async function route(request, deps) {
     try {
-        const path = (request.path || '/').replace(/\/+$/, '') || '/';
+        let path = (request.path || '/').replace(/\/+$/, '') || '/';
+        if (path.startsWith(PATH_PREFIX)) path = path.slice(PATH_PREFIX.length) || '/';
+
         const match = ROUTES.find(r => r.path === path);
 
         if (!match) throw new HttpError(404, 'Not found');
         assert(match.method === request.method, 405, 'Method not allowed');
 
-        // Every route requires a valid token, and `sub` comes only from the
-        // verified claims. No handler ever reads an identity from the body,
-        // so a caller cannot address another user's partition.
-        const identity = await authenticate(request, deps.verify);
+        // `sub` comes only from the verified claims. No handler ever reads an
+        // identity from the body, so a caller cannot address another user's
+        // partition.
+        const identity = identify(request);
 
         return await match.handler(request, identity, deps);
     } catch (e) {
