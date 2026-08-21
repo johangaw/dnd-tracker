@@ -44,9 +44,12 @@ fi
 
 # Everything that is not part of the running app.
 EXCLUDES=(
-  --exclude '.git/*'
-  --exclude '.github/*'
-  --exclude '.claude/*'
+  # Dotfiles and dot-directories, which are all tooling: .git, .github,
+  # .claude, .vscode, .gitignore, .DS_Store. Matched generically so a new one
+  # does not silently end up published.
+  --exclude '.*'
+  --exclude '.*/*'
+  --exclude '*/.*'
   --exclude 'node_modules/*'
   --exclude 'tests/*'
   --exclude 'infra/*'
@@ -55,9 +58,8 @@ EXCLUDES=(
   --exclude 'package.json'
   --exclude 'package-lock.json'
   --exclude 'vitest.config.js'
+  --exclude 'vitest.workspace.js'
   --exclude 'monster-schema.json'
-  --exclude '.DS_Store'
-  --exclude '*/.DS_Store'
 )
 
 # --size-only matters more than it looks: a CI checkout gives every file a fresh

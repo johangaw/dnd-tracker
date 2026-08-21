@@ -34,6 +34,9 @@ export class AppStack extends Stack {
         super(scope, id, props);
 
         const appName = props.appName ?? 'dnd-tracker';
+        // See the note on the sync function below: only usable once the
+        // account's Lambda concurrency limit has been raised above 10.
+        const reservedConcurrency = props.reservedConcurrency;
 
         // ---------------------------------------------------------------
         // Storage
@@ -286,9 +289,19 @@ function handler(event) {
             timeout: Duration.seconds(10),
             logGroup,
             environment: { TABLE_NAME: table.tableName },
-            // Belt and braces alongside the stage throttle below: whatever gets
-            // past API Gateway still cannot exhaust the account's concurrency.
-            reservedConcurrentExecutions: 10
+            // Reserving concurrency is opt-in, because a new AWS account has a
+            // total concurrency limit of 10 and Lambda refuses any reservation
+            // that would leave fewer than 10 unreserved - which means *no*
+            // reservation is possible until the account limit is raised.
+            //
+            // Nothing is really lost by leaving it off. The guards that matter
+            // are the JWT authorizer, which stops unauthenticated calls
+            // reaching the function at all, and the stage throttle below. On a
+            // 10-concurrency account the account limit is itself the cap.
+            //
+            // Once the limit has been raised, pass -c reservedConcurrency=10 to
+            // stop this one function from monopolising the pool.
+            ...(reservedConcurrency ? { reservedConcurrentExecutions: reservedConcurrency } : {})
         });
 
         table.grantReadWriteData(syncFunction);

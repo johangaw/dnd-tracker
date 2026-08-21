@@ -13,10 +13,10 @@
 // no accounts, no network. Sync is strictly additive.
 
 export const CONFIG = {
-    region: '',
-    userPoolId: '',
-    clientId: '',
-    cognitoDomain: '',
+    region: 'eu-north-1',
+    userPoolId: 'eu-north-1_Lqbnobv67',
+    clientId: '6hgpb2brs49da5k5nuq5dkfhs',
+    cognitoDomain: 'dnd-tracker-041755786096.auth.eu-north-1.amazoncognito.com',
     // Not a stack output and not something to change: CloudFront serves the
     // sync API from this path on the app's own origin, which is what keeps
     // every sync request same-origin and free of CORS. Point it at the

@@ -24,7 +24,11 @@ const env = {
     region: process.env.CDK_DEFAULT_REGION
 };
 
-new AppStack(app, appName, { env, appName });
+// Only set this once the account's Lambda concurrency limit has been raised
+// above the new-account default of 10; below that AWS rejects any reservation.
+const reservedConcurrency = Number(app.node.tryGetContext('reservedConcurrency')) || undefined;
+
+new AppStack(app, appName, { env, appName, reservedConcurrency });
 
 new GitHubOidcStack(app, `${appName}-github-oidc`, {
     env,
