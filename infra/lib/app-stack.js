@@ -280,7 +280,7 @@ function handler(event) {
 
         const syncFunction = new lambda.Function(this, 'SyncFunction', {
             functionName: `${appName}-sync`,
-            runtime: lambda.Runtime.NODEJS_22_X,
+            runtime: lambda.Runtime.NODEJS_24_X,
             handler: 'index.handler',
             // Plain .mjs files with no dependencies: the AWS SDK ships in the
             // managed runtime, so there is nothing to install or bundle.
