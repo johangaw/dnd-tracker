@@ -17,6 +17,8 @@ export class GitHubOidcStack extends Stack {
         const {
             githubRepo = 'johangaw/dnd-tracker',
             githubBranch = 'main',
+            // Must match the `environment:` the deploy job declares.
+            githubEnvironment = 'production',
             appName = 'dnd-tracker',
             // There can only be one OIDC provider per issuer per account, so if
             // another project already created it, import instead of creating.
@@ -47,9 +49,24 @@ export class GitHubOidcStack extends Stack {
                     [`${GITHUB_ISSUER}:aud`]: 'sts.amazonaws.com'
                 },
                 StringLike: {
-                    // Pinned to one branch of one repository. Without this
-                    // condition, any GitHub repo in the world could assume it.
-                    [`${GITHUB_ISSUER}:sub`]: `repo:${githubRepo}:ref:refs/heads/${githubBranch}`
+                    // Scoped to this one repository. Without this condition,
+                    // any GitHub repo in the world could assume the role.
+                    //
+                    // Two accepted subjects, because GitHub changes the shape
+                    // of this claim depending on the job. A job that declares
+                    // an `environment:` gets
+                    //   repo:<owner>/<repo>:environment:<name>
+                    // and *only* that - the ref form is replaced, not added.
+                    // A job without one gets
+                    //   repo:<owner>/<repo>:ref:refs/heads/<branch>
+                    // Listing both means the deploy job works whether or not it
+                    // targets an environment, instead of failing at "Configure
+                    // AWS credentials" with an unexplained "Not authorized to
+                    // perform sts:AssumeRoleWithWebIdentity".
+                    [`${GITHUB_ISSUER}:sub`]: [
+                        `repo:${githubRepo}:environment:${githubEnvironment}`,
+                        `repo:${githubRepo}:ref:refs/heads/${githubBranch}`
+                    ]
                 }
             })
         });

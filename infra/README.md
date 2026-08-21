@@ -220,10 +220,27 @@ billing.
 **Cognito threat protection is off.** It is billed per monthly active user and is
 not in the free tier.
 
-**The deploy role's trust policy is pinned** to
-`repo:<owner>/<repo>:ref:refs/heads/main`. Without that condition any GitHub
-repository in the world could assume it. Change the repo via
-`-c githubRepo=owner/name`.
+**The deploy role's trust policy is scoped to this repository.** Without that
+condition any GitHub repository in the world could assume it. Change the repo
+via `-c githubRepo=owner/name`.
+
+It accepts two subject claims, and the reason is a trap worth knowing about:
+GitHub changes the shape of the `sub` claim depending on the job. A job that
+declares an `environment:` — as the deploy job does — gets
+`repo:<owner>/<repo>:environment:production`, and that **replaces** the ref
+form rather than adding to it. A job without one gets
+`repo:<owner>/<repo>:ref:refs/heads/main`. Trusting only the ref form makes
+every run fail at "Configure AWS credentials" with nothing more useful than
+`Not authorized to perform sts:AssumeRoleWithWebIdentity`.
+
+Because the environment subject carries no branch, the branch restriction for
+that path lives in GitHub instead: set a deployment branch policy on the
+`production` environment (Settings → Environments → production → Deployment
+branches) to limit it to `main`.
+
+**After changing this stack, deploy it by hand** — `npx cdk deploy
+dnd-tracker-github-oidc`. CI cannot apply it, because it defines the role CI
+authenticates as.
 
 ## Cost
 
