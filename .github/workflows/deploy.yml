@@ -67,4 +67,7 @@ jobs:
         id: deploy
         run: |
           ./infra/deploy.sh | tee deploy.log
-          echo "site_url=$(grep -oE 'https://[a-z0-9]+\.cloudfront\.net' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"
+          # Read the URL the script itself printed rather than matching a
+          # cloudfront.net hostname, which stops being the site's address the
+          # moment a custom domain is configured.
+          echo "site_url=$(sed -n 's/^Deployed: //p' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"

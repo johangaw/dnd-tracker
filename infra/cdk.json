@@ -10,6 +10,8 @@
     "@aws-cdk/core:target-partitions": ["aws"],
     "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
     "@aws-cdk/aws-cloudfront:useOriginAccessControl": true,
-    "@aws-cdk/core:defaultCrossStackReferences": "strong"
+    "@aws-cdk/core:defaultCrossStackReferences": "strong",
+    "domainName": "dnd-tracker.johangaw.com",
+    "certificateArn": "arn:aws:acm:us-east-1:041755786096:certificate/cbca2e7b-323a-49bf-a671-e48219c81cdb"
   }
 }

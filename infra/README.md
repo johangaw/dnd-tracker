@@ -99,6 +99,82 @@ aws cloudformation describe-stacks --stack-name dnd-tracker \
   --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue" --output text
 ```
 
+## Custom domain
+
+The stack serves the app from its CloudFront domain unless a domain is
+configured. Two context values turn it on, and they must be set together:
+
+| Context key | Value |
+|---|---|
+| `domainName` | `dnd-tracker.johangaw.com` |
+| `certificateArn` | ARN of an ACM certificate **in `us-east-1`** |
+
+CloudFront reads certificates from `us-east-1` only, regardless of the region
+the rest of this stack is in. And because DNS for the domain is hosted at
+Cloudflare rather than Route 53, CDK cannot write the validation record itself:
+the certificate is requested once by hand and then imported by ARN. No Route 53
+hosted zone is involved, which also saves its $0.50/month.
+
+### 1. Request the certificate
+
+```sh
+aws acm request-certificate \
+  --region us-east-1 \
+  --domain-name dnd-tracker.johangaw.com \
+  --validation-method DNS \
+  --query CertificateArn --output text
+```
+
+Then read the record it wants:
+
+```sh
+aws acm describe-certificate --region us-east-1 \
+  --certificate-arn <arn> \
+  --query 'Certificate.DomainValidationOptions[0].ResourceRecord'
+```
+
+### 2. Add two records in Cloudflare
+
+In the `johangaw.com` zone, under **DNS → Records**:
+
+- The validation record ACM printed: type `CNAME`, **Proxy status DNS only**.
+  Cloudflare appends the zone name to whatever you type in *Name*, so paste the
+  record name **without** the trailing `.johangaw.com`, and drop the trailing
+  dot from the value.
+- The site record: `CNAME` from `dnd-tracker` to the `DistributionDomainName`
+  stack output — again **DNS only** (grey cloud), not proxied.
+
+Proxying (the orange cloud) puts Cloudflare's CDN in front of CloudFront's,
+which is a second cache to invalidate and a second place for a redirect loop to
+live — Cloudflare's default *Flexible* SSL mode would talk plain HTTP to a
+distribution that redirects HTTP to HTTPS. Grey cloud avoids all of it and
+still gets a certificate, TLS and HTTP/3, from CloudFront.
+
+Validation usually completes within a few minutes:
+
+```sh
+aws acm wait certificate-validated --region us-east-1 --certificate-arn <arn>
+```
+
+### 3. Configure and deploy
+
+Add both values to the `context` block in [`cdk.json`](cdk.json), so CI - which
+runs a bare `cdk deploy` with no flags - picks them up:
+
+```json
+"domainName": "dnd-tracker.johangaw.com",
+"certificateArn": "arn:aws:acm:us-east-1:<account>:certificate/<id>"
+```
+
+Push, and the deploy attaches the alias and certificate to the distribution.
+Nothing in `js/config.js` changes: the API is reached at `/api` on whatever
+origin the app is served from, so moving the origin needs no app-side edit.
+
+The Cognito app client picks up `https://dnd-tracker.johangaw.com/` as a
+callback and logout URL automatically. The CloudFront URL stays registered
+alongside it deliberately — it keeps working through the DNS cutover, and it is
+the way back in if the domain ever stops resolving.
+
 ## Day-to-day
 
 ```sh
@@ -257,6 +333,5 @@ this app's traffic that is a fraction of a cent, and it is the price of not
 maintaining a hand-written token verifier.
 
 Expect **$0.00–0.05/month**. Worth setting an AWS Budget alert at $1 anyway.
-Adding a custom domain later means a Route 53 hosted zone at $0.50/month (the
-ACM certificate itself is free, but must be issued in `us-east-1` for
-CloudFront).
+The custom domain adds nothing: the ACM certificate is free and DNS is hosted
+at Cloudflare, so there is no Route 53 hosted zone to pay $0.50/month for.

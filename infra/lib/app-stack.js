@@ -18,6 +18,7 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as apigw from 'aws-cdk-lib/aws-apigatewayv2';
@@ -37,6 +38,9 @@ export class AppStack extends Stack {
         // See the note on the sync function below: only usable once the
         // account's Lambda concurrency limit has been raised above 10.
         const reservedConcurrency = props.reservedConcurrency;
+        // Optional custom domain. Set both or neither; bin/app.js enforces it.
+        const domainName = props.domainName;
+        const certificateArn = props.certificateArn;
 
         // ---------------------------------------------------------------
         // Storage
@@ -212,8 +216,18 @@ function handler(event) {
             responseHeadersPolicy: securityHeaders
         };
 
+        // Imported by ARN rather than requested here, because the DNS for this
+        // domain is hosted at Cloudflare: CDK cannot write the validation
+        // record, so the certificate is created and validated by hand once and
+        // then referenced. It must be in us-east-1 whatever region this stack
+        // is in - CloudFront reads certificates from there only.
+        const certificate = certificateArn
+            ? acm.Certificate.fromCertificateArn(this, 'SiteCertificate', certificateArn)
+            : undefined;
+
         const distribution = new cloudfront.Distribution(this, 'Distribution', {
             comment: `${appName} app and sync API`,
+            ...(domainName ? { domainNames: [domainName], certificate } : {}),
             defaultRootObject: 'index.html',
             httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
             enableIpv6: true,
@@ -233,7 +247,8 @@ function handler(event) {
             }
         });
 
-        const siteUrl = `https://${distribution.distributionDomainName}`;
+        const cloudFrontUrl = `https://${distribution.distributionDomainName}`;
+        const siteUrl = domainName ? `https://${domainName}` : cloudFrontUrl;
 
         // ---------------------------------------------------------------
         // Identity, continued: the client needs the site URL as its callback
@@ -241,7 +256,10 @@ function handler(event) {
 
         // Cognito permits plain http only for localhost, so a phone on the LAN
         // cannot be used for sign-in - it needs the deployed https origin.
-        const callbackOrigins = [siteUrl, 'http://localhost:3000'];
+        // The CloudFront URL stays registered alongside the custom domain: it
+        // keeps working during a DNS cutover, and it is the only way back in if
+        // the domain ever stops resolving.
+        const callbackOrigins = [...new Set([siteUrl, cloudFrontUrl, 'http://localhost:3000'])];
 
         const userPoolClient = userPool.addClient('WebClient', {
             userPoolClientName: `${appName}-web`,
@@ -393,6 +411,9 @@ function handler(event) {
         output('BucketName', bucket.bucketName, 'S3 bucket holding the app files');
         output('DistributionId', distribution.distributionId, 'CloudFront distribution id, used to invalidate on deploy');
         output('SiteUrl', siteUrl, 'Public URL of the app');
+        // What the custom domain's CNAME has to point at, and the fallback URL
+        // while DNS has not propagated.
+        output('DistributionDomainName', distribution.distributionDomainName, 'CloudFront domain to point the custom domain CNAME at');
         // These three are what js/config.js needs. There is no fourth: the API
         // lives at /api on this same origin.
         output('UserPoolId', userPool.userPoolId, 'Cognito user pool id');
