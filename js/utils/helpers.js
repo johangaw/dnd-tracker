@@ -56,10 +56,32 @@ export function formatSpeed(speed) {
     return parts.join(', ') || '30 ft.';
 }
 
-// Format damage types
-export function formatDamageTypes(types) {
+// Format a single entry of a damage/condition list. Entries are either plain
+// strings ("psychic", "Charmed|XPHB") or group objects that nest their own list
+// plus a qualifying note, e.g.
+// {"immune": ["bludgeoning"], "note": "from nonmagical attacks", "cond": true}
+function formatTypeEntry(entry, key) {
+    if (typeof entry === 'string') return entry.split('|')[0];
+    if (!entry || typeof entry !== 'object') return '';
+    if (entry.special) return entry.special;
+
+    const nested = entry[key];
+    const list = Array.isArray(nested) ? nested.map(e => formatTypeEntry(e, key)).filter(Boolean).join(', ') : '';
+    const prefix = entry.preNote ? `${entry.preNote} ` : '';
+    const suffix = entry.note ? ` ${entry.note}` : '';
+    return `${prefix}${list}${suffix}`.trim();
+}
+
+// Format damage types (immunities/resistances/vulnerabilities)
+export function formatDamageTypes(types, key = 'immune') {
     if (!types) return '';
-    return types.map(t => typeof t === 'string' ? t : t.special || JSON.stringify(t)).join(', ');
+    return types.map(t => formatTypeEntry(t, key)).filter(Boolean).join(', ');
+}
+
+// Format condition immunities, stripping source suffixes like "Grappled|XPHB"
+export function formatConditionImmune(conditions) {
+    if (!conditions) return '';
+    return conditions.map(c => formatTypeEntry(c, 'conditionImmune')).filter(Boolean).join(', ');
 }
 
 // Convert spell name to aidedd.org URL format

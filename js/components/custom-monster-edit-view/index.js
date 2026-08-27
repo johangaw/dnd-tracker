@@ -890,6 +890,15 @@ function cleanSpellName(spell) {
     return '';
 }
 
+// Wrap a plain spell name back into 5e.tools format, keeping any trailing note
+// (e.g. "Mage Armor (included above)") outside the tag so it renders as plain text
+function toSpellTag(spell) {
+    if (spell.includes('{@')) return spell;
+    const match = spell.match(/^([^(]+?)(\s*\(.*\))?$/);
+    if (!match) return spell;
+    return `{@spell ${match[1]}}${match[2] || ''}`;
+}
+
 // Parse spellcasting text back to 5e.tools format
 function parseSpellcastingText(text) {
     const result = {};
@@ -901,7 +910,7 @@ function parseSpellcastingText(text) {
 
         const prefix = line.substring(0, colonIndex).trim().toLowerCase();
         const spellsText = line.substring(colonIndex + 1).trim();
-        const spells = spellsText.split(',').map(s => s.trim()).filter(s => s);
+        const spells = spellsText.split(',').map(s => s.trim()).filter(s => s).map(toSpellTag);
 
         if (spells.length === 0) return;
 

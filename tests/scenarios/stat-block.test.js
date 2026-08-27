@@ -217,6 +217,51 @@ describe('Stat Block', () => {
             expect(html).not.toContain('|XPHB')
         })
 
+        it('renders condition immunities given as objects with a note', () => {
+            const monster = {
+                name: 'Archmage',
+                source: 'XMM',
+                size: ['S', 'M'],
+                type: { type: 'humanoid', tags: ['wizard'] },
+                alignment: ['N'],
+                ac: [17],
+                hp: { average: 170 },
+                speed: { walk: 30 },
+                str: 10, dex: 14, con: 12, int: 20, wis: 15, cha: 16,
+                cr: '12',
+                passive: 16,
+                conditionImmune: [
+                    { conditionImmune: ['charmed'], note: '(with Mind Blank)', cond: true }
+                ]
+            }
+            const html = renderStatBlock(monster)
+            expect(html).toContain('charmed (with Mind Blank)')
+            expect(html).not.toContain('[object Object]')
+        })
+
+        it('renders damage immunities given as objects with a note', () => {
+            const monster = {
+                name: 'Test Monster',
+                source: 'MM',
+                size: ['M'],
+                type: 'construct',
+                alignment: ['N'],
+                ac: [{ ac: 12 }],
+                hp: { average: 22 },
+                speed: { walk: 30 },
+                str: 10, dex: 14, con: 10, int: 6, wis: 10, cha: 8,
+                cr: '1',
+                passive: 10,
+                resist: [
+                    'fire',
+                    { resist: ['bludgeoning', 'piercing'], note: 'from nonmagical attacks', cond: true }
+                ]
+            }
+            const html = renderStatBlock(monster)
+            expect(html).toContain('fire, bludgeoning, piercing from nonmagical attacks')
+            expect(html).not.toContain('{')
+        })
+
         it('includes onerror handler for token image fallback', () => {
             const monster = {
                 name: 'Test',

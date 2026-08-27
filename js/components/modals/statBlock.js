@@ -2,7 +2,7 @@
 
 import * as MonsterAPI from '../../services/monsterApi.js';
 import { getLegendaryGroup, formatLegendaryEntries } from '../../services/legendaryGroups.js';
-import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatEntries, formatName, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
+import { escapeHtml, formatSize, formatType, formatAlignment, formatSpeed, formatDamageTypes, formatConditionImmune, formatEntries, formatName, capitalizeFirst, formatSpellList } from '../../utils/helpers.js';
 
 /**
  * Generate the 5e.tools token image URL for a monster
@@ -162,19 +162,18 @@ export function renderStatBlock(monster, comment = '') {
 
     // Damage immunities/resistances/vulnerabilities
     if (monster.immune && monster.immune.length > 0) {
-        html += `<div class="stat-row"><span class="stat-label">Damage Immunities</span> ${formatDamageTypes(monster.immune)}</div>`;
+        html += `<div class="stat-row"><span class="stat-label">Damage Immunities</span> ${formatDamageTypes(monster.immune, 'immune')}</div>`;
     }
     if (monster.resist && monster.resist.length > 0) {
-        html += `<div class="stat-row"><span class="stat-label">Damage Resistances</span> ${formatDamageTypes(monster.resist)}</div>`;
+        html += `<div class="stat-row"><span class="stat-label">Damage Resistances</span> ${formatDamageTypes(monster.resist, 'resist')}</div>`;
     }
     if (monster.vulnerable && monster.vulnerable.length > 0) {
-        html += `<div class="stat-row"><span class="stat-label">Damage Vulnerabilities</span> ${formatDamageTypes(monster.vulnerable)}</div>`;
+        html += `<div class="stat-row"><span class="stat-label">Damage Vulnerabilities</span> ${formatDamageTypes(monster.vulnerable, 'vulnerable')}</div>`;
     }
 
     // Condition immunities (strip source suffix like "Grappled|XPHB" -> "Grappled")
     if (monster.conditionImmune && monster.conditionImmune.length > 0) {
-        const conditions = monster.conditionImmune.map(c => c.split('|')[0]).join(', ');
-        html += `<div class="stat-row"><span class="stat-label">Condition Immunities</span> ${conditions}</div>`;
+        html += `<div class="stat-row"><span class="stat-label">Condition Immunities</span> ${formatConditionImmune(monster.conditionImmune)}</div>`;
     }
 
     // Senses

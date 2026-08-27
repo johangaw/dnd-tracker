@@ -357,8 +357,9 @@ describe('Custom Monsters', () => {
             const monsters = CustomMonsters.getCustomMonsters()
             expect(monsters[0].spellcasting.length).toBe(1)
             expect(monsters[0].spellcasting[0].name).toBe('Innate Spellcasting')
-            expect(monsters[0].spellcasting[0].will).toContain('detect magic')
-            expect(monsters[0].spellcasting[0].daily['1e']).toContain('fireball')
+            // Spell names are stored as {@spell ...} tags so the stat block renders them as links
+            expect(monsters[0].spellcasting[0].will).toContain('{@spell detect magic}')
+            expect(monsters[0].spellcasting[0].daily['1e']).toContain('{@spell fireball}')
         })
     })
 
