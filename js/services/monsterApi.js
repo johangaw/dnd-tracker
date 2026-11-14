@@ -94,18 +94,36 @@ export async function searchMonsters(query, source = '') {
     }
 
     // Sort by name and limit results
-    return results
+    return Promise.all(results
         .sort((a, b) => a.name.localeCompare(b.name))
-        .slice(0, 100);
+        .slice(0, 100)
+        .map(monster => resolveMonsterCopy(monster)));
+}
+
+// Plain bestiary aliases inherit their base creature's stats while retaining
+// their own name, source and explicit overrides. Modified copies use a richer
+// 5e.tools transformation format and are outside this alias resolver's scope.
+async function resolveMonsterCopy(monster, ancestors = new Set()) {
+    if (!monster?._copy || monster._copy._mod) return monster;
+    const key = `${monster.name}|${monster.source}`;
+    if (ancestors.has(key)) throw new Error(`Circular monster copy: ${key}`);
+    const nextAncestors = new Set(ancestors).add(key);
+    const reference = monster._copy;
+    const bases = await loadSource(reference.source);
+    const base = bases.find(m => m.name === reference.name);
+    if (!base) throw new Error(`Missing monster copy base: ${reference.name}|${reference.source}`);
+    const resolved = { ...structuredClone(await resolveMonsterCopy(base, nextAncestors)), ...monster };
+    delete resolved._copy;
+    return resolved;
 }
 
 export async function getMonster(name, source) {
     const cacheKey = `${name}|${source}`;
     const cached = getMonsterCache()[cacheKey];
-    if (cached) return cached;
+    if (cached && !cached._copy) return cached;
 
     const monsters = await loadSource(source);
-    const monster = monsters.find(m => m.name === name && m.source === source);
+    const monster = await resolveMonsterCopy(monsters.find(m => m.name === name && m.source === source));
     
     if (monster) {
         cacheMonster(cacheKey, monster);
