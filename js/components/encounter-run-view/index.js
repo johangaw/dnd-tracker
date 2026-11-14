@@ -844,7 +844,7 @@ class EncounterRunViewElement extends HTMLElement {
             }
         });
 
-        modal.setContent(Object.values(uniqueMonsters).map(m => {
+        modal.setContent(Object.values(uniqueMonsters).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map(m => {
             const key = `${m.name}|${m.source}`;
             const inCombat = combatCounts[key] || 0;
             return `

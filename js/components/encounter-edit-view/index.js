@@ -262,7 +262,9 @@ class EncounterEditViewElement extends HTMLElement {
         const container = this.querySelector('#monster-list');
         const monsters = state.editingEncounter.monsters || [];
 
-        container.innerHTML = monsters.map((monster, index) => `
+        container.innerHTML = monsters.map((monster, index) => ({ monster, index }))
+            .sort((a, b) => a.monster.name.localeCompare(b.monster.name, undefined, { sensitivity: 'base' }))
+            .map(({ monster, index }) => `
             <div class="item-row" data-index="${index}">
                 <div class="monster-info">
                     <div class="monster-name">${escapeHtml(monster.name)}</div>
