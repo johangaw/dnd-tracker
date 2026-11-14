@@ -166,7 +166,8 @@ class CustomMonstersViewElement extends HTMLElement {
         this.querySelector('#choice-from-existing').addEventListener('click', () => {
             this.closeOwnModals();
             this.querySelector('#baseline-search-input').value = '';
-            this.querySelector('#baseline-search-results').innerHTML = '';
+            clearTimeout(this.searchTimeout);
+            void this.searchBaselineMonsters('', this.querySelector('#baseline-source-filter').value);
             this.querySelector('#baseline-search-modal').classList.add('active');
         }, {signal});
 
@@ -231,10 +232,8 @@ class CustomMonstersViewElement extends HTMLElement {
         }, {signal});
 
         baselineSourceFilter.addEventListener('change', () => {
-            const query = baselineInput.value;
-            if (query.length >= 2) {
-                this.searchBaselineMonsters(query, baselineSourceFilter.value);
-            }
+            clearTimeout(this.searchTimeout);
+            this.searchBaselineMonsters(baselineInput.value, baselineSourceFilter.value);
         }, {signal});
 
         // Close modal buttons (only close the containing modal)
@@ -449,13 +448,6 @@ class CustomMonstersViewElement extends HTMLElement {
 
     async searchBaselineMonsters(query, source) {
         const resultsContainer = this.querySelector('#baseline-search-results');
-
-        if (query.length < 2) {
-            resultsContainer.innerHTML = '<p class="search-hint">Type at least 2 characters to search</p>';
-            return;
-        }
-
-        resultsContainer.innerHTML = '<p class="search-hint">Searching...</p>';
 
         await searchMonsterModal({
             query,

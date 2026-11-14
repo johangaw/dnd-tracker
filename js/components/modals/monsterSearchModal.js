@@ -53,6 +53,8 @@ export function renderMonsterResults(results, {
     });
 }
 
+const activeSearches = new WeakMap();
+
 export async function searchMonsters({
     query,
     source,
@@ -66,14 +68,20 @@ export async function searchMonsters({
     const target = container || document.getElementById('monster-search-results');
     if (!target) return;
 
-    if (query.length < minQueryLength) {
-        target.innerHTML = `<div class="search-empty">${tooShortMessage}</div>`;
-        return;
-    }
-
-    target.innerHTML = '<div class="search-loading">Searching...</div>';
+    const request = {};
+    activeSearches.set(target, request);
+    const isCurrent = () => activeSearches.get(target) === request;
+    query = query.trim();
 
     try {
+        const canBrowse = source === 'Custom' || (query.length < minQueryLength && await MonsterAPI.canBrowseSource(source));
+        if (!isCurrent()) return;
+        if (query.length < minQueryLength && !canBrowse) {
+            target.innerHTML = `<div class="search-empty">${tooShortMessage}</div>`;
+            return;
+        }
+        target.innerHTML = '<div class="search-loading">Searching...</div>';
+
         const customMonsters = (!source || source === 'Custom' || source === 'ALL')
             ? CustomMonsters.searchCustomMonsters(query)
             : [];
@@ -84,6 +92,7 @@ export async function searchMonsters({
 
         const monsters = [...customMonsters, ...apiMonsters];
 
+        if (!isCurrent()) return;
         renderMonsterResults(monsters, {
             container: target,
             emptyMessage,
@@ -91,6 +100,6 @@ export async function searchMonsters({
             onViewStats
         });
     } catch (error) {
-        target.innerHTML = '<div class="search-empty">Error searching monsters</div>';
+        if (isCurrent()) target.innerHTML = '<div class="search-empty">Error searching monsters</div>';
     }
 }

@@ -152,11 +152,8 @@ class EncounterEditViewElement extends HTMLElement {
         }, {signal: this.cleanupController.signal});
 
         monsterSourceFilter.addEventListener('change', () => {
-            const query = monsterSearchInput.value;
-            if (query.length >= 2) {
-                const source = monsterSourceFilter.value;
-                this.searchMonsters(query, source);
-            }
+            clearTimeout(this.searchTimeout);
+            this.searchMonsters(monsterSearchInput.value, monsterSourceFilter.value);
         }, {signal: this.cleanupController.signal});
 
         // Save DM notes button
@@ -415,8 +412,8 @@ class EncounterEditViewElement extends HTMLElement {
 
     showMonsterSearch() {
         this.querySelector('#monster-search-input').value = '';
-        this.querySelector('#monster-search-results').innerHTML = 
-            '<div class="search-empty">Type to search for monsters...</div>';
+        clearTimeout(this.searchTimeout);
+        void this.searchMonsters('', this.querySelector('#monster-source-filter').value);
         this.querySelector('#monster-search-modal').classList.add('active');
         this.querySelector('#monster-search-input').focus();
     }
