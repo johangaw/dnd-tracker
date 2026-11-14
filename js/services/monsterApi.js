@@ -23,49 +23,71 @@ const AVAILABLE_SOURCES = [
 const DEFAULT_SOURCES = AVAILABLE_SOURCES.filter(source => source !== 'MM');
 
 let sourceIndex = null;
+let indexPromise = null;
 const loadedSources = {};
+const sourcePromises = new Map();
 
 export async function loadIndex() {
     if (sourceIndex) return sourceIndex;
-    
+    if (indexPromise) return indexPromise;
+
+    indexPromise = (async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/index.json`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            sourceIndex = await response.json();
+            return sourceIndex;
+        } catch (error) {
+            console.error('Failed to load monster index:', error);
+            return {};
+        }
+    })();
     try {
-        const response = await fetch(`${BASE_URL}/index.json`);
-        sourceIndex = await response.json();
-        return sourceIndex;
-    } catch (error) {
-        console.error('Failed to load monster index:', error);
-        return {};
+        return await indexPromise;
+    } finally {
+        indexPromise = null;
     }
 }
 
 export async function loadSource(sourceCode) {
-    if (loadedSources[sourceCode]) {
-        return loadedSources[sourceCode];
-    }
+    if (loadedSources[sourceCode]) return loadedSources[sourceCode];
+    if (!AVAILABLE_SOURCES.includes(sourceCode)) return [];
+    if (sourcePromises.has(sourceCode)) return sourcePromises.get(sourceCode);
 
-    // Check if source is available locally
-    if (!AVAILABLE_SOURCES.includes(sourceCode)) {
-        return [];
-    }
+    const pending = (async () => {
+        const index = await loadIndex();
+        const filename = index[sourceCode];
+        if (!filename) return [];
 
-    const index = await loadIndex();
-    const filename = index[sourceCode];
-    if (!filename) return [];
-
-    try {
-        const response = await fetch(`${BASE_URL}/${filename}`);
-        const data = await response.json();
-        // Normalize each monster's `source` field to the source code key so lookups work
-        const monsters = data.monster || [];
-        for (const m of monsters) {
-            m.source = sourceCode;
+        try {
+            const response = await fetch(`${BASE_URL}/${filename}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const monsters = data.monster || [];
+            for (const m of monsters) m.source = sourceCode;
+            loadedSources[sourceCode] = monsters;
+            return monsters;
+        } catch (error) {
+            console.error(`Failed to load source ${sourceCode}:`, error);
+            return [];
         }
-        loadedSources[sourceCode] = monsters;
-        return loadedSources[sourceCode];
-    } catch (error) {
-        console.error(`Failed to load source ${sourceCode}:`, error);
-        return [];
+    })();
+    sourcePromises.set(sourceCode, pending);
+    try {
+        return await pending;
+    } finally {
+        sourcePromises.delete(sourceCode);
     }
+}
+
+// Warm the search cache without delaying the app's first view or flooding the
+// connection. loadSource shares in-flight requests with searches and retries
+// failed downloads on the next use.
+export async function preloadMonsters() {
+    const sources = [...AVAILABLE_SOURCES];
+    await Promise.all(Array.from({ length: 6 }, async () => {
+        while (sources.length) await loadSource(sources.shift());
+    }));
 }
 
 export async function searchMonsters(query, source = '') {
@@ -213,6 +235,7 @@ export default {
     DEFAULT_SOURCES,
     loadIndex,
     loadSource,
+    preloadMonsters,
     searchMonsters,
     getMonster,
     formatCR,

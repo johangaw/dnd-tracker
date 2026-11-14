@@ -322,8 +322,8 @@ async function completeSignIn() {
 document.addEventListener('DOMContentLoaded', () => {
     initEventHandlers();
 
-    // Preload monster index
-    MonsterAPI.loadIndex();
+    // Warm the bestiary in the background while the initial view renders.
+    void MonsterAPI.preloadMonsters();
 
     completeSignIn().finally(() => {
         // A no-op unless a backend is configured and the user is signed in.
