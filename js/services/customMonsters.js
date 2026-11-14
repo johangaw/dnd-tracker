@@ -40,7 +40,6 @@ export function deleteCustomMonster(id) {
 // Search custom monsters by name
 export function searchCustomMonsters(query) {
     const searchQuery = query.toLowerCase().trim();
-    if (searchQuery.length < 2) return [];
     
     return getCustomMonsters().filter(m => 
         m.name.toLowerCase().includes(searchQuery)

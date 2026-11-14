@@ -61,9 +61,8 @@ class CombatMonsterSearchModalElement extends HTMLElement {
         }, { signal });
 
         sourceFilter.addEventListener('change', () => {
-            if (input.value.length >= 2) {
-                this.searchHandler?.(input.value, sourceFilter.value);
-            }
+            clearTimeout(this.searchTimeout);
+            this.searchHandler?.(input.value, sourceFilter.value);
         }, { signal });
 
         this.querySelector('#qty-decrease').addEventListener('click', () => this.quantityDeltaHandler?.(-1), { signal });
@@ -101,7 +100,8 @@ class CombatMonsterSearchModalElement extends HTMLElement {
 
     open() {
         this.querySelector('#combat-monster-search-input').value = '';
-        this.setResultsHtml('<div class="search-empty">Type to search for monsters...</div>');
+        clearTimeout(this.searchTimeout);
+        this.searchHandler?.('', this.querySelector('#combat-monster-source-filter').value);
         this.classList.add('active');
         this.querySelector('#combat-monster-search-input').focus();
     }

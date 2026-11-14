@@ -90,9 +90,15 @@ export async function preloadMonsters() {
     }));
 }
 
+// Small selected sources can be browsed without filling the search box.
+export async function canBrowseSource(source) {
+    if (!source || source === 'ALL' || !AVAILABLE_SOURCES.includes(source)) return false;
+    return (await loadSource(source)).length <= 100;
+}
+
 export async function searchMonsters(query, source = '') {
     const searchQuery = query.toLowerCase().trim();
-    if (searchQuery.length < 2) return [];
+    if (searchQuery.length < 2 && !await canBrowseSource(source)) return [];
 
     // Use specific source, or default sources, or all sources if 'ALL' is specified
     let sourcesToSearch;
@@ -236,6 +242,7 @@ export default {
     loadIndex,
     loadSource,
     preloadMonsters,
+    canBrowseSource,
     searchMonsters,
     getMonster,
     formatCR,
