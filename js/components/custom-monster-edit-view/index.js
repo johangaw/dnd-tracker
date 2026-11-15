@@ -6,6 +6,7 @@ import { escapeHtml } from '../../utils/helpers.js';
 import { getHP, getAC, getProficiencyBonus } from '../../services/monsterApi.js';
 import { showStatBlock } from '../modals/statBlock.js';
 import { createAutosave, bindFormAutosave } from '../../utils/autosave.js';
+import '../modals/import-features-modal/index.js';
 
 const SIZE_OPTIONS = [
     ['T', 'Tiny'], ['S', 'Small'], ['M', 'Medium'],
@@ -238,9 +239,11 @@ class CustomMonsterEditViewElement extends HTMLElement {
                 <p id="monster-name-required" class="error-text hidden">Add a name to save this monster.</p>
 
                 <div class="form-actions">
+                    <button type="button" id="import-features-btn" class="btn">Import Features</button>
                     <button type="button" id="preview-monster-btn" class="btn">Preview</button>
                 </div>
             </form>
+            <import-features-modal class="modal"></import-features-modal>
         `;
 
         this.setupEventHandlers();
@@ -265,6 +268,21 @@ class CustomMonsterEditViewElement extends HTMLElement {
         bindFormAutosave(form, this.autosave, signal);
 
         this.querySelector('#preview-monster-btn').addEventListener('click', () => this.previewMonster(), {signal});
+        this.querySelector('#import-features-btn').addEventListener('click', () => {
+            const target = getState().editingMonster;
+            this.querySelector('import-features-modal').open(features => {
+                if (getState().editingMonster !== target) return;
+                for (const { key, entry } of features) {
+                    (target[key] ||= []).push(structuredClone(entry));
+                }
+                this.renderTraits();
+                this.renderActions();
+                this.renderBonusActions();
+                this.renderReactions();
+                this.renderSpellcasting();
+                this.renderLegendaryActions();
+            });
+        }, {signal});
 
         // Add-item buttons
         this.querySelector('#add-trait-btn').addEventListener('click', () => this.addTrait(), {signal});
