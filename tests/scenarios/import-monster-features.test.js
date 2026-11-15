@@ -32,6 +32,10 @@ describe('Import monster features', () => {
 
     it('searches official monsters and imports only selected attacks without replacing traits or stats', async () => {
         await searchAndSelect('Goblin', 'MM')
+        expect(modal.querySelector('#feature-search-step').hidden).toBe(true)
+        expect(modal.querySelector('#feature-selection-step').hidden).toBe(false)
+        expect(modal.querySelector('.feature-description').textContent).toContain('slashing damage')
+        expect(modal.querySelector('.feature-description').textContent).not.toContain('{@')
         await setChecked('import-features-modal input[name="feature"]', true)
         await click('#import-selected-features')
         expect(modal.classList.contains('active')).toBe(false)
@@ -59,6 +63,12 @@ describe('Import monster features', () => {
         const loadSource = vi.spyOn(CustomMonsters, 'getCustomMonster').mockReturnValueOnce(source)
         await searchAndSelect('Source Mage', 'Custom')
         loadSource.mockRestore()
+        expect(modal.querySelector('.feature-description li').textContent).toBe('Resists magic')
+        const preview = modal.querySelectorAll('.feature-description')[2]
+        expect(preview.textContent).toContain('Spell save DC 15')
+        expect(preview.textContent).toContain('1/day each: fireball')
+        expect(preview.textContent).toContain('Level 1 (4 slots): shield')
+        expect(preview.textContent).toContain('Special restriction')
         for (const input of modal.querySelectorAll('input[name="feature"]')) {
             if (input.closest('label').textContent.includes('Unselected')) continue
             await setChecked(`import-features-modal input[name="feature"][value="${input.value}"]`, true)
@@ -86,6 +96,32 @@ describe('Import monster features', () => {
         expect(modal.querySelector('#import-selected-features').disabled).toBe(true)
         expect(modal.querySelectorAll('input[name="feature"]')).toHaveLength(0)
         expect(getState().editingMonster.action || []).toEqual([])
+    })
+
+    it('returns to the search results without importing and clears the selection count', async () => {
+        await searchAndSelect('Goblin', 'MM')
+        await setChecked('import-features-modal input[name="feature"]', true)
+        expect(modal.querySelector('#feature-selection-count').textContent).toBe('1 selected')
+        await click('#feature-change-monster')
+        expect(modal.querySelector('#feature-search-step').hidden).toBe(false)
+        expect(modal.querySelector('#feature-selection-step').hidden).toBe(true)
+        expect(modal.querySelector('#feature-monster-search').value).toBe('Goblin')
+        expect(modal.querySelector('.search-result-info')).toBeTruthy()
+        expect(modal.querySelector('#feature-selection-count').textContent).toBe('No features selected')
+        expect(modal.querySelector('#import-selected-features').disabled).toBe(true)
+        expect(getState().editingMonster.action || []).toEqual([])
+        await click('#feature-cancel')
+        expect(modal.classList.contains('active')).toBe(false)
+    })
+
+    it('renders homebrew descriptions as text rather than executable HTML', async () => {
+        vi.spyOn(MonsterAPI, 'getMonster').mockResolvedValue({
+            name: 'Homebrew', trait: [{ name: 'Trait', entries: ['<img src=x onerror="alert(1)">', { type: 'entries', name: 'Detail', entries: ['{@dc 12} to resist.'] }] }]
+        })
+        await modal.selectMonster({ name: 'Homebrew', source: 'MM' })
+        expect(modal.querySelector('.feature-description img')).toBeNull()
+        expect(modal.querySelector('.feature-description').textContent).toContain('<img')
+        expect(modal.querySelector('.feature-description').textContent).toContain('DC 12 to resist.')
     })
 
     it('shows empty and error states and ignores an older monster load', async () => {

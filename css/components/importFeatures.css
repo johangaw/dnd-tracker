@@ -1,0 +1,124 @@
+/* A single scrolling body, with actions always within reach. */
+import-features-modal .modal-content {
+    max-width: 720px;
+    height: min(85dvh, 800px);
+    overflow: hidden;
+}
+
+import-features-modal .modal-body {
+    min-height: 0;
+    overscroll-behavior: contain;
+}
+
+import-features-modal [hidden] {
+    display: none;
+}
+
+import-features-modal .search-results {
+    max-height: none;
+    overflow: visible;
+}
+
+.feature-hint {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 16px;
+}
+
+.feature-monster-name {
+    margin: 16px 0 6px;
+}
+
+.feature-section {
+    margin-top: 24px;
+}
+
+.feature-section h4 {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+.feature-choice {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    padding: 14px;
+}
+
+.feature-choice:has(input:checked) {
+    border-color: var(--accent);
+}
+
+.feature-choice-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.feature-choice-heading input[type="checkbox"] {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    margin: 2px 0 0;
+}
+
+.feature-description {
+    margin: 8px 0 0 28px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.feature-description p + p,
+.feature-description ul {
+    margin-top: 8px;
+}
+
+.feature-description ul {
+    padding-left: 20px;
+}
+
+.feature-description a {
+    color: var(--accent-hover);
+    text-underline-offset: 2px;
+}
+
+.feature-import-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.feature-import-footer .btn {
+    flex: 0 0 auto;
+    width: auto;
+    white-space: nowrap;
+}
+
+#feature-selection-count {
+    margin-right: auto;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+    .feature-import-footer {
+        flex-wrap: wrap;
+    }
+
+    #feature-selection-count {
+        flex-basis: 100%;
+    }
+}
